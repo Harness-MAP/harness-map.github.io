@@ -1,7 +1,7 @@
 import json, re, os, sys
 from pathlib import Path
-S = Path("/tmp/claude-1000/-home-azureuser/8e7565d1-6529-493a-a528-66b753c0583c/scratchpad/build")
-SITE = Path("/home/azureuser/workspace/harness-evolution.github.io")
+S = Path(__file__).resolve().parent  # tools/
+SITE = S.parent  # repository root
 tpl = (S / "index.template.html").read_text()
 lin = json.load(open(SITE / "static/data/lineages.json")); vid = json.load(open(SITE / "static/data/videos.json"))
 def js(o): return json.dumps(o, separators=(",", ":")).replace("</", "<\\/")
