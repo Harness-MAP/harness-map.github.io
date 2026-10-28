@@ -1,0 +1,1354 @@
+{
+ "balrog": {
+  "title": "BALROG-MiniHack",
+  "primary": "success",
+  "best": 0.9,
+  "best_label": "cand_r68_0_spatial-grounding",
+  "first_at": 41,
+  "n": 41,
+  "n_run": 48,
+  "run": "adaptive_k16_c1p4",
+  "rows": [
+   {
+    "i": 0,
+    "label": "anchor_naive",
+    "p": null,
+    "score": 0.1,
+    "path": true,
+    "best": false,
+    "depth": 0,
+    "diff": null,
+    "nfiles": 9,
+    "heading": "naive anchor \u2014 module map and evolvable levers"
+   },
+   {
+    "i": 1,
+    "label": "cand_r1_0_spatial-grounding",
+    "p": 0,
+    "score": 0.35,
+    "path": false,
+    "best": false,
+    "depth": 1,
+    "diff": {
+     "files": 7,
+     "insertions": 490,
+     "deletions": 39
+    },
+    "nfiles": 13,
+    "heading": "cand_r001_0_spatial-grounding"
+   },
+   {
+    "i": 2,
+    "label": "cand_r18_0_spatial-grounding",
+    "p": 0,
+    "score": 0.175,
+    "path": false,
+    "best": false,
+    "depth": 1,
+    "diff": {
+     "files": 5,
+     "insertions": 301,
+     "deletions": 29
+    },
+    "nfiles": 11,
+    "heading": "cand_r018_0_spatial-grounding \u2014 middleware pipeline"
+   },
+   {
+    "i": 3,
+    "label": "cand_r26_0_spatial-grounding",
+    "p": 0,
+    "score": 0.325,
+    "path": false,
+    "best": false,
+    "depth": 1,
+    "diff": {
+     "files": 3,
+     "insertions": 264,
+     "deletions": 98
+    },
+    "nfiles": 7,
+    "heading": "NOTES \u2014 cand_r026_0 (one-module pilot)"
+   },
+   {
+    "i": 4,
+    "label": "cand_r27_0_spatial-grounding",
+    "p": 0,
+    "score": 0.325,
+    "path": false,
+    "best": false,
+    "depth": 1,
+    "diff": {
+     "files": 6,
+     "insertions": 200,
+     "deletions": 95
+    },
+    "nfiles": 9,
+    "heading": "axis"
+   },
+   {
+    "i": 5,
+    "label": "cand_r29_0_spatial-grounding",
+    "p": 0,
+    "score": 0.15,
+    "path": false,
+    "best": false,
+    "depth": 1,
+    "diff": {
+     "files": 5,
+     "insertions": 134,
+     "deletions": 48
+    },
+    "nfiles": 9,
+    "heading": "cand_r029_0 \u2014 neighbour ledger (grounded single call)"
+   },
+   {
+    "i": 6,
+    "label": "cand_r33_0_spatial-grounding",
+    "p": 0,
+    "score": 0.175,
+    "path": false,
+    "best": false,
+    "depth": 1,
+    "diff": {
+     "files": 8,
+     "insertions": 221,
+     "deletions": 93
+    },
+    "nfiles": 10,
+    "heading": "cand_r033_0_spatial-grounding"
+   },
+   {
+    "i": 7,
+    "label": "cand_r35_0_spatial-grounding",
+    "p": 0,
+    "score": 0.15,
+    "path": true,
+    "best": false,
+    "depth": 1,
+    "diff": {
+     "files": 4,
+     "insertions": 266,
+     "deletions": 98
+    },
+    "nfiles": 8,
+    "heading": "axis:"
+   },
+   {
+    "i": 8,
+    "label": "cand_r36_0_spatial-grounding",
+    "p": 3,
+    "score": 0.375,
+    "path": false,
+    "best": false,
+    "depth": 1,
+    "diff": {
+     "files": 6,
+     "insertions": 458,
+     "deletions": 232
+    },
+    "nfiles": 13,
+    "heading": "cand_r036_0_spatial-grounding"
+   },
+   {
+    "i": 9,
+    "label": "cand_r37_0_spatial-grounding",
+    "p": 5,
+    "score": 0.325,
+    "path": false,
+    "best": false,
+    "depth": 1,
+    "diff": {
+     "files": 7,
+     "insertions": 508,
+     "deletions": 104
+    },
+    "nfiles": 12,
+    "heading": "cand_r037_0_spatial-grounding \u2014 middleware pipeline with a code-planner decision stage"
+   },
+   {
+    "i": 10,
+    "label": "cand_r38_0_spatial-grounding",
+    "p": 1,
+    "score": 0.325,
+    "path": false,
+    "best": false,
+    "depth": 1,
+    "diff": {
+     "files": 2,
+     "insertions": 40,
+     "deletions": 2
+    },
+    "nfiles": 14,
+    "heading": "NOTES \u2014 cand_r038_0_spatial-grounding (parent cand_r001_0_spatial-grounding)"
+   },
+   {
+    "i": 11,
+    "label": "cand_r39_0_spatial-grounding",
+    "p": 0,
+    "score": 0.125,
+    "path": false,
+    "best": false,
+    "depth": 1,
+    "diff": {
+     "files": 6,
+     "insertions": 233,
+     "deletions": 36
+    },
+    "nfiles": 11,
+    "heading": "cand_r039_0 \u2014 spatial chart + BFS route hint (grounded single call)"
+   },
+   {
+    "i": 12,
+    "label": "cand_r40_0_spatial-grounding",
+    "p": 6,
+    "score": 0.25,
+    "path": false,
+    "best": false,
+    "depth": 2,
+    "diff": {
+     "files": 2,
+     "insertions": 116,
+     "deletions": 3
+    },
+    "nfiles": 11,
+    "heading": "axis"
+   },
+   {
+    "i": 13,
+    "label": "cand_r41_0_spatial-grounding",
+    "p": 7,
+    "score": 0.375,
+    "path": true,
+    "best": false,
+    "depth": 2,
+    "diff": {
+     "files": 1,
+     "insertions": 102,
+     "deletions": 11
+    },
+    "nfiles": 9,
+    "heading": "axis:"
+   },
+   {
+    "i": 14,
+    "label": "cand_r42_0_spatial-grounding",
+    "p": 2,
+    "score": 0.3,
+    "path": false,
+    "best": false,
+    "depth": 2,
+    "diff": {
+     "files": 5,
+     "insertions": 167,
+     "deletions": 6
+    },
+    "nfiles": 13,
+    "heading": "cand_r042_0_spatial-grounding \u2014 middleware pipeline whose innermost stage OWNS movement"
+   },
+   {
+    "i": 15,
+    "label": "cand_r43_0_spatial-grounding",
+    "p": 1,
+    "score": 0.325,
+    "path": false,
+    "best": false,
+    "depth": 2,
+    "diff": {
+     "files": 3,
+     "insertions": 91,
+     "deletions": 18
+    },
+    "nfiles": 14,
+    "heading": "cand_r043_0_spatial-grounding"
+   },
+   {
+    "i": 16,
+    "label": "cand_r44_0_spatial-grounding",
+    "p": 3,
+    "score": 0.375,
+    "path": false,
+    "best": false,
+    "depth": 3,
+    "diff": {
+     "files": 2,
+     "insertions": 129,
+     "deletions": 12
+    },
+    "nfiles": 9,
+    "heading": "cand_r044_0_spatial-grounding"
+   },
+   {
+    "i": 17,
+    "label": "cand_r45_0_spatial-grounding",
+    "p": 5,
+    "score": 0.3,
+    "path": false,
+    "best": false,
+    "depth": 3,
+    "diff": {
+     "files": 5,
+     "insertions": 309,
+     "deletions": 86
+    },
+    "nfiles": 12,
+    "heading": "cand_r045_0_spatial-grounding \u2014 middleware stack over a map-memory Chart"
+   },
+   {
+    "i": 18,
+    "label": "cand_r46_0_spatial-grounding",
+    "p": 13,
+    "score": 0.375,
+    "path": false,
+    "best": false,
+    "depth": 3,
+    "diff": {
+     "files": 4,
+     "insertions": 470,
+     "deletions": 214
+    },
+    "nfiles": 13,
+    "heading": "cand_r046_0_spatial-grounding \u2014 staged pipeline over tools/ modules + a Quest lava-crossing stage"
+   },
+   {
+    "i": 19,
+    "label": "cand_r47_0_spatial-grounding",
+    "p": 0,
+    "score": 0.2,
+    "path": false,
+    "best": false,
+    "depth": 3,
+    "diff": {
+     "files": 6,
+     "insertions": 234,
+     "deletions": 49
+    },
+    "nfiles": 11,
+    "heading": "cand_r047_0 \u2014 prose-noun neighbour ledger + code arbitration (single grounded call)"
+   },
+   {
+    "i": 20,
+    "label": "cand_r48_0_spatial-grounding",
+    "p": 4,
+    "score": 0.375,
+    "path": false,
+    "best": false,
+    "depth": 4,
+    "diff": {
+     "files": 3,
+     "insertions": 241,
+     "deletions": 101
+    },
+    "nfiles": 12,
+    "heading": "cand_r048_0_spatial-grounding \u2014 potential-field walker rewired as a STAGE table over tools/field + tools/chart"
+   },
+   {
+    "i": 21,
+    "label": "cand_r49_0_spatial-grounding",
+    "p": 6,
+    "score": 0.325,
+    "path": false,
+    "best": false,
+    "depth": 4,
+    "diff": {
+     "files": 3,
+     "insertions": 168,
+     "deletions": 2
+    },
+    "nfiles": 12,
+    "heading": "axis:"
+   },
+   {
+    "i": 22,
+    "label": "cand_r50_0_spatial-grounding",
+    "p": 7,
+    "score": 0.325,
+    "path": false,
+    "best": false,
+    "depth": 4,
+    "diff": {
+     "files": 1,
+     "insertions": 81,
+     "deletions": 4
+    },
+    "nfiles": 9,
+    "heading": "NOTES \u2014 cand_r050_0_spatial-grounding (chart-routed learner)"
+   },
+   {
+    "i": 23,
+    "label": "cand_r51_0_spatial-grounding",
+    "p": 19,
+    "score": 0.375,
+    "path": false,
+    "best": false,
+    "depth": 4,
+    "diff": {
+     "files": 2,
+     "insertions": 279,
+     "deletions": 33
+    },
+    "nfiles": 12,
+    "heading": "cand_r051_0_spatial-grounding \u2014 prose-grounded potential-field walker (steered toward r027)"
+   },
+   {
+    "i": 24,
+    "label": "cand_r52_0_spatial-grounding",
+    "p": 20,
+    "score": 0.6,
+    "path": false,
+    "best": false,
+    "depth": 5,
+    "diff": {
+     "files": 3,
+     "insertions": 344,
+     "deletions": 6
+    },
+    "nfiles": 13,
+    "heading": "cand_r052_0_spatial-grounding \u2014 potential-field walker + a Quest-regime module (tools/quest.py)"
+   },
+   {
+    "i": 25,
+    "label": "cand_r53_0_spatial-grounding",
+    "p": 0,
+    "score": 0.225,
+    "path": false,
+    "best": false,
+    "depth": 5,
+    "diff": {
+     "files": 5,
+     "insertions": 176,
+     "deletions": 49
+    },
+    "nfiles": 10,
+    "heading": "cand_r053_0 \u2014 code-ranked move menu (grounded single call, r029 region)"
+   },
+   {
+    "i": 26,
+    "label": "cand_r54_0_spatial-grounding",
+    "p": 3,
+    "score": 0.375,
+    "path": false,
+    "best": false,
+    "depth": 5,
+    "diff": {
+     "files": 3,
+     "insertions": 361,
+     "deletions": 193
+    },
+    "nfiles": 11,
+    "heading": "cand_r054_0_spatial-grounding: staged pipeline over tools/ modules (from the one-module r026 walker)"
+   },
+   {
+    "i": 27,
+    "label": "cand_r55_0_spatial-grounding",
+    "p": 5,
+    "score": 0.275,
+    "path": false,
+    "best": false,
+    "depth": 5,
+    "diff": {
+     "files": 8,
+     "insertions": 397,
+     "deletions": 98
+    },
+    "nfiles": 13,
+    "heading": "cand_r055_0 \u2014 middleware stage pipeline whose movement locus is a CHART + BFS route"
+   },
+   {
+    "i": 28,
+    "label": "cand_r56_0_spatial-grounding",
+    "p": 3,
+    "score": 0.375,
+    "path": false,
+    "best": false,
+    "depth": 6,
+    "diff": {
+     "files": 1,
+     "insertions": 83,
+     "deletions": 33
+    },
+    "nfiles": 8,
+    "heading": "cand_r056_0_spatial-grounding \u2014 one-module chart pilot rewired as an ordered STAGE PIPELINE"
+   },
+   {
+    "i": 29,
+    "label": "cand_r57_0_spatial-grounding",
+    "p": 5,
+    "score": 0.3,
+    "path": false,
+    "best": false,
+    "depth": 6,
+    "diff": {
+     "files": 8,
+     "insertions": 395,
+     "deletions": 106
+    },
+    "nfiles": 13,
+    "heading": "cand_r057_0 \u2014 stage pipeline with a code-owned ROUTE stage (model = fights + residue)"
+   },
+   {
+    "i": 30,
+    "label": "cand_r58_0_spatial-grounding",
+    "p": 13,
+    "score": 0.625,
+    "path": false,
+    "best": false,
+    "depth": 6,
+    "diff": {
+     "files": 2,
+     "insertions": 460,
+     "deletions": 42
+    },
+    "nfiles": 11,
+    "heading": "cand_r058_0_spatial-grounding \u2014 charted learner as a STAGE table + a Quest-regime tool module"
+   },
+   {
+    "i": 31,
+    "label": "cand_r59_0_spatial-grounding",
+    "p": 4,
+    "score": 0.6,
+    "path": false,
+    "best": false,
+    "depth": 6,
+    "diff": {
+     "files": 4,
+     "insertions": 617,
+     "deletions": 101
+    },
+    "nfiles": 13,
+    "heading": "cand_r059_0_spatial-grounding \u2014 field walker rewired as a STAGE table over tools/ modules (+ door/Quest owners)"
+   },
+   {
+    "i": 32,
+    "label": "cand_r60_0_spatial-grounding",
+    "p": 6,
+    "score": 0.35,
+    "path": false,
+    "best": false,
+    "depth": 7,
+    "diff": {
+     "files": 3,
+     "insertions": 141,
+     "deletions": 6
+    },
+    "nfiles": 12,
+    "heading": "axis:"
+   },
+   {
+    "i": 33,
+    "label": "cand_r61_0_spatial-grounding",
+    "p": 7,
+    "score": 0.35,
+    "path": false,
+    "best": false,
+    "depth": 7,
+    "diff": {
+     "files": 1,
+     "insertions": 80,
+     "deletions": 2
+    },
+    "nfiles": 9,
+    "heading": "cand_r061_0 \u2014 chart-routed learner"
+   },
+   {
+    "i": 34,
+    "label": "cand_r62_0_spatial-grounding",
+    "p": 19,
+    "score": 0.225,
+    "path": false,
+    "best": false,
+    "depth": 7,
+    "diff": {
+     "files": 4,
+     "insertions": 145,
+     "deletions": 24
+    },
+    "nfiles": 12,
+    "heading": "axis:"
+   },
+   {
+    "i": 35,
+    "label": "cand_r63_0_spatial-grounding",
+    "p": 25,
+    "score": 0.325,
+    "path": false,
+    "best": false,
+    "depth": 7,
+    "diff": {
+     "files": 2,
+     "insertions": 111,
+     "deletions": 5
+    },
+    "nfiles": 11,
+    "heading": "NOTES \u2014 cand_r063_0_spatial-grounding (parent r053 one-hop menu; steered toward r027's gradient walker)"
+   },
+   {
+    "i": 36,
+    "label": "cand_r64_0_spatial-grounding",
+    "p": 30,
+    "score": 0.875,
+    "path": false,
+    "best": false,
+    "depth": 8,
+    "diff": {
+     "files": 2,
+     "insertions": 243,
+     "deletions": 8
+    },
+    "nfiles": 12,
+    "heading": "cand_r064_0_spatial-grounding \u2014 tools/ loader + a Boxoban `sokoban` stage owner (exact push-level A*)"
+   },
+   {
+    "i": 37,
+    "label": "cand_r65_0_spatial-grounding",
+    "p": 26,
+    "score": 0.625,
+    "path": false,
+    "best": false,
+    "depth": 8,
+    "diff": {
+     "files": 4,
+     "insertions": 359,
+     "deletions": 2
+    },
+    "nfiles": 12,
+    "heading": "cand_r065_0_spatial-grounding \u2014 stage-table chart walker + a separable Quest regime module (steer: r058/r052)"
+   },
+   {
+    "i": 38,
+    "label": "cand_r66_0_spatial-grounding",
+    "p": 3,
+    "score": 0.375,
+    "path": false,
+    "best": false,
+    "depth": 8,
+    "diff": {
+     "files": 4,
+     "insertions": 484,
+     "deletions": 197
+    },
+    "nfiles": 12,
+    "heading": "cand_r066_0_spatial-grounding \u2014 chart pilot rewired as a STAGE PIPELINE over tools/ modules"
+   },
+   {
+    "i": 39,
+    "label": "cand_r67_0_spatial-grounding",
+    "p": 5,
+    "score": 0.275,
+    "path": false,
+    "best": false,
+    "depth": 8,
+    "diff": {
+     "files": 9,
+     "insertions": 435,
+     "deletions": 112
+    },
+    "nfiles": 14,
+    "heading": "cand_r067_0_spatial-grounding \u2014 middleware pipeline + ledger + BINDING chart route"
+   },
+   {
+    "i": 40,
+    "label": "cand_r68_0_spatial-grounding",
+    "p": 13,
+    "score": 0.9,
+    "path": true,
+    "best": true,
+    "depth": 9,
+    "diff": {
+     "files": 3,
+     "insertions": 711,
+     "deletions": 45
+    },
+    "nfiles": 12,
+    "heading": "cand_r068_0_spatial-grounding \u2014 r041 learner rewired onto r064's stage table + tools/ owners, with a `>`-attracted front"
+   }
+  ]
+ },
+ "nav_hard": {
+  "title": "SimWorld-MMNav hard",
+  "primary": "SubtaskSR",
+  "best": 0.555,
+  "best_label": "cand_r15_0_spatial-grounding",
+  "first_at": 16,
+  "n": 16,
+  "n_run": 16,
+  "run": "hard5010_adaptive_k4c1",
+  "rows": [
+   {
+    "i": 0,
+    "label": "anchor_nav",
+    "p": null,
+    "score": 0.36,
+    "path": true,
+    "best": false,
+    "depth": null,
+    "diff": null,
+    "nfiles": 14,
+    "heading": "NOTES.md \u2014 SimWorld-MMNav anchor (module map \u00b7 evolvable levers \u00b7 contract)"
+   },
+   {
+    "i": 1,
+    "label": "cand_r1_0_spatial-grounding",
+    "p": 0,
+    "score": 0.285,
+    "path": false,
+    "best": false,
+    "depth": null,
+    "diff": {
+     "files": 3,
+     "insertions": 342,
+     "deletions": 28
+    },
+    "nfiles": 14,
+    "heading": "NOTES \u2014 `cand_r001_0_spatial-grounding` (iter 1, parent `anchor_nav`)"
+   },
+   {
+    "i": 2,
+    "label": "cand_r2_0_spatial-grounding",
+    "p": 1,
+    "score": 0.33,
+    "path": false,
+    "best": false,
+    "depth": null,
+    "diff": {
+     "files": 2,
+     "insertions": 280,
+     "deletions": 116
+    },
+    "nfiles": 14,
+    "heading": "NOTES \u2014 `cand_r002_0_spatial-grounding` (iter 2, parent `cand_r1_0_spatial-grounding`)"
+   },
+   {
+    "i": 3,
+    "label": "cand_r3_0_spatial-grounding",
+    "p": 0,
+    "score": 0.36,
+    "path": false,
+    "best": false,
+    "depth": null,
+    "diff": {
+     "files": 1,
+     "insertions": 186,
+     "deletions": 17
+    },
+    "nfiles": 14,
+    "heading": "NOTES \u2014 `cand_r003_0_spatial-grounding` (iter 3, parent `anchor_nav`)"
+   },
+   {
+    "i": 4,
+    "label": "cand_r4_0_spatial-grounding",
+    "p": 1,
+    "score": 0.355,
+    "path": false,
+    "best": false,
+    "depth": null,
+    "diff": {
+     "files": 4,
+     "insertions": 287,
+     "deletions": 159
+    },
+    "nfiles": 14,
+    "heading": "NOTES \u2014 `cand_r004_0_spatial-grounding` (iter 4, parent `cand_r1_0_spatial-grounding`)"
+   },
+   {
+    "i": 5,
+    "label": "cand_r5_0_spatial-grounding",
+    "p": 0,
+    "score": 0.345,
+    "path": false,
+    "best": false,
+    "depth": null,
+    "diff": {
+     "files": 4,
+     "insertions": 305,
+     "deletions": 4
+    },
+    "nfiles": 15,
+    "heading": "NOTES \u2014 `cand_r5_0_spatial-grounding` (iter 5, parent `anchor_nav`)"
+   },
+   {
+    "i": 6,
+    "label": "cand_r6_0_spatial-grounding",
+    "p": 0,
+    "score": 0.37,
+    "path": true,
+    "best": false,
+    "depth": null,
+    "diff": {
+     "files": 3,
+     "insertions": 536,
+     "deletions": 11
+    },
+    "nfiles": 15,
+    "heading": "NOTES \u2014 `cand_r006_0_spatial-grounding` (iter 6, parent `anchor_nav`)"
+   },
+   {
+    "i": 7,
+    "label": "cand_r7_0_spatial-grounding",
+    "p": 2,
+    "score": 0.345,
+    "path": false,
+    "best": false,
+    "depth": null,
+    "diff": {
+     "files": 2,
+     "insertions": 247,
+     "deletions": 274
+    },
+    "nfiles": 14,
+    "heading": "NOTES \u2014 `cand_r007_0_spatial-grounding` (iter 7, parent `cand_r2_0_spatial-grounding`)"
+   },
+   {
+    "i": 8,
+    "label": "cand_r8_0_spatial-grounding",
+    "p": 0,
+    "score": 0.35,
+    "path": false,
+    "best": false,
+    "depth": null,
+    "diff": {
+     "files": 3,
+     "insertions": 382,
+     "deletions": 4
+    },
+    "nfiles": 15,
+    "heading": "NOTES \u2014 `cand_r008_0_spatial-grounding` (iter 8, parent `anchor_nav`)"
+   },
+   {
+    "i": 9,
+    "label": "cand_r9_0_spatial-grounding",
+    "p": 6,
+    "score": 0.4,
+    "path": true,
+    "best": false,
+    "depth": null,
+    "diff": {
+     "files": 3,
+     "insertions": 594,
+     "deletions": 93
+    },
+    "nfiles": 16,
+    "heading": "NOTES \u2014 `cand_r009_0_spatial-grounding` (iter 9, parent `cand_r6_0_spatial-grounding`)"
+   },
+   {
+    "i": 10,
+    "label": "cand_r10_0_spatial-grounding",
+    "p": 2,
+    "score": 0.535,
+    "path": false,
+    "best": false,
+    "depth": null,
+    "diff": {
+     "files": 3,
+     "insertions": 206,
+     "deletions": 11
+    },
+    "nfiles": 14,
+    "heading": "NOTES \u2014 `cand_r010_0_spatial-grounding` (iter 10, parent `cand_r2_0_spatial-grounding`)"
+   },
+   {
+    "i": 11,
+    "label": "cand_r11_0_spatial-grounding",
+    "p": 4,
+    "score": 0.48,
+    "path": false,
+    "best": false,
+    "depth": null,
+    "diff": {
+     "files": 4,
+     "insertions": 477,
+     "deletions": 10
+    },
+    "nfiles": 15,
+    "heading": "NOTES \u2014 `cand_r11_0_spatial-grounding` (iter 11, parent `cand_r4_0_spatial-grounding`)"
+   },
+   {
+    "i": 12,
+    "label": "cand_r12_0_spatial-grounding",
+    "p": 0,
+    "score": 0.335,
+    "path": false,
+    "best": false,
+    "depth": null,
+    "diff": {
+     "files": 3,
+     "insertions": 777,
+     "deletions": 8
+    },
+    "nfiles": 15,
+    "heading": "NOTES \u2014 `cand_r012_0_spatial-grounding` (iter 12, parent `anchor_nav`)"
+   },
+   {
+    "i": 13,
+    "label": "cand_r13_0_spatial-grounding",
+    "p": 9,
+    "score": 0.55,
+    "path": true,
+    "best": false,
+    "depth": null,
+    "diff": {
+     "files": 4,
+     "insertions": 468,
+     "deletions": 16
+    },
+    "nfiles": 17,
+    "heading": "NOTES \u2014 `cand_r13_0_spatial-grounding` (iter 13, parent `cand_r9_0_spatial-grounding`)"
+   },
+   {
+    "i": 14,
+    "label": "cand_r14_0_spatial-grounding",
+    "p": 13,
+    "score": 0.515,
+    "path": false,
+    "best": false,
+    "depth": null,
+    "diff": {
+     "files": 3,
+     "insertions": 479,
+     "deletions": 9
+    },
+    "nfiles": 17,
+    "heading": "NOTES \u2014 `cand_r14_0_spatial-grounding` (iter 14, parent `cand_r13_0_spatial-grounding`)"
+   },
+   {
+    "i": 15,
+    "label": "cand_r15_0_spatial-grounding",
+    "p": 13,
+    "score": 0.555,
+    "path": true,
+    "best": true,
+    "depth": null,
+    "diff": {
+     "files": 2,
+     "insertions": 215,
+     "deletions": 53
+    },
+    "nfiles": 17,
+    "heading": "NOTES \u2014 `cand_r15_0_spatial-grounding` (iter 15, parent `cand_r13_0_spatial-grounding`)"
+   }
+  ]
+ },
+ "games_maze": {
+  "title": "SpatialWorld maze",
+  "primary": "score",
+  "best": 1.0,
+  "best_label": "cand_r1_0_spatial-grounding",
+  "first_at": 2,
+  "n": 2,
+  "n_run": 4,
+  "run": "maze__k8_claude_pv",
+  "rows": [
+   {
+    "i": 0,
+    "label": "anchor_maze",
+    "p": null,
+    "score": 0.3,
+    "path": true,
+    "best": false,
+    "depth": 0,
+    "diff": null,
+    "nfiles": 13,
+    "heading": "maze rich harness \u2014 module map & levers"
+   },
+   {
+    "i": 1,
+    "label": "cand_r1_0_spatial-grounding",
+    "p": 0,
+    "score": 1.0,
+    "path": true,
+    "best": true,
+    "depth": 1,
+    "diff": {
+     "files": 3,
+     "insertions": 365,
+     "deletions": 14
+    },
+    "nfiles": 15,
+    "heading": "axis: code \u2014 a committed left-hand lattice walk inside `tools/vlm.py`"
+   }
+  ]
+ },
+ "games_maze3d_pro": {
+  "title": "SpatialWorld maze3d_pro",
+  "primary": "score",
+  "best": 1.0,
+  "best_label": "cand_r6_1_action-planning",
+  "first_at": 13,
+  "n": 13,
+  "n_run": 13,
+  "run": "maze3d_pro__k2_claude_pv",
+  "rows": [
+   {
+    "i": 0,
+    "label": "anchor_maze3d_pro",
+    "p": null,
+    "score": 0.08,
+    "path": true,
+    "best": false,
+    "depth": 0,
+    "diff": null,
+    "nfiles": 13,
+    "heading": "maze3d_pro rich harness \u2014 module map & levers"
+   },
+   {
+    "i": 1,
+    "label": "cand_r1_0_spatial-grounding",
+    "p": 0,
+    "score": 0.32,
+    "path": false,
+    "best": false,
+    "depth": 1,
+    "diff": {
+     "files": 7,
+     "insertions": 597,
+     "deletions": 62
+    },
+    "nfiles": 13,
+    "heading": "maze3d_pro rich harness \u2014 module map & levers"
+   },
+   {
+    "i": 2,
+    "label": "cand_r1_1_action-planning",
+    "p": 0,
+    "score": 0.28,
+    "path": false,
+    "best": false,
+    "depth": 1,
+    "diff": {
+     "files": 5,
+     "insertions": 496,
+     "deletions": 34
+    },
+    "nfiles": 14,
+    "heading": "maze3d_pro rich harness \u2014 module map & levers"
+   },
+   {
+    "i": 3,
+    "label": "cand_r2_0_spatial-grounding",
+    "p": 2,
+    "score": 0.28,
+    "path": false,
+    "best": false,
+    "depth": 2,
+    "diff": {
+     "files": 7,
+     "insertions": 423,
+     "deletions": 114
+    },
+    "nfiles": 14,
+    "heading": "maze3d_pro rich harness \u2014 module map & levers"
+   },
+   {
+    "i": 4,
+    "label": "cand_r2_1_action-planning",
+    "p": 2,
+    "score": 0.36,
+    "path": false,
+    "best": false,
+    "depth": 2,
+    "diff": {
+     "files": 7,
+     "insertions": 613,
+     "deletions": 161
+    },
+    "nfiles": 15,
+    "heading": "maze3d_pro rich harness \u2014 module map & levers"
+   },
+   {
+    "i": 5,
+    "label": "cand_r3_0_spatial-grounding",
+    "p": 4,
+    "score": 0.36,
+    "path": false,
+    "best": false,
+    "depth": 3,
+    "diff": {
+     "files": 6,
+     "insertions": 620,
+     "deletions": 324
+    },
+    "nfiles": 15,
+    "heading": "maze3d_pro rich harness \u2014 module map & levers"
+   },
+   {
+    "i": 6,
+    "label": "cand_r3_1_action-planning",
+    "p": 4,
+    "score": 0.28,
+    "path": false,
+    "best": false,
+    "depth": 3,
+    "diff": {
+     "files": 7,
+     "insertions": 785,
+     "deletions": 520
+    },
+    "nfiles": 15,
+    "heading": "cand_r003_1_action-planning \u2014 the frame as GEOMETRY: a rangefinder, a flank strip, and a supplied stride"
+   },
+   {
+    "i": 7,
+    "label": "cand_r4_0_spatial-grounding",
+    "p": 0,
+    "score": 0.76,
+    "path": false,
+    "best": false,
+    "depth": 4,
+    "diff": {
+     "files": 9,
+     "insertions": 1092,
+     "deletions": 75
+    },
+    "nfiles": 14,
+    "heading": "maze3d_pro rich harness \u2014 module map & levers"
+   },
+   {
+    "i": 8,
+    "label": "cand_r4_1_action-planning",
+    "p": 0,
+    "score": 0.88,
+    "path": false,
+    "best": false,
+    "depth": 4,
+    "diff": {
+     "files": 8,
+     "insertions": 1178,
+     "deletions": 83
+    },
+    "nfiles": 14,
+    "heading": "maze3d_pro rich harness \u2014 module map & levers"
+   },
+   {
+    "i": 9,
+    "label": "cand_r5_0_spatial-grounding",
+    "p": 0,
+    "score": 0.96,
+    "path": false,
+    "best": false,
+    "depth": 5,
+    "diff": {
+     "files": 11,
+     "insertions": 1184,
+     "deletions": 86
+    },
+    "nfiles": 15,
+    "heading": "maze3d_pro rich harness \u2014 module map & levers"
+   },
+   {
+    "i": 10,
+    "label": "cand_r5_1_action-planning",
+    "p": 0,
+    "score": 0.68,
+    "path": false,
+    "best": false,
+    "depth": 5,
+    "diff": {
+     "files": 9,
+     "insertions": 1287,
+     "deletions": 92
+    },
+    "nfiles": 13,
+    "heading": "maze3d_pro rich harness \u2014 module map & levers"
+   },
+   {
+    "i": 11,
+    "label": "cand_r6_0_spatial-grounding",
+    "p": 0,
+    "score": 0.96,
+    "path": false,
+    "best": false,
+    "depth": 6,
+    "diff": {
+     "files": 11,
+     "insertions": 1539,
+     "deletions": 86
+    },
+    "nfiles": 15,
+    "heading": "maze3d_pro rich harness \u2014 module map & levers"
+   },
+   {
+    "i": 12,
+    "label": "cand_r6_1_action-planning",
+    "p": 0,
+    "score": 1.0,
+    "path": true,
+    "best": true,
+    "depth": 6,
+    "diff": {
+     "files": 11,
+     "insertions": 1316,
+     "deletions": 81
+    },
+    "nfiles": 16,
+    "heading": "maze3d_pro rich harness \u2014 module map & levers"
+   }
+  ]
+ },
+ "games_block3d": {
+  "title": "SpatialWorld block3d",
+  "primary": "score",
+  "best": 1.0,
+  "best_label": "cand_r4_0_spatial-grounding",
+  "first_at": 4,
+  "n": 4,
+  "n_run": 16,
+  "run": "block3d__k32_claude_pv",
+  "rows": [
+   {
+    "i": 0,
+    "label": "anchor_block3d",
+    "p": null,
+    "score": 0.05,
+    "path": true,
+    "best": false,
+    "depth": 0,
+    "diff": null,
+    "nfiles": 13,
+    "heading": "block3d rich harness \u2014 module map & levers"
+   },
+   {
+    "i": 1,
+    "label": "cand_r1_0_spatial-grounding",
+    "p": 0,
+    "score": 0.0,
+    "path": false,
+    "best": false,
+    "depth": 1,
+    "diff": {
+     "files": 14,
+     "insertions": 939,
+     "deletions": 77
+    },
+    "nfiles": 19,
+    "heading": "block3d rich harness \u2014 module map & levers (r001_0 \u00b7 spatial-grounding)"
+   },
+   {
+    "i": 2,
+    "label": "cand_r3_0_spatial-grounding",
+    "p": 0,
+    "score": 0.85,
+    "path": false,
+    "best": false,
+    "depth": 1,
+    "diff": {
+     "files": 16,
+     "insertions": 1396,
+     "deletions": 110
+    },
+    "nfiles": 19,
+    "heading": "block3d harness \u2014 layer-factored edge covers + a boustrophedon press tape"
+   },
+   {
+    "i": 3,
+    "label": "cand_r4_0_spatial-grounding",
+    "p": 0,
+    "score": 1.0,
+    "path": true,
+    "best": true,
+    "depth": 1,
+    "diff": {
+     "files": 18,
+     "insertions": 1435,
+     "deletions": 74
+    },
+    "nfiles": 21,
+    "heading": "block3d rich harness \u2014 the frame's own ruler, and a camera calibrated from the agent's own moves"
+   }
+  ]
+ },
+ "games_rubik": {
+  "title": "SpatialWorld rubik",
+  "primary": "score",
+  "best": 1.0,
+  "best_label": "cand_r1_1_action-planning",
+  "first_at": 3,
+  "n": 3,
+  "n_run": 3,
+  "run": "rubik__k2_claude_pv",
+  "rows": [
+   {
+    "i": 0,
+    "label": "anchor_rubik",
+    "p": null,
+    "score": 0.1,
+    "path": true,
+    "best": false,
+    "depth": 0,
+    "diff": null,
+    "nfiles": 12,
+    "heading": "rubik rich harness \u2014 module map & levers"
+   },
+   {
+    "i": 1,
+    "label": "cand_r1_0_spatial-grounding",
+    "p": 0,
+    "score": 0.05,
+    "path": false,
+    "best": false,
+    "depth": 1,
+    "diff": {
+     "files": 5,
+     "insertions": 685,
+     "deletions": 29
+    },
+    "nfiles": 13,
+    "heading": "rubik rich harness \u2014 module map & levers (iter 1, parent `anchor_rubik`)"
+   },
+   {
+    "i": 2,
+    "label": "cand_r1_1_action-planning",
+    "p": 0,
+    "score": 1.0,
+    "path": true,
+    "best": true,
+    "depth": 1,
+    "diff": {
+     "files": 7,
+     "insertions": 963,
+     "deletions": 43
+    },
+    "nfiles": 15,
+    "heading": "rubik rich harness \u2014 module map & levers (iter 1, parent `anchor_rubik`)"
+   }
+  ]
+ },
+ "games_snake": {
+  "title": "SpatialWorld snake",
+  "primary": "score",
+  "best": 1.0,
+  "best_label": "cand_r1_0_spatial-grounding",
+  "first_at": 2,
+  "n": 2,
+  "n_run": 3,
+  "run": "snake__k2_claude_pv",
+  "rows": [
+   {
+    "i": 0,
+    "label": "anchor_snake",
+    "p": null,
+    "score": 0.0,
+    "path": true,
+    "best": false,
+    "depth": 0,
+    "diff": null,
+    "nfiles": 13,
+    "heading": "snake rich harness \u2014 module map & levers"
+   },
+   {
+    "i": 1,
+    "label": "cand_r1_0_spatial-grounding",
+    "p": 0,
+    "score": 1.0,
+    "path": true,
+    "best": true,
+    "depth": 1,
+    "diff": {
+     "files": 9,
+     "insertions": 707,
+     "deletions": 43
+    },
+    "nfiles": 15,
+    "heading": "cand_r001_0_spatial-grounding \u2014 the frame arbitrates the commit"
+   }
+  ]
+ }
+}
