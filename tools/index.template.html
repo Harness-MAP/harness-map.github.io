@@ -10,16 +10,21 @@
 <meta property="og:description" content="Quality-diversity search over a structure-token map of agent harnesses. 10.7% → 100% on SpatialWorld-3DGames, 10% → 90% on BALROG-MiniHack, 32.5% → 46.5% on SimWorld-Robotics with a frozen Qwen3-VL-30B.">
 <meta property="og:image" content="https://harness-map.github.io/static/img/og_preview.jpg">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="icon" href="static/img/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="static/img/icon-qd-map.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="static/css/style.css">
 </head>
 <body>
 
-<header class="hero">
+<nav class="topnav" aria-label="Page">
+  <a class="brand" href="#top"><img src="static/img/icon-qd-map.svg" alt="" width="26" height="26">Harness-MAP</a>
+  <div class="links"><a href="#idea">Idea</a><a href="#method">Method</a><a href="#results">Results</a><a href="#evolution">Evolution</a><a href="#bibtex">BibTeX</a></div>
+</nav>
+
+<header class="hero" id="top">
   <div class="wrap">
-    <img class="logo" src="static/img/favicon.svg" alt="" width="68" height="68">
+    <img class="logo" src="static/img/icon-qd-map.svg" alt="" width="96" height="96">
     <h1>Harness-MAP <span class="sub">Budget-Efficient Harness Search via Structure-Token Factorization</span></h1>
     <p class="authors">
       <a href="https://yuanapril.github.io/">Mei Yuan</a><span class="sep">·</span>
@@ -35,178 +40,151 @@
       <a class="btn ghost" href="https://github.com/Harness-MAP/harness-evolution/tree/main/examples"><svg viewBox="0 0 24 24"><path d="M4 4h16a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zm1 2v2h2V6H5zm0 4v2h2v-2H5zm0 4v2h2v-2H5zm12-8v2h2V6h-2zm0 4v2h2v-2h-2zm0 4v2h2v-2h-2zM9 6v12h6V6H9z"/></svg>Evolution packs</a>
       <a class="btn ghost" href="#bibtex"><svg viewBox="0 0 24 24"><path d="M7 6h3.5L9 11H7V6zm7 0h3.5L16 11h-2V6zM7 13h3v5H7v-5zm7 0h3v5h-3v-5z"/></svg>BibTeX</a>
     </div>
-    <nav class="toc" aria-label="Sections">
-      <a href="#abstract">Abstract</a><a href="#method">Method</a><a href="#demo">Interactive demo</a><a href="#results">Results</a><a href="#evolution">Watch harnesses evolve</a><a href="#code">Code</a><a href="#bibtex">BibTeX</a>
-    </nav>
   </div>
 </header>
 
-<section class="teaser" style="padding-top:8px">
+<!-- ============================================================ 01 THE IDEA -->
+<section id="idea" class="section idea">
   <div class="wrap wide">
-    <figure class="figure">
-      <div class="frame"><img src="static/img/fig1_teaser.png" alt="Left: naive search in harness space drifts along local lineages; Harness-MAP searches a structure-token space with adaptive resolution. Right: success rate against harness evaluations on SpatialWorld-3DGames, where Harness-MAP reaches 100% while Meta-Harness ends at 68.6%." width="2400" height="1200"></div>
-      <figcaption><b>Figure 1.</b> <b>(a)</b> Naive meta-agent search drifts along a few local lineages in a space that has no coordinates. <b>(b)</b> Harness-MAP factorizes every candidate into structure and token coordinates, partitions that space into Voronoi cells, and sub-splits the cells with high fitness variance as the search proceeds. <b>(c)</b> On SpatialWorld-3DGames the k₀ = 4 run reaches 100% task success within 40 evaluations; Meta-Harness ends at 68.6% after 50.</figcaption>
-    </figure>
-    <div class="stats" aria-label="Headline results">
-      <div class="stat"><div class="bench">SpatialWorld-3DGames</div><div class="num"><span class="from">10.7%</span><span class="arrow">→</span><span class="to">100.0%</span></div><div class="sub">task success, 39 harness evaluations</div></div>
-      <div class="stat"><div class="bench">BALROG-MiniHack</div><div class="num"><span class="from">10.0%</span><span class="arrow">→</span><span class="to">90.0%</span></div><div class="sub">task success, 41 harness evaluations</div></div>
-      <div class="stat"><div class="bench">SimWorld-Robotics</div><div class="num"><span class="from">32.5%</span><span class="arrow">→</span><span class="to">46.5%</span></div><div class="sub">subtask success, 6 harness evaluations</div></div>
-    </div>
-    <p class="small muted" style="text-align:center;margin-top:10px">The policy model is a frozen <code>Qwen3-VL-30B-A3B-Instruct</code> in every case. Only the harness changes.</p>
-  </div>
-</section>
-
-<section id="abstract">
-  <div class="wrap">
-    <span class="eyebrow">Abstract</span>
-    <p class="lede">Automating harness evolution via naive meta-agent search is prohibitively expensive, requiring hundreds of meta-agent calls and minutes-to-hours per evaluation. <i>How can we efficiently search for a diverse set of high-quality harnesses under a tight evaluation budget?</i></p>
-    <p>To address this, we introduce <b>Harness-MAP</b> to structure the search space, factorizing graph-level program structures from token-level implementations. Bilevel search over this structure-token representation space illuminates an archive of diverse, high-quality harnesses. The map also enables a resolution-adaptive search strategy that navigates this space efficiently, sub-splitting partitions with high fitness variance while retracting ineffective refinements. Across three interactive spatial navigation benchmarks with the frozen Qwen3-VL-30B-A3B-Instruct backbone model, our search approach rapidly achieves performance leaps under minimal evaluation budgets: 10.7% → 100.0% on SpatialWorld-3DGames (39 evals), 10.0% → 90.0% on BALROG-MiniHack (41 evals), and 32.5% → 46.5% on SimWorld-Robotics (6 evals). Harness-MAP outperforms prior harness evolution methods across both search and held-out tasks, establishing factorized representations as an effective Quality-Diversity paradigm for budget-aware agent harness search.</p>
-  </div>
-</section>
-
-<section id="method">
-  <div class="wrap">
-    <span class="eyebrow">Method</span>
-    <h2>A map instead of a lineage</h2>
-    <p>What turns a frozen model into an agent is its <b>harness</b>: the prompts it reads, the tools it may call, the memory it keeps, and the control flow that connects them. Letting an LLM meta-agent rewrite the harness from execution feedback works, but a naive loop is expensive. A single candidate evaluation takes 7.8 minutes on 40 episodes of BALROG-MiniHack and 10.7 hours on 50 episodes of SimWorld-Robotics-Hard, and in a space with no coordinates a search step has no size and a trajectory has no coverage. Harness-MAP gives every harness coordinates, keeps an archive of elites across the resulting map, and spends its evaluation budget where finer resolution has been shown to pay off.</p>
-
-    <h3>1. A harness gets coordinates</h3>
-    <p>Every candidate is factorized as <i>H</i> = (<i>s</i>, θ), a structural skeleton and a token-level implementation, with the joint descriptor φ(<i>H</i>) = (φ<sub>S</sub>(<i>s</i>); φ<sub>T</sub>(θ)). The <b>structural descriptor</b> encodes the harness's component graph: top-level functions, classes and modules are vertices with deterministic role labels (perception, controller, memory, policy, …) and call, reference and import dependencies are edges. Two rounds of Weisfeiler–Lehman refinement hash each vertex's role-aware neighbourhood, and φ<sub>S</sub> is the normalized histogram of those hashes, so renaming functions or splitting files leaves the coordinate unchanged while adding a perception module moves it. The <b>token descriptor</b> concatenates three standardized blocks, AST control-flow statistics, numeric constants and an embedding of the documentation text, each scaled by 1/√dim so that no block dominates distances. One k-means over the descriptors of a corpus of harness variants yields a Centroidal Voronoi Tessellation with k₀ cells (CVT-MAP-Elites); a candidate is placed by nearest centroid, which reads only its source and costs no evaluation.</p>
-    <figure class="figure">
-      <div class="frame"><img src="static/img/fig2_structure_token.png" loading="lazy" alt="Four Rubik's-cube harness candidates shown as file tree, pseudocode and component graph: the anchor in cell A, and three candidates in cell B that differ in structure, in tokens only, or in both." width="2000" height="1543"></div>
-      <figcaption><b>Figure 2.</b> Four candidates from a Rubik's-cube run. The anchor <b>a</b> calls the frozen VLM once per step. <b>b</b> adds a sticker lens and a cube solver, a structural change that moves it from cell A to cell B. <b>c</b> keeps b's component graph and changes only the implementation, so it stays in cell B. <b>d</b> changes both structure and tokens and still lands closest to cell B.</figcaption>
+    <p class="eyebrow center"><span class="num">01</span>The idea</p>
+    <figure class="figcard teaser">
+      <div class="figbar"><span>Figure 1</span><a class="textbtn" href="static/img/fig1_teaser.png" target="_blank" rel="noopener">View full figure <svg viewBox="0 0 24 24"><path d="M14 4h6v6h-2V7.4l-5.3 5.3-1.4-1.4L16.6 6H14V4zM4 14h2v2.6l5.3-5.3 1.4 1.4L7.4 18H10v2H4v-6z"/></svg></a></div>
+      <a href="static/img/fig1_teaser.png" target="_blank" rel="noopener" aria-label="Open Figure 1 at full size"><img src="static/img/fig1_teaser.png" alt="Figure 1. (a) Naive search in harness space, guided by a meta-agent, collapses into a few local lineages. (b) Harness-MAP searches a structure-token space partitioned into cells, sub-splitting high-variance cells at step t+1. (c) Success rate against harness evaluations on SpatialWorld-3DGames: Harness-MAP reaches 100% while Meta-Harness and OpenEvolve stay below." width="2400" height="1200"></a>
+      <figcaption><b>Figure 1.</b> Conceptual overview and benchmark performance of Harness-MAP. <b>(a)</b> Naive search rapidly collapses into narrow local lineages over a metric-free search space. <b>(b)</b> Harness-MAP (Ours) factorizes candidates into a structure-token space and dynamically sub-splits high-variance cells (at t+1) with resolution-adaptive search. <b>(c)</b> Performance growth on SpatialWorld-3DGames shows that our method achieves a state-of-the-art Pareto frontier, outperforming Meta-Harness (<a href="https://arxiv.org/abs/2603.28052" rel="noopener">Lee et al., 2026</a>) and Map-Elites (<a href="https://arxiv.org/abs/1504.04909" rel="noopener">Mouret &amp; Clune, 2015</a>)-based OpenEvolve (<a href="https://github.com/codelion/openevolve" rel="noopener">Sharma, 2025</a>).</figcaption>
     </figure>
 
-    <h3>2. Searching over the map</h3>
-    <p>Standard CVT-MAP-Elites mutates blindly; standard harness-evolution loops (propose, evaluate, diagnose, refine) have no spatial coverage. Harness-MAP runs the LLM-guided loop <i>across</i> the archive. The five shaded operations in the paper's Algorithm 1 are each a headless, tool-using session over a candidate directory with its own skill specification:</p>
-    <div class="flow">
-      <div class="step llm"><span class="tag">meta-agent</span><b>Coverage-gated initialization</b>The proposer is pointed at empty cells, with the centroid delta to an occupied cell verbalized as a structural or token-level direction, until ⌈m·k₀⌉ cells hold an evaluated founder (m = 50%).</div>
-      <div class="step"><span class="tag geo">map</span><b>Select P cell elites</b>Each generation breeds from P = ⌈log₂ k₀⌉ elites, cycling through the occupied cells so that every region keeps getting mutation chances.</div>
-      <div class="step llm"><span class="tag">meta-agent</span><b>Diagnose</b>A diagnostician reads the parent's code and episode traces end to end and names the binding constraint: a harness bug to fix, a model ceiling to scaffold, or a task gap that needs a goal-directed lever.</div>
-      <div class="step llm"><span class="tag">meta-agent</span><b>Directive-steered variation</b>Each of the C children gets a target in the map plus a design axis (spatial grounding, action planning, verification and recovery, efficiency, observation parsing), so siblings diverge by construction. The proposer makes one axis-distinct edit under a fixed harness skeleton.</div>
-      <div class="step llm"><span class="tag">meta-agent</span><b>Validity filtering</b>A child must keep the entry-point contract and pass an adversarial anti-cheat judge that rules on the mechanism in its code and traces, never on the score. A FAIL verdict removes it from selection.</div>
-      <div class="step"><span class="tag geo">map</span><b>Evaluate, archive, adapt</b>The child is scored on the search split, placed in its nearest cell, and kept if it is the cell's best. Then the map's resolution adapts.</div>
+    <div class="story">
+      <div class="story-card q">
+        <span class="label">The question</span>
+        <p class="big">How can we efficiently search for a <b>diverse set of high-quality harnesses</b> under a <b>tight evaluation budget</b>?</p>
+        <p>A meta-agent that rewrites the harness from execution feedback works, but each candidate costs minutes to hours of rollouts, and in a space with no coordinates a search step has no size and a search trajectory has no coverage. Naive search drifts along a few lineages and spends its budget blind.</p>
+      </div>
+      <div class="story-card a">
+        <span class="label">The idea</span>
+        <p class="big">Give every harness <b>coordinates</b>, then search the <b>map</b> at the resolution the data asks for.</p>
+        <p>Harness-MAP factorizes a candidate into its <b class="hi-s">program structure</b> (the component graph) and its <b class="hi-t">token-level implementation</b>, keeps the best harness of every cell of that structure-token map, and adapts the map while searching: cells whose members' fitness spreads are sub-split, refinements that do not pay are retracted. Budget concentrates where finer resolution has produced gains.</p>
+      </div>
     </div>
-    <p>The evaluation budget is counted explicitly, so every method in the paper is compared at the same number of candidate evaluations:</p>
-    <div class="formula">N = ⌈m·k₀⌉ + G · P · C</div>
-    <p class="small muted">G generations, P parents per generation, C children per parent. Initialization is step T = 0 for every method; a Harness-MAP step spends P·C evaluations.</p>
 
-    <h3>3. Adaptive resolution</h3>
-    <div class="cols">
-      <div>
-        <p>A fixed grid wastes evaluations on uniform cells and lumps distinct candidates together in high-variance ones. At the end of each step, Harness-MAP picks the single occupied cell with the largest internal fitness range and sub-splits it with a local CVT. The sub-split is kept only if a child cell's elite beats the pre-split elite; otherwise it is reverted, and the parent cell logs its fitness distribution so it is not re-split until a new candidate changes it.</p>
-        <p>Centroids are fit on cached descriptors, so resolution adapts at <b>zero evaluation cost</b>: budget concentrates where finer cells have produced quality gains, while flat or saturated regions keep a coarse cell. In the paper's BALROG runs every major breakthrough came from a newly subdivided cell, and the archive grows incrementally rather than exponentially.</p>
-      </div>
-      <figure class="figure">
-        <div class="frame" style="padding:10px"><img src="static/img/fig5_partitioning.svg" loading="lazy" alt="Three panels: a fixed grid, fixed Voronoi cells, and Voronoi cells in which two high-variance cells are sub-split." width="1705" height="650"></div>
-        <figcaption><b>Figure 5.</b> Archive partitioning in (a) MAP-Elites, (b) CVT-MAP-Elites and (c) Harness-MAP, which sub-splits the cells whose members' fitness spreads the most.</figcaption>
-      </figure>
-    </div>
-  </div>
-</section>
+    <p class="backbone">No weights are trained for any number on this page. The policy model is the same frozen <code>Qwen3-VL-30B-A3B-Instruct</code> throughout, and the search edits only the harness around it: the prompts it reads, the tools it may call, the memory it keeps and the control flow that connects them.</p>
 
-<section id="demo">
-  <div class="wrap">
-    <span class="eyebrow">Interactive</span>
-    <h2>Adaptive resolution, one step at a time</h2>
-    <p>A toy fitness landscape stands in for task success, and dots are evaluated candidates placed by their coordinates (darker is fitter; ringed dots are cell elites). Each step does what the paper's Algorithm 2 does: pick the occupied cell with the largest fitness range, sub-split it with a local 2-centroid CVT, breed one child from each new cell's elite, then keep the split if a child cell's elite beats the pre-split elite and revert it otherwise. Click anywhere on the map to propose a candidate of your own.</p>
-    <div class="demo" data-demo>
-      <div>
-        <div class="canvas-wrap"><canvas width="1120" height="800" aria-label="Interactive map of candidates in a Voronoi partition that sub-splits adaptively"></canvas></div>
-        <div class="controls">
-          <button type="button" class="primary" data-act="step">Run one adaptive step</button>
-          <button type="button" data-act="reset">Reset</button>
-        </div>
-        <div class="readout"><div>cells<b data-ro="cells">6</b></div><div>evaluations spent<b data-ro="evals">20</b></div><div>best fitness<b data-ro="best">–</b></div></div>
-      </div>
-      <div>
-        <div class="log" aria-live="polite"></div>
-        <table class="cells"><thead><tr><th>cell</th><th>members</th><th>elite</th><th>range</th><th>remembered</th></tr></thead><tbody></tbody></table>
-      </div>
+    <details class="abstract">
+      <summary>Read the abstract <svg viewBox="0 0 24 24"><path d="M12 15.5 5.5 9l1.4-1.4 5.1 5.1 5.1-5.1L18.5 9z"/></svg></summary>
+      <div class="abstract-copy"><p>Automating harness evolution via naive meta-agent search is prohibitively expensive, requiring hundreds of meta-agent calls and minutes-to-hours per evaluation. How can we efficiently search for a diverse set of high-quality harnesses under a tight evaluation budget? To address this, we introduce Harness-MAP to structure the search space, factorizing graph-level program structures from token-level implementations. Bilevel search over this structure-token representation space illuminates an archive of diverse, high-quality harnesses. The map also enables a resolution-adaptive search strategy that navigates this space efficiently, sub-splitting partitions with high fitness variance while retracting ineffective refinements. Across three interactive spatial navigation benchmarks with the frozen Qwen3-VL-30B-A3B-Instruct backbone model, our search approach rapidly achieves performance leaps under minimal evaluation budgets: 10.7% → 100.0% on SpatialWorld-3dgames (39 evals), 10.0% → 90.0% on BALROG-MiniHack (41 evals), and 32.5% → 46.5% on SimWorld-Robotics (6 evals). Harness-MAP outperforms prior harness evolution methods across both search and held-out tasks, establishing factorized representations as an effective Quality-Diversity paradigm for budget-aware agent harness search.</p></div>
+    </details>
+
+    <div class="metrics" aria-label="Headline results">
+      <div><span class="value">100.0<span>%</span></span><span class="label">SpatialWorld-3DGames task success</span><span class="detail">from 10.7% in 39 harness evaluations</span></div>
+      <div><span class="value">90.0<span>%</span></span><span class="label">BALROG-MiniHack task success</span><span class="detail">from 10.0% in 41 harness evaluations</span></div>
+      <div><span class="value">46.5<span>%</span></span><span class="label">SimWorld-Robotics subtask success</span><span class="detail">from 32.5% in 6 harness evaluations</span></div>
+      <div><span class="value">0</span><span class="label">Rollouts spent adapting the map</span><span class="detail">resolution changes refit centroids on cached descriptors</span></div>
     </div>
   </div>
 </section>
 
-<section id="results">
-  <div class="wrap">
-    <span class="eyebrow">Results</span>
-    <h2>Budget-matched comparison on three benchmarks</h2>
-    <p>Every search method starts from the same reference harness and the same frozen policy model, <code>Qwen3-VL-30B-A3B-Instruct</code> served with vLLM, and gets the same number of candidate evaluations: N = 50 on SpatialWorld-3DGames and BALROG-MiniHack, N = 16 on SimWorld-MMNav. The meta-agent for the main results is <code>claude-opus-5</code> through the Claude Code CLI; <code>gpt-5.6-sol</code> through the Codex CLI is used to check backbone robustness. Harness-MAP uses a 50% coverage-initialization ratio and sweeps the initial resolution k₀.</p>
-    <div class="scroll">
-      <table class="tbl">
-        <caption><b>Table 1.</b> Success rates under the budget-matched protocol. BALROG numbers carry the standard error over 40 episodes.</caption>
-        <thead><tr><th>Method</th><th>SpatialWorld-3DGames<br><span class="sub">SR %</span></th><th>SimWorld-MMNav easy<br><span class="sub">Subtask SR %</span></th><th>SimWorld-MMNav hard<br><span class="sub">Subtask SR %</span></th><th>BALROG-MiniHack<br><span class="sub">SR %</span></th></tr></thead>
-        <tbody>
-          <tr class="grp"><td colspan="5">Direct inference</td></tr>
-          <tr><td>GPT-4o</td><td>–</td><td>33.1</td><td>34.4</td><td>10.0 ± 4.7</td></tr>
-          <tr><td>GPT-5</td><td>36.4</td><td>–</td><td>–</td><td>20.3 ± 7.3</td></tr>
-          <tr><td>Qwen2.5-VL-72B-Instruct</td><td>7.6</td><td>23.8</td><td>23.9</td><td>5.0 ± 3.4</td></tr>
-          <tr><td>Qwen3-VL-30B-Instruct</td><td>10.7</td><td>32.0</td><td>29.0</td><td>10.0 ± 4.7</td></tr>
-          <tr class="grp"><td colspan="5">Harness search at budget N = 50 / 16 / 16 / 50</td></tr>
-          <tr><td>Meta-Harness</td><td>68.6</td><td>39.0</td><td>46.0</td><td>75.0 ± 6.8</td></tr>
-          <tr><td>GEPA</td><td>18.6</td><td>41.0</td><td>34.0</td><td>30.0 ± 7.2</td></tr>
-          <tr><td>DGM</td><td>34.6</td><td>40.0</td><td>38.5</td><td>72.5 ± 7.1</td></tr>
-          <tr><td>ShinkaEvolve</td><td>60.6</td><td>40.5</td><td>39.0</td><td>20.0 ± 6.3</td></tr>
-          <tr><td>OpenEvolve</td><td>21.2</td><td>36.5</td><td>37.0</td><td>27.5 ± 7.1</td></tr>
-          <tr class="ours"><td>Harness-MAP (ours)</td><td class="best">100.0</td><td class="best">46.5</td><td class="best">55.5</td><td class="best">90.0 ± 4.7</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <p>Harness-MAP leads on every benchmark: a perfect 100.0% on the 3D games against 68.6% for the strongest baseline, 90.0% on MiniHack against 75.0%, and the best subtask success on both navigation settings. The harnesses it finds around a 30B model also pass unevolved frontier backbones, such as GPT-5 at 36.4% on the 3D games.</p>
-
-    <h3>Sample efficiency in evaluations and in sequential steps</h3>
-    <p>Under the budget-matched protocol the gains arrive early. On SpatialWorld-3DGames the k₀ = 4 run scores 71.0% at N = 10, above Meta-Harness's full-budget 68.6%, and reaches 100.0% by N = 40. On BALROG-MiniHack the k₀ = 2 run matches Meta-Harness's final 75.0% at N = 20, and k₀ = 16 reaches 90.0% at N = 50. Coverage-gated initialization alone frequently finds a saturating harness before the first search step, and the adaptive archive keeps improving across budget increments where the baselines plateau.</p>
-    <div data-tabs>
-      <div class="tabs" role="tablist" aria-label="Benchmark">
-        <button class="tab" role="tab" aria-selected="true" aria-controls="fig3-games" id="tab-fig3-games">SpatialWorld-3DGames</button>
-        <button class="tab" role="tab" aria-selected="false" aria-controls="fig3-balrog" id="tab-fig3-balrog">BALROG-MiniHack</button>
-      </div>
-      <div id="fig3-games" role="tabpanel" aria-labelledby="tab-fig3-games">
-        <figure class="figure">
-          <div class="fig-grid">
-            <div class="frame"><img src="static/img/fig3_games_adaptive_N.png" loading="lazy" alt="SpatialWorld-3DGames: best-so-far success rate against evaluations N for Harness-MAP adaptive at five initial resolutions and five baselines" width="1160" height="1072"></div>
-            <div class="frame"><img src="static/img/fig3_games_adaptive_T.png" loading="lazy" alt="SpatialWorld-3DGames: best-so-far success rate against sequential proposal steps T" width="1160" height="1072"></div>
-            <div class="frame"><img src="static/img/fig3_games_fixed_N.png" loading="lazy" alt="SpatialWorld-3DGames: fixed-resolution variants against evaluations N" width="1160" height="1072"></div>
-            <div class="frame"><img src="static/img/fig3_games_hier_N.png" loading="lazy" alt="SpatialWorld-3DGames: hierarchical-resolution variants against evaluations N" width="1160" height="1072"></div>
-          </div>
-          <figcaption><b>Figure 3a.</b> SpatialWorld-3DGames, success averaged over the five games. Blues are Harness-MAP at initial resolutions k₀ = 2 to 32: adaptive resolution against N and against T (top), fixed and hierarchical resolution against N (bottom). Curves are rebuilt from the per-evaluation logs released with the code; the fixed and hierarchical endpoints at k₀ = 16 and 32 sit one point below the paper's Table 8, whose final cells were re-seeded after these logs were archived.</figcaption>
-        </figure>
-      </div>
-      <div id="fig3-balrog" role="tabpanel" aria-labelledby="tab-fig3-balrog" hidden>
-        <figure class="figure">
-          <div class="fig-grid">
-            <div class="frame"><img src="static/img/fig3_balrog_adaptive_N.png" loading="lazy" alt="BALROG-MiniHack: best-so-far success rate against evaluations N for Harness-MAP adaptive at five initial resolutions and five baselines" width="1160" height="1072"></div>
-            <div class="frame"><img src="static/img/fig3_balrog_adaptive_T.png" loading="lazy" alt="BALROG-MiniHack: best-so-far success rate against sequential proposal steps T" width="1160" height="1072"></div>
-            <div class="frame"><img src="static/img/fig3_balrog_fixed_N.png" loading="lazy" alt="BALROG-MiniHack: fixed-resolution variants against evaluations N" width="1160" height="1072"></div>
-            <div class="frame"><img src="static/img/fig3_balrog_hier_N.png" loading="lazy" alt="BALROG-MiniHack: hierarchical-resolution variants against evaluations N" width="1160" height="1072"></div>
-          </div>
-          <figcaption><b>Figure 3b.</b> BALROG-MiniHack, success over the 40 search episodes. The grey band is the range of the unevolved naive agent across 26 replicate evaluations, the honest noise floor for a single run.</figcaption>
-        </figure>
-      </div>
+<!-- ============================================================ 02 METHOD -->
+<section id="method" class="section">
+  <div class="wrap wide">
+    <div class="section-heading split">
+      <div><p class="eyebrow"><span class="num">02</span>Method</p><h2>A map instead of a lineage.</h2></div>
+      <p class="lead">Factorize every harness into coordinates, archive the elites across the map, and sharpen the map only where it pays.</p>
     </div>
 
-    <h3>Resolution: sensitivity to k₀ and the adaptive mechanism</h3>
-    <p>Cell count decides budget allocation. Too few cells reduce archive diversity; too many slow cell rotation and dilute the budget. Moderate initial resolutions win: k₀ ∈ {4, 8} reach 100.0% on the 3D games with every k₀ between 95.0% and 100.0%, and k₀ = 16 peaks at 90.0% on MiniHack, where k₀ = 32 drops to 40.0% under the same 50-evaluation budget. Across every k₀, the adaptive mechanism matches or beats the fixed and hierarchical variants on the 3D games: it refines the map incrementally, suppresses unhelpful sub-splits on simple landscapes such as Block3D, and deepens granularity on Maze3D and Rubik where quality gains are verified.</p>
-    <div data-tabs>
-      <div class="tabs" role="tablist" aria-label="Resolution dynamics benchmark">
-        <button class="tab" role="tab" aria-selected="true" aria-controls="res-games" id="tab-res-games">SpatialWorld-3DGames</button>
-        <button class="tab" role="tab" aria-selected="false" aria-controls="res-balrog" id="tab-res-balrog">BALROG-MiniHack</button>
-      </div>
-      <div id="res-games" role="tabpanel" aria-labelledby="tab-res-games">
-        <figure class="figure">
-          <div class="frame"><img src="static/img/fig4_games_resolution.png" loading="lazy" alt="Archive cell count against sequential step for each 3D game, comparing adaptive, fixed and hierarchical resolution at five initial resolutions" width="2200" height="622"></div>
-          <figcaption><b>Figure 4.</b> Archive resolution against sequential steps on the five 3D games. Fixed resolution stays flat; the hierarchical schedule doubles whether or not the archive warrants it; adaptive resolution grows where sub-splits pay off and retreats where they do not.</figcaption>
-        </figure>
-      </div>
-      <div id="res-balrog" role="tabpanel" aria-labelledby="tab-res-balrog" hidden>
-        <figure class="figure" style="max-width:640px;margin-left:auto;margin-right:auto">
-          <div class="frame"><img src="static/img/fig8_balrog_resolution.png" loading="lazy" alt="Archive cell count against sequential step on BALROG-MiniHack for adaptive, fixed and hierarchical resolution at five initial resolutions" width="1800" height="2162"></div>
-          <figcaption><b>Figure 8.</b> Archive resolution dynamics on BALROG-MiniHack. The adaptive runs add a handful of cells early and then hold, while the hierarchical ladder keeps multiplying cells.</figcaption>
-        </figure>
-      </div>
+    <div class="steps3">
+      <article><span class="idx">01 / Factorize</span><h3>A harness gets coordinates.</h3><p>Its component graph becomes a structural descriptor, its code a token descriptor. One k-means over a corpus of harness variants turns the joint space into k₀ Voronoi cells.</p></article>
+      <article><span class="idx">02 / Search</span><h3>Elites breed across the map.</h3><p>Each step selects cell elites, diagnoses their failure modes and proposes children steered toward target cells. An anti-cheat judge gates every child before it is evaluated.</p></article>
+      <article><span class="idx">03 / Adapt</span><h3>Resolution follows the evidence.</h3><p>The cell with the largest fitness range is sub-split at zero rollout cost. The split stays only if a child cell's elite improves; otherwise it is reverted and remembered.</p></article>
     </div>
 
-    <h3>The map illuminates more of the space</h3>
+    <!-- ---- 1. factorization lab -->
+    <div class="lab" id="lab-factor">
+      <div class="lab-head"><div><span class="micro">Explore</span><h3>What are a harness's coordinates?</h3></div><span class="lab-note">§3.2</span></div>
+      <p>Every candidate is written as <i>H</i> = (<i>s</i>, θ) with the joint descriptor <span class="formula-inline">φ(<i>H</i>) = (φ<sub>S</sub>(<i>s</i>) ; φ<sub>T</sub>(θ))</span>. The <b class="hi-s">structural descriptor</b> reads the top-level component graph: functions, classes and modules are vertices with deterministic role labels, and call, reference and import dependencies are edges. Weisfeiler–Lehman refinement hashes each vertex's role-aware neighbourhood, and φ<sub>S</sub> is the normalized histogram of those hashes, so renaming a function leaves the coordinate unchanged while adding a perception module moves it. The <b class="hi-t">token descriptor</b> concatenates standardized blocks for control-flow statistics, numeric constants and the documentation text. Pick one of four candidates from a Rubik's-cube run to see how structural and token-level edits move a harness on the map.</p>
+      <div class="cand-tabs" role="tablist" aria-label="Candidate harness"></div>
+      <div class="factor-grid">
+        <div class="panel"><div class="ph">Pseudocode <span data-fx="files"></span></div><pre class="code" data-fx="code"></pre><p class="note" data-fx="note"></p></div>
+        <div class="panel"><div class="ph">Component graph<span>φₛ at t = 0</span></div><svg data-fx="graph" viewBox="0 0 360 250" role="img" aria-label="Component graph of the selected candidate"></svg><div class="hist" data-fx="hist"></div></div>
+        <div class="panel"><div class="ph">Structure-token map</div><svg data-fx="map" viewBox="0 0 300 250" role="img" aria-label="Position of the selected candidate in a two-cell map"></svg><p class="note" data-fx="cell"></p></div>
+      </div>
+      <div class="legend roles" data-fx="legend"></div>
+    </div>
+
+    <!-- ---- 2. search loop -->
+    <div class="lab" id="lab-loop">
+      <div class="lab-head"><div><span class="micro">The loop</span><h3>Searching over the map</h3></div><span class="lab-note">§3.3, Algorithm 1</span></div>
+      <p>Standard CVT-MAP-Elites mutates blindly; a standard harness-evolution loop (propose, evaluate, diagnose, refine) has no spatial coverage. Harness-MAP runs the LLM-guided loop <i>across</i> the archive. Steps marked <span class="tag agent">meta-agent</span> are headless, tool-using sessions over a candidate directory; steps marked <span class="tag map">map</span> read only the archive and cost no rollout.</p>
+      <ol class="pipeline">
+        <li class="agent"><span class="n">0</span><b>Coverage-gated initialization</b><p>The meta-agent proposes root harnesses, each checked by the validity filter, until ⌈<i>m</i>·k₀⌉ cells hold an evaluated founder (<i>m</i> = 50%).</p></li>
+        <li class="map"><span class="n">1</span><b>Select elites</b><p>Each step breeds from P = ⌈log₂ k₀⌉ cell elites, cycling through the occupied cells so every region keeps getting chances.</p></li>
+        <li class="agent"><span class="n">2</span><b>Diagnose</b><p>A diagnostician reads the parent's code and episode traces end to end and names the binding constraint: a harness bug, a model ceiling or a task gap.</p></li>
+        <li class="agent"><span class="n">3</span><b>Directive-steered variation</b><p>Each of the C children gets a target cell translated into a structural or token-level directive, so siblings diverge by construction.</p></li>
+        <li class="judge"><span class="n">4</span><b>Validity filter</b><p>A child must keep the entry-point contract and pass an adversarial anti-cheat judge that rules on the mechanism in code and traces, never on the score.</p></li>
+        <li class="map"><span class="n">5</span><b>Evaluate and archive</b><p>The child is scored on the search split, placed in its nearest cell and kept if it is that cell's best.</p></li>
+        <li class="map zero"><span class="n">6</span><b>Adapt resolution</b><p>Sub-split the occupied cell with the largest fitness range; keep the split only if a child cell's elite improves, else revert and remember. Zero evaluations.</p></li>
+      </ol>
+      <div class="budget"><span class="formula">N = ⌈<i>m</i>·k₀⌉ + G · P · C</span><span class="muted">Steps 1–6 repeat for G generations with P parents and C children each. Every method in the paper is compared at the same N, so initialization counts against the budget too.</span></div>
+    </div>
+
+    <!-- ---- 3. adaptive resolution storyboard -->
+    <div class="lab" id="lab-adapt">
+      <div class="lab-head"><div><span class="micro">Zero-cost refinement</span><h3>Adapting the map's resolution</h3></div><span class="lab-note">§3.4, Algorithm 2</span></div>
+      <p>A fixed grid wastes evaluations on uniform cells and lumps distinct candidates together in high-variance ones. At the end of every step Harness-MAP treats one sub-split as a local, data-driven hypothesis and tests it with the children it would have bred anyway.</p>
+      <div class="storyboard">__STORYBOARD_SVG__</div>
+      <p class="small muted">Dots are evaluated harnesses placed by their coordinates, coloured by fitness; ringed dots are cell elites; dashed rings are the children bred in that step. Centroids are refit on cached descriptors, so the resolution of the archive changes without spending a rollout.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ 03 RESULTS -->
+<section id="results" class="section">
+  <div class="wrap wide">
+    <div class="section-heading split">
+      <div><p class="eyebrow"><span class="num">03</span>Results</p><h2>Budget-matched.<br>Every benchmark.</h2></div>
+      <p class="lead">Same frozen model, same reference harness, same number of candidate evaluations for every method: N = 50 on SpatialWorld-3DGames and BALROG-MiniHack, N = 16 on SimWorld-MMNav.</p>
+    </div>
+    <p>The meta-agent for the main results is <code>claude-opus-5</code> through the Claude Code CLI; <code>gpt-5.6-sol</code> through the Codex CLI is used to check robustness to the backbone. Harness-MAP uses a 50% coverage-initialization ratio and sweeps the initial resolution k₀; the bars show its best k₀ per benchmark.</p>
+
+    <div class="results-toolbar"><span class="micro">Table 1 · success rate (%) ↑</span><span class="muted small">direct inference in light gray · harness search in gray · Harness-MAP in blue</span></div>
+    <div class="barcards" id="barcards"></div>
+    <details class="numeric">
+      <summary>View numerical results <svg viewBox="0 0 24 24"><path d="M12 15.5 5.5 9l1.4-1.4 5.1 5.1 5.1-5.1L18.5 9z"/></svg></summary>
+      <div class="scroll">
+        <table class="tbl">
+          <caption><b>Table 1.</b> Results across three interactive benchmarks under the budget-matched evaluation protocol. BALROG numbers carry the standard error over 40 episodes.</caption>
+          <thead><tr><th>Method</th><th>SpatialWorld-3DGames<br><span class="sub">SR %</span></th><th>SimWorld-MMNav easy<br><span class="sub">Subtask SR %</span></th><th>SimWorld-MMNav hard<br><span class="sub">Subtask SR %</span></th><th>BALROG-MiniHack<br><span class="sub">SR %</span></th></tr></thead>
+          <tbody>
+            <tr class="grp"><td colspan="5">Direct inference</td></tr>
+            <tr><td>GPT-4o</td><td>–</td><td>33.1</td><td>34.4</td><td>10.0 ± 4.7</td></tr>
+            <tr><td>GPT-5</td><td>36.4</td><td>–</td><td>–</td><td>20.3 ± 7.3</td></tr>
+            <tr><td>Qwen2.5-VL-72B-Instruct</td><td>7.6</td><td>23.8</td><td>23.9</td><td>5.0 ± 3.4</td></tr>
+            <tr><td>Qwen3-VL-30B-Instruct</td><td>10.7</td><td>32.0</td><td>29.0</td><td>10.0 ± 4.7</td></tr>
+            <tr class="grp"><td colspan="5">Harness search at budget N = 50 / 16 / 16 / 50</td></tr>
+            <tr><td>Meta-Harness</td><td>68.6</td><td>39.0</td><td>46.0</td><td>75.0 ± 6.8</td></tr>
+            <tr><td>GEPA</td><td>18.6</td><td>41.0</td><td>34.0</td><td>30.0 ± 7.2</td></tr>
+            <tr><td>DGM</td><td>34.6</td><td>40.0</td><td>38.5</td><td>72.5 ± 7.1</td></tr>
+            <tr><td>ShinkaEvolve</td><td>60.6</td><td>40.5</td><td>39.0</td><td>20.0 ± 6.3</td></tr>
+            <tr><td>OpenEvolve</td><td>21.2</td><td>36.5</td><td>37.0</td><td>27.5 ± 7.1</td></tr>
+            <tr class="ours"><td>Harness-MAP (ours)</td><td class="best">100.0</td><td class="best">46.5</td><td class="best">55.5</td><td class="best">90.0 ± 4.7</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </details>
+
+    <!-- ---- search dynamics -->
+    <div class="lab" id="lab-dyn">
+      <div class="lab-head"><div><span class="micro">Interactive · Figures 3, 6 and 7</span><h3>Watch the search unfold</h3></div><span class="lab-note">best-so-far success</span></div>
+      <p>Under the budget-matched protocol the gains arrive early: on SpatialWorld-3DGames the k₀ = 4 run passes Meta-Harness's full-budget score before N = 10 and reaches 100% by N = 42; on BALROG-MiniHack the k₀ = 16 run reaches 90% at N = 48. Switch the axis to sequential steps T to see how much of that comes from parallel breadth, and switch the view to per game or per task to see where the search runs long. Drag the slider or press replay to watch the budget being spent.</p>
+      <div class="dyn" data-dyn="search"></div>
+    </div>
+
+    <!-- ---- resolution dynamics -->
+    <div class="lab" id="lab-res">
+      <div class="lab-head"><div><span class="micro">Interactive · Figures 4 and 8</span><h3>How the archive's resolution evolves</h3></div><span class="lab-note">cells vs. step T</span></div>
+      <p>Fixed resolution never changes the archive; hierarchical expansion walks a prepared coarse-to-fine ladder and grows the archive regardless of what the search finds; adaptive resolution sub-splits where fitness varies and retreats where a split did not pay, so it refines the map incrementally rather than exponentially.</p>
+      <div class="dyn" data-dyn="resolution"></div>
+    </div>
+
+    <h3 class="plain">The map illuminates more of the space</h3>
     <p>To compare search methods with quality-diversity metrics, every candidate each method proposed on SpatialWorld-3DGames is embedded offline into the same structure-token descriptor space and mapped onto the k₀ Voronoi cells. As the grid gets finer, the baselines' local edits cover a collapsing fraction of cells, while Harness-MAP keeps coverage above 50% at every resolution and its QD-score keeps scaling.</p>
     <div class="scroll">
       <table class="tbl">
@@ -227,7 +205,7 @@
       </table>
     </div>
 
-    <h3>The descriptor helps independently of the search loop</h3>
+    <h3 class="plain">The descriptor helps independently of the search loop</h3>
     <p>Crossing the two search loops with the two descriptors on SpatialWorld-3DGames (k₀ = 8) isolates the representation. OpenEvolve run over our structure-token CVT cells jumps from 21.9% to 71.4% and solves Maze and Block3D in 6 evaluations. Our loop run over OpenEvolve's two-dimensional complexity and diversity descriptor loses efficiency, 37 instead of 16 evaluations to solve Rubik, and fails to cover Maze3D.</p>
     <div class="scroll">
       <table class="tbl">
@@ -245,8 +223,8 @@
     </div>
     <p class="small muted">† OpenEvolve's descriptor could not fill 50% of the k₀ cells on Maze3D, so this cell ran at a 25% coverage target.</p>
 
-    <details>
-      <summary>Generalization to held-out tasks (Table 5)</summary>
+    <details class="numeric">
+      <summary>Generalization to held-out tasks (Table 5) <svg viewBox="0 0 24 24"><path d="M12 15.5 5.5 9l1.4-1.4 5.1 5.1 5.1-5.1L18.5 9z"/></svg></summary>
       <p class="small">Each benchmark keeps a held-out split: unseen Snake seeds, the ten unseen SimWorld maps, and for MiniHack both unseen level seeds of the eight search tasks (holdout A) and eight unseen tasks (holdout B). Harness-MAP, Meta-Harness and DGM retain 100% on Snake; the k₀ = 4 navigation harness improves from 55.0 to 60.0 subtask success on the held-out hard maps.</p>
       <div class="scroll">
         <table class="tbl">
@@ -267,26 +245,17 @@
         </table>
       </div>
     </details>
-    <details>
-      <summary>Per-game and per-task search curves (Figures 6 and 7)</summary>
-      <figure class="figure">
-        <div class="frame"><img src="static/img/fig6_games_pergame_N.png" loading="lazy" alt="Per-game best-so-far success against evaluations N on SpatialWorld-3DGames" width="2200" height="668"></div>
-        <div class="frame" style="margin-top:8px"><img src="static/img/fig6_games_pergame_T.png" loading="lazy" alt="Per-game best-so-far success against sequential steps T on SpatialWorld-3DGames" width="2200" height="672"></div>
-        <figcaption><b>Figure 6.</b> SpatialWorld-3DGames, per game: best-so-far success against the evaluation budget N (top) and the sequential step T (bottom). Snake and Maze are often solved during coverage initialization; Maze3D-Pro and Rubik are where the search runs long.</figcaption>
-      </figure>
-      <figure class="figure">
-        <div class="frame"><img src="static/img/fig7_balrog_pertask.png" loading="lazy" alt="Per-task best-so-far success on the eight BALROG-MiniHack search tasks against N and against T" width="2200" height="1457"></div>
-        <figcaption><b>Figure 7.</b> BALROG-MiniHack, per task. Boxoban separates the method families, CorridorBattle-Dark separates the leaders, and the two Quest tasks are solved only by Harness-MAP runs that discovered a dedicated quest module.</figcaption>
-      </figure>
-    </details>
   </div>
 </section>
 
-<section id="evolution">
+<!-- ============================================================ 04 EVOLUTION PACKS -->
+<section id="evolution" class="section">
   <div class="wrap wide">
-    <span class="eyebrow">Evolution packs</span>
-    <h2>Watch the harnesses evolve</h2>
-    <p style="max-width:900px">The code release ships the paper's best run on each benchmark laid out harness by harness: the anchor, then every harness the run evaluated until the best score was first reached, each with the proposer's notes and the diagnostician's report, plus videos of the episodes those harnesses played. The charts below plot every evaluated harness in evaluation order, with the ancestry of the best harness highlighted. Click a harness to watch the episode it played.</p>
+    <div class="section-heading split">
+      <div><p class="eyebrow"><span class="num">04</span>Evolution packs</p><h2>Watch the harnesses evolve.</h2></div>
+      <p class="lead">The best run on each benchmark, laid out harness by harness, with the episodes those harnesses played.</p>
+    </div>
+    <p>The code release ships the paper's best run on each benchmark: the anchor, then every harness the run evaluated until the best score was first reached, each with the proposer's notes and the diagnostician's report, plus videos of the episodes those harnesses played. The charts below plot every evaluated harness in evaluation order, with the ancestry of the best harness highlighted. Click a harness to watch the episode it played.</p>
     <div data-tabs>
       <div class="tabs" role="tablist" aria-label="Benchmark">
         <button class="tab" role="tab" aria-selected="true" aria-controls="evo-balrog" id="tab-evo-balrog">BALROG-MiniHack</button>
@@ -369,38 +338,13 @@
   </div>
 </section>
 
-<section id="code">
+<!-- ============================================================ 05 CITATION -->
+<section id="bibtex" class="section">
   <div class="wrap">
-    <span class="eyebrow">Code</span>
-    <h2>Run it on your own harness</h2>
-    <p>The release at <a href="https://github.com/Harness-MAP/harness-evolution">github.com/Harness-MAP/harness-evolution</a> contains the method, the three benchmark configurations of the paper with their evolution packs, and the five baselines plus the two descriptor-swap ablations as budget-matched arms over pinned upstream clones. A benchmark plugs in through an anchor harness, an evaluator with a task split, a config file and an adapter; the search itself is never edited.</p>
-    <pre><code>git clone https://github.com/Harness-MAP/harness-evolution.git
-cd harness-evolution
-pip install -e .                      # numpy, sentence-transformers, einops
-python examples/toy/run_toy.py        # the method end to end on a toy task, no GPU, no LLM, ~10 s
-
-# the paper's three benchmarks, after editing the placeholders in each run.sh
-MODE=adaptive K0=4 bash examples/balrog/run.sh
-GAME=maze3d_pro MODE=adaptive K0=8 bash examples/spatialworld_games/run.sh
-SETTING=hard MODE=adaptive K0=4 bash examples/simworld_nav/run.sh
-
-# a published baseline on the same anchor, evaluator and budget
-python baselines/run_baseline.py --config examples/balrog/config.json \
-    --anchor &lt;ANCHOR_DIR&gt; --baseline meta-harness --budget 50</code></pre>
-    <div class="repo-grid">
-      <div class="card"><h4>harness_map/</h4><ul><li><code>qd/descriptors.py</code>: roles, component graph, Weisfeiler–Lehman, AST / numeric / doc-text blocks</li><li><code>qd/partition.py</code>: k-means, CVT fit, frozen φ, centroid ladder</li><li><code>qd/coverage.py</code>, <code>qd/archive.py</code>, <code>qd/modes.py</code>: coverage-gated initialization, cells and breeding, the three resolution modes with budget accounting, ledger and resume</li><li><code>meta_agent/</code>: proposer, judge and diagnostician skills over the Claude Code CLI, Codex CLI or any OpenAI-compatible chat API</li></ul></div>
-      <div class="card"><h4>examples/</h4><ul><li><code>run_benchmark.py</code>: config + anchor + evaluator command → one search</li><li><code>balrog/</code>, <code>spatialworld_games/</code>, <code>simworld_nav/</code>: the paper's configs, run scripts, setup notes and the evolution packs shown above</li><li><code>render/</code>: episode logs → videos</li></ul></div>
-      <div class="card"><h4>baselines/</h4><ul><li>Meta-Harness, GEPA, DGM, OpenEvolve and ShinkaEvolve as arms over pinned clones</li><li>the two ablations: OpenEvolve over our CVT cells, and our loop over OpenEvolve's descriptor</li><li>one driver for every benchmark × arm pair, with the same anti-cheat gate and budget protocol</li></ul></div>
-    </div>
-  </div>
-</section>
-
-<section id="bibtex">
-  <div class="wrap">
-    <span class="eyebrow">Citation</span>
+    <p class="eyebrow"><span class="num">05</span>Citation</p>
     <h2>BibTeX</h2>
     <div class="bib"><button type="button" id="copy-bib">Copy</button>
-<pre id="bibtex"><code>@article{yuan2026harnessmap,
+<pre id="bibtex-text"><code>@article{yuan2026harnessmap,
   title   = {Harness-MAP: Budget-Efficient Harness Search via Structure-Token Factorization},
   author  = {Yuan, Mei and Chang, Yingshan and Fried, Daniel and Bisk, Yonatan},
   journal = {arXiv preprint},
@@ -412,12 +356,13 @@ python baselines/run_baseline.py --config examples/balrog/config.json \
 <footer>
   <div class="wrap">
     <p>Contact: <a href="mailto:meiyuan@cs.cmu.edu">meiyuan@cs.cmu.edu</a>, <a href="mailto:ybisk@cs.cmu.edu">ybisk@cs.cmu.edu</a> · Carnegie Mellon University.</p>
-    <p>Benchmarks: <a href="https://github.com/Hongcheng-Gao/SpatialWorld">SpatialWorld</a> (3D games, run as a pure-visual variant), <a href="https://github.com/balrog-ai/BALROG">BALROG</a> (MiniHack) and <a href="https://github.com/SCAI-JHU/SimWorld-Robotics">SimWorld-Robotics</a> (MMNav). Videos were rendered with the scripts in <code>examples/render</code> of the code release. This page is hand-written and hosted on GitHub Pages.</p>
+    <p>Benchmarks: <a href="https://github.com/Hongcheng-Gao/SpatialWorld">SpatialWorld</a> (3D games), <a href="https://github.com/balrog-ai/BALROG">BALROG</a> (MiniHack) and <a href="https://github.com/SCAI-JHU/SimWorld-Robotics">SimWorld-Robotics</a> (MMNav). Code: <a href="https://github.com/Harness-MAP/harness-evolution">github.com/Harness-MAP/harness-evolution</a>. Videos were rendered with the scripts in <code>examples/render</code> of the code release. This page is hand-written and hosted on GitHub Pages.</p>
   </div>
 </footer>
 
 <script type="application/json" id="data-lineages">__LINEAGES_JSON__</script>
 <script type="application/json" id="data-videos">__VIDEOS_JSON__</script>
+<script type="application/json" id="data-curves">__CURVES_JSON__</script>
 <script src="static/js/main.js" defer></script>
 </body>
 </html>
