@@ -98,7 +98,13 @@ STORY = (
     f'<figure class="revert alt"><span class="kicker">Outcome B · reverted</span>{panel("revert")}<figcaption><b>Revert and remember</b> otherwise: the cell is merged back and logs its fitness range, so it is not re-split until a new candidate changes that distribution.</figcaption></figure>'
     '<div class="ramp" style="grid-column:1/-1"><span>fitness</span><span>low</span><i></i><span>high</span></div>')
 
-html = (tpl.replace("__LINEAGES_JSON__", js(lin)).replace("__VIDEOS_JSON__", js(vid)).replace("__CURVES_JSON__", js(cur)).replace("__ANATOMY_JSON__", js(ana))
+# the teaser as inline SVG so the page's theme can recolour its ink and outlines (fills/strokes stay as attributes)
+svg = (SITE / "static/img/fig1_teaser_method.svg").read_text()
+svg = re.sub(r'<svg[^>]*>', '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 576 540" class="teaser-svg" role="img" '
+             'aria-label="Figure 1. (a) Naive search in harness space, guided by a meta-agent: candidates drift along a few local lineages inside one undivided region. '
+             '(b) Harness-MAP: the structure-token space is partitioned into cells; at step t+1 a high-variance cell is sub-split and children are bred from cell elites. '
+             'Legend: candidate shapes, a fitness colour scale from low to high, and markers for parent, child and other candidates.">', svg, count=1)
+html = (tpl.replace("__TEASER_SVG__", svg).replace("__LINEAGES_JSON__", js(lin)).replace("__VIDEOS_JSON__", js(vid)).replace("__CURVES_JSON__", js(cur)).replace("__ANATOMY_JSON__", js(ana))
            .replace("__STORYBOARD_SVG__", STORY))
 # BALROG grid videos: render the four players statically
 grids = ""
