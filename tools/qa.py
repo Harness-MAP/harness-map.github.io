@@ -5,10 +5,10 @@ os.environ["PLAYWRIGHT_BROWSERS_PATH"] = f"{S}/pw"
 os.environ["LD_LIBRARY_PATH"] = f"{S}/deb/ex/usr/lib/x86_64-linux-gnu:" + os.environ.get("LD_LIBRARY_PATH", "")
 from playwright.sync_api import sync_playwright
 SITE = "/home/azureuser/workspace/harness-evolution.github.io"
-srv = subprocess.Popen([sys.executable, "-m", "http.server", "8767", "--bind", "127.0.0.1", "-d", SITE], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+srv = subprocess.Popen([sys.executable, "-m", "http.server", "8765", "--bind", "127.0.0.1", "-d", SITE], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 time.sleep(1.2)
 exe = glob.glob(f"{S}/pw/chromium_headless_shell-*/chrome-headless-shell-linux64/chrome-headless-shell")[0]
-OUT = f"{S}/shots2"
+OUT = f"{S}/shots"
 try:
     with sync_playwright() as p:
         b = p.chromium.launch(executable_path=exe, args=["--no-sandbox", "--disable-gpu"])
@@ -18,39 +18,38 @@ try:
             logs = []
             pg.on("console", lambda m: logs.append(f"{m.type}: {m.text}") if m.type in ("error", "warning") else None)
             pg.on("pageerror", lambda e: logs.append(f"PAGEERROR: {e}"))
-            pg.goto("http://127.0.0.1:8767/index.html", wait_until="networkidle"); pg.wait_for_timeout(1200)
+            pg.goto("http://127.0.0.1:8765/index.html", wait_until="networkidle"); pg.wait_for_timeout(1200)
+            # hide the sticky nav for element screenshots so it does not overlap
+            pg.add_style_tag(content=".topnav{position:static!important}")
             def shot(sel, name):
-                el = pg.query_selector(sel)
-                if not el: print("  missing", sel); return
-                el.scroll_into_view_if_needed(); pg.wait_for_timeout(300); el.screenshot(path=f"{OUT}/{tag}_{name}.png")
+                e = pg.query_selector(sel)
+                if not e: print("  missing", sel); return
+                e.scroll_into_view_if_needed(); pg.wait_for_timeout(300); e.screenshot(path=f"{OUT}/{tag}_{name}.png")
             print(tag, "height", pg.evaluate("document.documentElement.scrollHeight"), "| hscroll:", pg.evaluate("document.documentElement.scrollWidth > document.documentElement.clientWidth"))
             return pg, shot, logs
         for width, tag, dark in [(1280, "desk", False), (390, "phone", False), (1280, "dark", True)]:
             pg, shot, logs = session(width, tag, dark)
             shot("header.hero", "01_hero"); shot("#idea", "02_idea"); shot(".steps3", "03_steps"); shot("#lab-factor", "04_factor"); shot("#lab-loop", "05_loop"); shot("#lab-adapt", "06_adapt")
-            shot("#barcards", "07_table1"); shot("#lab-dyn", "08_dyn"); shot("#lab-res", "09_res")
+            shot("#barcards", "07_table1"); shot("#lab-dyn", "08_dyn"); shot("#lab-res", "09_res"); shot("#lab-qd", "10_qd"); shot("#lab-abl", "11_abl"); shot("#lab-gen", "12_gen")
+            shot("#evolution", "13_evo_balrog"); shot("#cases", "15_cases"); shot("#bibtex", "16_bibtex")
             if tag == "desk":
-                pg.click("#lab-factor .cand-tabs button:nth-child(4)"); pg.wait_for_timeout(200); shot("#lab-factor", "04b_factor_d")
-                pg.click("#lab-factor .cand-tabs button:nth-child(1)"); pg.wait_for_timeout(200); shot("#lab-factor .factor-grid", "04c_factor_a")
-                pg.click("#lab-dyn [data-ctl=view] [data-v=per]"); pg.wait_for_timeout(400); shot("#lab-dyn", "08b_dyn_pergame")
-                pg.click("#lab-dyn [data-ctl=bench] [data-v=balrog]"); pg.wait_for_timeout(400); shot("#lab-dyn", "08c_dyn_balrog_pertask")
-                pg.click("#lab-dyn [data-ctl=view] [data-v=agg]"); pg.click("#lab-dyn [data-ctl=axis] [data-v=t]"); pg.wait_for_timeout(400); shot("#lab-dyn", "08d_dyn_balrog_T")
-                pg.click("#lab-dyn [data-ctl=mode] [data-v=hier]"); pg.wait_for_timeout(300)
-                # legend toggle + slider + hover
-                pg.click("#lab-dyn .legend-toggles button:nth-of-type(6)"); pg.wait_for_timeout(300)
-                pg.evaluate("const s=document.querySelector('#lab-dyn [data-slider]'); s.value=5; s.dispatchEvent(new Event('input'))"); pg.wait_for_timeout(300)
-                print("  readout after slider:", pg.inner_text("#lab-dyn [data-readout]"))
-                box = pg.query_selector("#lab-dyn .chart svg").bounding_box(); pg.mouse.move(box["x"] + box["width"] * 0.45, box["y"] + box["height"] * 0.5); pg.wait_for_timeout(200)
-                print("  tooltip:", pg.inner_text("#lab-dyn .chart .tip").replace("\n", " | ")[:200]); shot("#lab-dyn", "08e_dyn_hover_reveal")
-                pg.click("#lab-dyn [data-play]"); pg.wait_for_timeout(1500); print("  play readout mid-way:", pg.inner_text("#lab-dyn [data-readout]")); pg.wait_for_timeout(7000); print("  play readout end:", pg.inner_text("#lab-dyn [data-readout]"))
-                pg.click("#lab-res .seg [data-v=balrog]"); pg.wait_for_timeout(400); shot("#lab-res", "09b_res_balrog")
-                box = pg.query_selector("#lab-res .chart svg").bounding_box(); pg.mouse.move(box["x"] + box["width"] * 0.5, box["y"] + box["height"] * 0.5); pg.wait_for_timeout(200)
-                print("  res tooltip:", pg.inner_text("#lab-res .chart .tip").replace("\n", " | ")[:200])
-                pg.click("#lab-res .legend-toggles button:nth-of-type(2)"); pg.wait_for_timeout(300); shot("#lab-res", "09c_res_balrog_nofixed")
-                pg.click("details.numeric summary"); pg.wait_for_timeout(300); shot("details.numeric", "07b_table1_numeric")
-                pg.click("details.abstract summary"); pg.wait_for_timeout(300); shot("details.abstract", "02b_abstract_open")
-            shot("#evolution", "10_evolution"); shot("#bibtex", "11_bibtex"); shot("footer", "12_footer")
-            print("  paper button class:", pg.get_attribute("#btn-paper", "class"))
+                pg.click("#lab-dyn [data-ctl=bench] [data-v=nav_hard]"); pg.wait_for_timeout(400); shot("#lab-dyn", "08b_dyn_navhard")
+                pg.click("#lab-dyn [data-ctl=bench] [data-v=nav_easy]"); pg.click("#lab-dyn [data-ctl=axis] [data-v=t]"); pg.wait_for_timeout(400); shot("#lab-dyn .charts", "08c_dyn_naveasy_T")
+                pg.click("#lab-res .seg [data-v=nav_hard]"); pg.wait_for_timeout(400); shot("#lab-res", "09b_res_navhard")
+                pg.click("#lab-res .seg [data-v=nav_easy]"); pg.wait_for_timeout(400); shot("#lab-res .charts", "09c_res_naveasy")
+                box = pg.query_selector("#abl-chart svg rect[role=img]").bounding_box(); pg.mouse.move(box["x"] + 5, box["y"] + 5); pg.wait_for_timeout(200); print("  abl tooltip:", pg.inner_text("#abl-chart .tip").replace("\n", " | ")[:160])
+                box = pg.query_selector_all("#gen-charts svg rect[role=img]")[7].bounding_box(); pg.mouse.move(box["x"] + box["width"] * 0.6, box["y"] + 5); pg.wait_for_timeout(200); print("  gen tooltip:", pg.inner_text("#gen-charts .tip").replace("\n", " | ")[:160])
+                # anatomy follows the lineage selection
+                before = pg.inner_text("#anat-balrog .an-head")[:60]
+                pg.query_selector_all("#chart-balrog rect[role=button]")[7].click(); pg.wait_for_timeout(400); after = pg.inner_text("#anat-balrog .an-head")[:60]
+                print("  anatomy before:", before, "| after click #7:", after); shot("#anat-balrog", "14_anatomy_r35")
+                pg.query_selector_all("#chart-balrog rect[role=button]")[40].click(); pg.wait_for_timeout(300); shot("#anat-balrog", "14b_anatomy_best")
+                pg.click("#tab-evo-games"); pg.wait_for_timeout(500); shot("#evo-games", "13b_evo_games")
+                pg.click("#tab-evo-nav-easy"); pg.wait_for_timeout(500); shot("#evo-nav-easy", "13c_evo_nav_easy")
+                pg.click("#tab-evo-nav-hard"); pg.wait_for_timeout(500); shot("#evo-nav-hard", "13d_evo_nav_hard")
+                # theme toggle
+                pg.click("[data-theme-toggle]"); pg.wait_for_timeout(300); print("  theme after toggle:", pg.evaluate("document.documentElement.getAttribute('data-theme')"), "| bg:", pg.evaluate("getComputedStyle(document.body).backgroundColor")); shot("header.hero", "01b_hero_toggled")
+                pg.click("[data-theme-toggle]"); pg.wait_for_timeout(200); print("  theme after second toggle:", pg.evaluate("document.documentElement.getAttribute('data-theme')"))
             print("  console:", logs or "clean")
             pg.close()
         b.close()

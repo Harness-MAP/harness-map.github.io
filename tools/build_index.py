@@ -7,11 +7,11 @@ S = Path(__file__).resolve().parent  # tools/
 SITE = S.parent  # repository root
 tpl = (S / "index.template.html").read_text()
 lin = json.load(open(SITE / "static/data/lineages.json")); vid = json.load(open(SITE / "static/data/videos.json"))
-cur = json.load(open(SITE / "static/data/curves.json"))
+cur = json.load(open(SITE / "static/data/curves.json")); ana = json.load(open(SITE / "static/data/anatomy.json"))
 def js(o): return json.dumps(o, separators=(",", ":")).replace("</", "<\\/")
 
 # ------------------------------------------------------------------ adaptive-resolution storyboard
-RAMP = ["#f28c52", "#ea6c34", "#d4521f", "#b23d14", "#8a2d0e", "#5e1d08"]        # fitness, low -> high (validated ramp)
+RAMP = ["#4da9c3", "#64bdba", "#8ccab1", "#cadaa4", "#f6e09b", "#fee099", "#fdc88f", "#fa9a6b", "#fa7b6b"]   # Figure 1 fitness scale, low -> high
 CENTS = [(0.22, 0.74), (0.56, 0.82), (0.84, 0.62), (0.28, 0.28), (0.63, 0.42), (0.80, 0.20)]
 SPLIT = 4                                                                        # the cell with the largest fitness range
 SUBC = [(0.60, 0.45), (0.67, 0.36)]                                              # its local 2-centroid CVT
@@ -46,7 +46,9 @@ for i, p in enumerate(PTS): assert nearest(p[:2], CENTS) == [0, 0, 1, 1, 2, 2, 3
 X0, Y0, SZ = 10, 8, 240
 px = lambda x: round(X0 + x * SZ, 1); py = lambda y: round(Y0 + (1 - y) * SZ, 1)
 col = lambda f: RAMP[min(len(RAMP) - 1, int(f * len(RAMP)))]
-def poly_svg(poly, fill, extra=""): return f'<polygon points="{" ".join(f"{px(x)},{py(y)}" for x, y in poly)}" fill="var(--{fill})" stroke="var(--line-2)" stroke-width="1" {extra}/>'
+def poly_svg(poly, fill, extra=""):
+    stroke = f'stroke="var(--cs{fill[4:]})" stroke-width="1.6" stroke-dasharray="5 3"' if not extra else extra
+    return f'<polygon points="{" ".join(f"{px(x)},{py(y)}" for x, y in poly)}" fill="var(--{fill})" {stroke} stroke-linejoin="round"/>'
 def dot(p, elite=False, child=False):
     s = f'<circle cx="{px(p[0])}" cy="{py(p[1])}" r="5.5" fill="{col(p[2])}" stroke="var(--surface)" stroke-width="2"/>'
     if elite: s += f'<circle cx="{px(p[0])}" cy="{py(p[1])}" r="9" fill="none" stroke="var(--ink)" stroke-width="1.5"/>'
@@ -73,13 +75,13 @@ def panel(kind):
         kids = KIDS_KEEP if kind == "keep" else KIDS_KEEP
         pts = PTS + kids
     else:
-        for i, c in enumerate(CELLS): s.append(poly_svg(c, fills[i], 'stroke-dasharray="5 3" stroke="var(--warm)" stroke-width="2.5"' if (i == SPLIT and kind == "pick") else ""))
+        for i, c in enumerate(CELLS): s.append(poly_svg(c, fills[i], 'stroke="var(--ink)" stroke-width="2.6" stroke-dasharray="6 3"' if (i == SPLIT and kind == "pick") else ""))
         if kind == "revert": pts = PTS + KIDS_REV
     el = elites(pts, cents)
     for c in cents: s.append(f'<path d="M{px(c[0]) - 3},{py(c[1]) - 3} L{px(c[0]) + 3},{py(c[1]) + 3} M{px(c[0]) - 3},{py(c[1]) + 3} L{px(c[0]) + 3},{py(c[1]) - 3}" stroke="var(--muted)" stroke-width="1.2"/>')
     for p in pts: s.append(dot(p, elite=p in el, child=(p in KIDS_KEEP or p in KIDS_REV)))
     if kind == "pick":
-        s.append(label(0.40, 0.60, "range 0.85 − 0.30 = 0.55", "warm-ink", 128))
+        s.append(label(0.40, 0.60, "range 0.85 − 0.30 = 0.55", "ink", 128))
     if kind == "split":
         s.append(label(0.40, 0.60, "local 2-centroid CVT", "ink", 112))
     if kind == "keep":
@@ -96,7 +98,7 @@ STORY = (
     f'<figure class="revert alt"><span class="kicker">Outcome B · reverted</span>{panel("revert")}<figcaption><b>Revert and remember</b> otherwise: the cell is merged back and logs its fitness range, so it is not re-split until a new candidate changes that distribution.</figcaption></figure>'
     '<div class="ramp" style="grid-column:1/-1"><span>fitness</span><span>low</span><i></i><span>high</span></div>')
 
-html = (tpl.replace("__LINEAGES_JSON__", js(lin)).replace("__VIDEOS_JSON__", js(vid)).replace("__CURVES_JSON__", js(cur))
+html = (tpl.replace("__LINEAGES_JSON__", js(lin)).replace("__VIDEOS_JSON__", js(vid)).replace("__CURVES_JSON__", js(cur)).replace("__ANATOMY_JSON__", js(ana))
            .replace("__STORYBOARD_SVG__", STORY))
 # BALROG grid videos: render the four players statically
 grids = ""

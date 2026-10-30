@@ -116,7 +116,48 @@ for (m, k), rs in sorted(by.items()):
     if 0 not in keep: keep[0] = k
     res["balrog"].append({"mode": m, "k0": k, "exact": True, "pts": [[x, keep[x]] for x in sorted(keep)]})
 
-data = {"games": games, "balrog": balrog, "resolution": res,
+# ------------------------------------------------------------------ SimWorld-MMNav (easy = paper's "simple", hard); budget N = 16
+NAV_METHOD = {"IRIS": "Meta-Harness", "DGM": "DGM", "GEPA": "GEPA", "ShinkaEvolve": "ShinkaEvolve", "OpenEvolve": "OpenEvolve"}
+NAV_CAP = 16
+nav = {}
+for key, sub in (("nav_easy", "nav_simple"), ("nav_hard", "nav_hard")):
+    rows = [r for r in json.load(open(A / f"{sub}/figures/score_log_{sub}.json")) if r["canonical"] and r["task"].startswith("search") and r["best_so_far"] != ""]
+    S = json.load(open(A / f"{sub}/figures/series.json")); an = S["anchor"]
+    def ncurve(method, k0=None, axis="n"):
+        rs = [r for r in rows if r["method"] == method and (k0 is None or r["k0"] == k0) and r["n"] <= NAV_CAP]
+        return bsf([(r[axis], r["best_so_far"]) for r in rs]) if rs else {}
+    def npair(method, k0=None):
+        cn = ncurve(method, k0, "n"); ct = ncurve(method, k0, "t")
+        if not cn: return None
+        d = {"n": compact([[x, y] for x, y in dense([cn], "n") if x <= NAV_CAP]), "t": compact(dense([ct], "t"))}
+        return d
+    block = {"anchor": {"mean": round(100 * an["mean"], 1), "min": round(100 * an["min"], 1), "max": round(100 * an["max"], 1), "n": an["n"]},
+             "baselines": {}, "ours": {"adaptive": {}, "fixed": {}, "hier": {}}, "h0": None}
+    for raw, name in NAV_METHOD.items():
+        pr = npair(raw)
+        if pr: block["baselines"][name] = pr
+    for k in (2, 4, 8):
+        pr = npair("ours", k)
+        if pr: block["ours"]["adaptive"][str(k)] = pr
+    nav[key] = {"agg": block, "pertask": {}, "order": []}
+    print(key, "endpoints:", {n: v["n"][-1] for n, v in block["baselines"].items()}, {k: v["n"][-1] for k, v in block["ours"]["adaptive"].items()}, "anchor", block["anchor"])
+# resolution: hard has per-step traces; easy persisted only the final archive size -> k0 -> final endpoint, flagged inexact
+res["nav_hard"] = []
+rows = [r for r in csv.DictReader(open(A / "nav_hard/figures/resolution_log_nav_hard.csv")) if r["mode"] == "adaptive" and r["step"] != ""]
+by = collections.defaultdict(dict)
+for r in rows: by[int(r["k0"])][int(r["step"])] = int(r["n_cells"])
+for k, keep in sorted(by.items()):
+    if 0 not in keep: keep[0] = k
+    res["nav_hard"].append({"mode": "adaptive", "k0": k, "exact": True, "pts": [[x, keep[x]] for x in sorted(keep)]})
+res["nav_easy"] = []
+import re as _re
+for r in csv.DictReader(open(A / "nav_simple/figures/resolution_log_nav_simple.csv")):
+    if r["mode"] != "adaptive" or r["round_as_run"] != "FINAL" or r["canonical"] != "True": continue
+    m = _re.search(r"rounds=(\d+)", r["note"]); rounds = int(m.group(1)) if m else 1
+    res["nav_easy"].append({"mode": "adaptive", "k0": int(r["k0"]), "exact": False, "pts": [[0, int(r["k0"])], [rounds, int(r["n_cells"])]]})
+print("resolution nav_hard:", [(s["k0"], s["pts"][-1]) for s in res["nav_hard"]], "| nav_easy endpoints:", [(s["k0"], s["pts"]) for s in res["nav_easy"]])
+
+data = {"games": games, "balrog": balrog, "nav_easy": nav["nav_easy"], "nav_hard": nav["nav_hard"], "resolution": res,
         "meta": {"baselines": ["Meta-Harness", "DGM", "GEPA", "ShinkaEvolve", "OpenEvolve"], "k0": K0S, "modes": MODES, "ncap": NCAP}}
 OUT.write_text(json.dumps(data, separators=(",", ":")))
 print("wrote", OUT, OUT.stat().st_size, "bytes")

@@ -9,7 +9,18 @@
     DATA.lineages = JSON.parse($('#data-lineages').textContent);
     DATA.videos = JSON.parse($('#data-videos').textContent);
     DATA.curves = JSON.parse($('#data-curves').textContent);
+    DATA.anatomy = JSON.parse($('#data-anatomy').textContent);
   } catch (e) { console.error('embedded data missing', e); }
+
+  /* ---------------- light / dark toggle (persisted; follows the system until the first click) ---------------- */
+  const toggle = $('[data-theme-toggle]');
+  if (toggle) toggle.addEventListener('click', () => {
+    const root = document.documentElement;
+    const dark = root.getAttribute('data-theme') === 'dark' || (!root.getAttribute('data-theme') && matchMedia('(prefers-color-scheme: dark)').matches);
+    const next = dark ? 'light' : 'dark'; root.setAttribute('data-theme', next);
+    try { localStorage.setItem('theme', next); } catch (e) {}
+    window.dispatchEvent(new Event('tabshown'));
+  });
 
   /* ---------------- tabs ---------------- */
   function initTabs(group) {
@@ -74,13 +85,12 @@
   const stepPath = (pts, xs, ys) => pts.map((p, i) => (i ? ` H${xs(p[0])} V${ys(p[1])}` : `M${xs(p[0])},${ys(p[1])}`)).join('');
   const SUB = { 2: '₂', 4: '₄', 8: '₈', 16: '₁₆', 32: '₃₂' };
 
-  /* ======================================================= Table 1 as bar cards */
+  /* ======================================================= Table 1 as three cards (SimWorld easy + hard share one) */
   const T1 = {
-    benches: [
-      { id: 'games', title: 'SpatialWorld-3DGames', metric: 'Task success rate', n: 50, note: '110 levels across five games' },
-      { id: 'easy', title: 'SimWorld-MMNav · easy', metric: 'Subtask success rate', n: 16, note: '50 search tasks' },
-      { id: 'hard', title: 'SimWorld-MMNav · hard', metric: 'Subtask success rate', n: 16, note: '50 search tasks' },
-      { id: 'minihack', title: 'BALROG-MiniHack', metric: 'Task success rate', n: 50, note: '40 episodes across eight tasks, ± standard error' }],
+    cards: [
+      { title: 'SpatialWorld-3DGames', sub: 'Task success rate (%) · 110 levels across five games', n: 50, cols: [{ id: 'games', label: '' }] },
+      { title: 'SimWorld-MMNav', sub: 'Subtask success rate (%) · 50 search tasks per setting', n: 16, wide: true, cols: [{ id: 'easy', label: 'easy' }, { id: 'hard', label: 'hard' }] },
+      { title: 'BALROG-MiniHack', sub: 'Task success rate (%) · 40 episodes across eight tasks, ± standard error', n: 50, cols: [{ id: 'minihack', label: '' }] }],
     rows: [
       { name: 'GPT-4o', group: 'direct', v: { games: null, easy: 33.1, hard: 34.4, minihack: [10.0, 4.7] } },
       { name: 'GPT-5', group: 'direct', v: { games: 36.4, easy: null, hard: null, minihack: [20.3, 7.3] } },
@@ -95,27 +105,29 @@
   };
   function barCards(host) {
     host.innerHTML = '';
-    T1.benches.forEach(b => {
-      const rows = T1.rows.filter(r => r.v[b.id] != null);
-      const val = r => (Array.isArray(r.v[b.id]) ? r.v[b.id][0] : r.v[b.id]);
-      const se = r => (Array.isArray(r.v[b.id]) ? r.v[b.id][1] : null);
-      const ours = rows.find(r => r.group === 'ours'), search = rows.filter(r => r.group === 'search');
-      const bestBase = search.reduce((a, r) => (val(r) > val(a) ? r : a), search[0]);
-      const anchor = rows.find(r => r.anchor);
-      let html = `<div class="chart-top"><div><h4>${esc(b.title)}</h4><p>${esc(b.metric)} (%) · ${esc(b.note)}</p></div><span class="chart-tag">N = ${b.n}</span></div>`;
+    const val = (r, id) => (r.v[id] == null ? null : Array.isArray(r.v[id]) ? r.v[id][0] : r.v[id]);
+    const se = (r, id) => (Array.isArray(r.v[id]) ? r.v[id][1] : null);
+    T1.cards.forEach(c => {
+      const rows = T1.rows.filter(r => c.cols.some(col => val(r, col.id) != null));
+      const range = {}; c.cols.forEach(col => { const vs = rows.map(r => val(r, col.id)).filter(v => v != null); range[col.id] = [Math.min(...vs), Math.max(...vs)]; });
+      const shade = (v, id) => { const [lo, hi] = range[id]; return (0.22 + 0.78 * (hi > lo ? (v - lo) / (hi - lo) : 1)).toFixed(2); };
+      let html = `<div class="chart-top"><div><h4>${esc(c.title)}</h4><p>${esc(c.sub)}</p></div><span class="chart-tag">N = ${c.n}</span></div>`;
+      if (c.cols.length > 1) html += `<div class="bar-row head" style="--cols:${c.cols.length}"><span></span>${c.cols.map(col => `<span>${esc(col.label)}</span>`).join('')}</div>`;
       let grp = '';
       rows.forEach(r => {
         if (r.group !== grp) { grp = r.group; html += `<div class="bar-group">${grp === 'direct' ? 'Direct inference, no search' : grp === 'search' ? 'Harness search, same budget' : 'Ours'}</div>`; }
-        const v = val(r), s = se(r);
-        html += `<div class="bar-row ${r.group}${r.anchor ? ' anchor' : ''}" tabindex="0" aria-label="${esc(r.name)}: ${v.toFixed(1)}${s != null ? ' ± ' + s.toFixed(1) : ''}">` +
-          `<span class="bar-name">${esc(r.name)}</span><span class="bar-track"><span class="bar-fill" style="width:${v}%"></span>` +
-          (s != null ? `<span class="bar-se" style="left:${Math.max(0, v - s)}%;width:${Math.min(100, v + s) - Math.max(0, v - s)}%"></span>` : '') +
-          `</span><span class="bar-value">${v.toFixed(1)}${s != null ? `<small> ±${s.toFixed(1)}</small>` : ''}</span></div>`;
+        const cells = c.cols.map(col => {
+          const v = val(r, col.id), s = se(r, col.id);
+          if (v == null) return `<span class="bar-track"></span><span class="bar-value na">–</span>`;
+          const p = shade(v, col.id);
+          return `<span class="bar-track"><span class="bar-fill" style="width:${v}%;--op:${p}"></span>` +
+            (s != null ? `<span class="bar-se" style="left:${Math.max(0, v - s)}%;width:${Math.min(100, v + s) - Math.max(0, v - s)}%"></span>` : '') +
+            `</span><span class="bar-value" style="--op:${p}">${v.toFixed(1)}${s != null ? `<small> ±${s.toFixed(1)}</small>` : ''}</span>`;
+        }).join('');
+        const label = c.cols.map(col => { const v = val(r, col.id); return v == null ? `${col.label || ''} –` : `${col.label ? col.label + ' ' : ''}${v.toFixed(1)}`; }).join(', ');
+        html += `<div class="bar-row ${r.group}${r.anchor ? ' anchor' : ''}" style="--cols:${c.cols.length}" tabindex="0" aria-label="${esc(r.name)}: ${esc(label)}"><span class="bar-name">${esc(r.name)}</span>${cells}</div>`;
       });
-      html += `<div class="chart-bottom"><strong>+${(val(ours) - val(bestBase)).toFixed(1)} pts</strong> over the best search baseline (${esc(bestBase.name)}, ${val(bestBase).toFixed(1)})` +
-        (anchor ? `; <strong>+${(val(ours) - val(anchor)).toFixed(1)} pts</strong> over the frozen model without a search (${val(anchor).toFixed(1)}).` : '.') + '</div>';
-      const card = el('article', 'chart-card' + (b.id === 'games' ? ' spot' : ''), html);
-      host.appendChild(card);
+      host.appendChild(el('article', 'chart-card' + (c.wide ? ' wide' : ''), html));
     });
   }
   if ($('#barcards')) barCards($('#barcards'));
@@ -136,7 +148,7 @@
       svgEl('line', { x1: m.l, x2: W - m.r, y1: ys(v), y2: ys(v), stroke: 'var(--line)', 'stroke-width': 1 }, svg);
       svgEl('text', { x: m.l - 6, y: ys(v) + 3.5, 'text-anchor': 'end', 'font-size': fs - 1, fill: 'var(--muted)' }, svg).textContent = v;
     });
-    const step = cfg.axis === 'n' ? 10 : (xmax > 30 ? 10 : xmax > 14 ? 5 : xmax > 7 ? 2 : 1);
+    const step = xmax > 30 ? 10 : xmax > 14 ? (cfg.axis === 'n' ? 2 : 5) : xmax > 7 ? 2 : 1;
     for (let x = 0; x <= xmax; x += step) {
       svgEl('line', { x1: xs(x), x2: xs(x), y1: ys(0), y2: ys(0) + 4, stroke: 'var(--line-2)', 'stroke-width': 1 }, svg);
       svgEl('text', { x: xs(x), y: ys(0) + 15, 'text-anchor': 'middle', 'font-size': fs - 1, fill: 'var(--muted)' }, svg).textContent = x;
@@ -187,13 +199,15 @@
   /* ======================================================= search dynamics panel (Figures 3, 6, 7) */
   const BCOL = { 'Meta-Harness': 'var(--c-mh)', 'DGM': 'var(--c-dgm)', 'GEPA': 'var(--c-gepa)', 'ShinkaEvolve': 'var(--c-shinka)', 'OpenEvolve': 'var(--c-oe)' };
   const MODE_LABEL = { adaptive: 'adaptive', fixed: 'fixed', hier: 'hierarchical' };
+  const BENCH = [{ id: 'games', label: 'SpatialWorld-3DGames', cap: 50 }, { id: 'balrog', label: 'BALROG-MiniHack', cap: 50 }, { id: 'nav_easy', label: 'SimWorld-MMNav · easy', cap: 16 }, { id: 'nav_hard', label: 'SimWorld-MMNav · hard', cap: 16 }];
+  const isNav = b => b.startsWith('nav');
   function dynamicsPanel(root) {
     const D = DATA.curves; if (!D) return;
     const K0 = D.meta.k0, BASES = D.meta.baselines;
     const st = { bench: 'games', view: 'agg', axis: 'n', mode: 'adaptive', reveal: null,
       show: { k0: Object.fromEntries(K0.map(k => [k, true])), base: Object.fromEntries(BASES.map(b => [b, true])) } };
     root.innerHTML = `<div class="toolbar">
-      <div class="seg" data-ctl="bench"><button type="button" data-v="games">SpatialWorld-3DGames</button><button type="button" data-v="balrog">BALROG-MiniHack</button></div>
+      <div class="seg" data-ctl="bench">${BENCH.map(b => `<button type="button" data-v="${b.id}">${b.label}</button>`).join('')}</div>
       <div class="seg" data-ctl="view"><button type="button" data-v="agg">Aggregate</button><button type="button" data-v="per">Per game</button></div>
       <div class="seg" data-ctl="axis"><button type="button" data-v="n">vs. evaluations N</button><button type="button" data-v="t">vs. steps T</button></div>
       <div class="seg" data-ctl="mode"><button type="button" data-v="adaptive">adaptive</button><button type="button" data-v="fixed">fixed</button><button type="button" data-v="hier">hierarchical</button></div>
@@ -202,8 +216,8 @@
     <p class="note small muted" data-note></p>`;
     const chartsEl = $('[data-charts]', root), legendEl = $('[data-legend]', root), slider = $('[data-slider]', root), readout = $('[data-readout]', root), playBtn = $('[data-play]', root), noteEl = $('[data-note]', root);
     let charts = [], xmax = 50, playing = null;
-    const block = key => (st.bench === 'games' ? (key === 'agg' ? D.games.agg : D.games.pergame[key]) : (key === 'agg' ? D.balrog.agg : D.balrog.pertask[key]));
-    const panels = () => (st.view === 'agg' ? [{ key: 'agg', title: null }] :
+    const block = key => (st.bench === 'games' ? (key === 'agg' ? D.games.agg : D.games.pergame[key]) : st.bench === 'balrog' ? (key === 'agg' ? D.balrog.agg : D.balrog.pertask[key]) : D[st.bench].agg);
+    const panels = () => (st.view === 'agg' || isNav(st.bench) ? [{ key: 'agg', title: null }] :
       st.bench === 'games' ? D.games.order.map(g => ({ key: g, title: D.games.names[g] })) : D.balrog.order.map(t => ({ key: t, title: t })));
     function seriesFor(b) {
       const out = [];
@@ -213,6 +227,7 @@
     }
     function anchorFor(b) {
       if (st.bench === 'games') return b.anchor != null ? { value: b.anchor, label: 'Qwen3-VL-30B, no search' } : null;
+      if (isNav(st.bench)) return { value: b.anchor.mean, band: [b.anchor.min, b.anchor.max], label: 'anchor harness, no search (replicates)' };
       if (st.view === 'agg') return { value: b.anchor.mean, band: [b.anchor.min, b.anchor.max], label: 'BALROG naive agent, no search' };
       return b.anchor != null ? { value: b.anchor, label: 'naive agent, no search' } : null;
     }
@@ -229,21 +244,25 @@
       chartsEl.className = 'charts' + (multi ? ' multi' : '');
       const cols = multi ? Math.max(1, Math.floor(w / 240)) : 1; const cw = multi ? Math.floor((w - 12 * (cols - 1)) / cols) - 18 : w - 20;
       const sets = ps.map(p => { const b = block(p.key); return { p, b, series: seriesFor(b), anchor: anchorFor(b) }; });
-      xmax = st.axis === 'n' ? D.meta.ncap : Math.max(1, ...sets.flatMap(s => s.series.map(q => q.pts[q.pts.length - 1][0])));
+      const cap = BENCH.find(b => b.id === st.bench).cap;
+      xmax = st.axis === 'n' ? cap : Math.max(1, ...sets.flatMap(s => s.series.map(q => q.pts[q.pts.length - 1][0])));
       chartsEl.innerHTML = ''; charts = [];
       sets.forEach(s => {
         const host = el('div', 'chart'); chartsEl.appendChild(host);
         charts.push(curveChart(host, { width: Math.max(220, cw), small: multi, title: s.p.title, series: s.series, anchor: s.anchor, axis: st.axis, xmax,
           xlabel: st.axis === 'n' ? 'harness evaluations N' : 'sequential proposal steps T',
-          ylabel: st.bench === 'games' && st.view === 'agg' ? 'best-so-far success, mean over 5 games (%)' : 'best-so-far success rate (%)',
-          aria: `${st.bench === 'games' ? 'SpatialWorld-3DGames' : 'BALROG-MiniHack'} ${s.p.title || 'aggregate'}: best-so-far success against ${st.axis === 'n' ? 'evaluations' : 'steps'}` }));
+          ylabel: st.bench === 'games' && st.view === 'agg' ? 'best-so-far success, mean over 5 games (%)' : isNav(st.bench) ? 'best-so-far subtask success (%)' : 'best-so-far success rate (%)',
+          aria: `${BENCH.find(b => b.id === st.bench).label} ${s.p.title || 'aggregate'}: best-so-far success against ${st.axis === 'n' ? 'evaluations' : 'steps'}` }));
       });
       slider.max = xmax; slider.min = st.axis === 'n' ? 1 : 0;
       if (!keepReveal || st.reveal == null || st.reveal > xmax) st.reveal = xmax;
       slider.value = st.reveal; applyReveal();
+      const nav = isNav(st.bench);
+      $('[data-ctl=view]', root).style.display = nav ? 'none' : ''; $('[data-ctl=mode]', root).style.display = nav ? 'none' : '';
       noteEl.innerHTML = st.bench === 'games'
-        ? 'Success rate is the mean of the five games’ best-so-far task success (the paper’s Table 1 convention). Dashed line: the frozen Qwen3-VL-30B without a search, 11.3% on this mean (10.7% when games are weighted by task count, as in Table 1). Curves for fixed and hierarchical resolution at k₀ = 16 and 32 end one point below Table 8 because the archived logs predate the final re-seeds.'
-        : `Best-so-far success over the 40 search episodes (8 tasks × 5 seeds). Dashed line and band: mean and range of ${D.balrog.agg.anchor.n} replicate evaluations of BALROG’s naive agent with the same frozen model.`;
+        ? 'Success rate is the mean of the five games\u2019 best-so-far task success (the paper\u2019s Table 1 convention). Dashed line: the frozen Qwen3-VL-30B without a search, 11.3% on this mean (10.7% when games are weighted by task count, as in Table 1). Curves for fixed and hierarchical resolution at k₀ = 16 and 32 end one point below Table 8 because the archived logs predate the final re-seeds.'
+        : st.bench === 'balrog' ? `Best-so-far success over the 40 search episodes (8 tasks × 5 seeds). Dashed line and band: mean and range of ${D.balrog.agg.anchor.n} replicate evaluations of BALROG\u2019s naive agent with the same frozen model.`
+        : `Best-so-far subtask success over the 50 search tasks, read at the N = 16 budget; only adaptive resolution was run on SimWorld, at k₀ = 2, 4 and 8. Dashed line and band: mean and range of ${D[st.bench].agg.anchor.n} evaluations of the frozen anchor harness inside the runs (Table 1\u2019s direct-inference row is the ReAct baseline without the harness layout). Every baseline\u2019s first evaluation is its own re-score of that anchor.`;
     }
     function applyReveal() { readout.textContent = `${st.axis === 'n' ? 'N' : 'T'} = ${st.reveal}`; charts.forEach(c => c.setReveal(st.reveal)); }
     slider.addEventListener('input', () => { stop(); st.reveal = +slider.value; applyReveal(); });
@@ -261,7 +280,7 @@
         b.classList.toggle('on', b.dataset.v === st[ctl]);
         b.addEventListener('click', () => {
           stop(); st[ctl] = b.dataset.v; $$('button', seg).forEach(x => x.classList.toggle('on', x === b));
-          if (ctl === 'bench') $('[data-ctl=view] [data-v=per]', root).textContent = st.bench === 'games' ? 'Per game' : 'Per task';
+          if (ctl === 'bench') { $('[data-ctl=view] [data-v=per]', root).textContent = st.bench === 'games' ? 'Per game' : 'Per task'; if (isNav(st.bench)) { st.view = 'agg'; st.mode = 'adaptive'; $$('[data-ctl=view] button, [data-ctl=mode] button', root).forEach(x => x.classList.toggle('on', x.dataset.v === 'agg' || x.dataset.v === 'adaptive')); } }
           render(false);
         });
       });
@@ -321,7 +340,7 @@
     const D = DATA.curves; if (!D) return;
     const R = D.resolution, K0 = D.meta.k0, MODES = D.meta.modes;
     const st = { bench: 'games', show: { k0: Object.fromEntries(K0.map(k => [k, true])), mode: Object.fromEntries(MODES.map(m => [m, true])) } };
-    root.innerHTML = `<div class="toolbar"><div class="seg" data-ctl="bench"><button type="button" data-v="games">SpatialWorld-3DGames</button><button type="button" data-v="balrog">BALROG-MiniHack</button></div></div>
+    root.innerHTML = `<div class="toolbar"><div class="seg" data-ctl="bench">${BENCH.map(b => `<button type="button" data-v="${b.id}">${b.label}</button>`).join('')}</div></div>
       <div class="legend-toggles" data-legend></div><div class="charts" data-charts></div><p class="note small muted" data-note></p>`;
     const chartsEl = $('[data-charts]', root), legendEl = $('[data-legend]', root), noteEl = $('[data-note]', root);
     function legend() {
@@ -335,7 +354,7 @@
     const toSeries = list => list.filter(s => st.show.mode[s.mode] && st.show.k0[s.k0]).map(s => ({ mode: s.mode, k0: s.k0, exact: s.exact, pts: s.pts, color: `var(--k${s.k0})`, label: `${MODE_LABEL[s.mode]}, k${SUB[s.k0]}` }));
     function render() {
       const w = chartsEl.clientWidth || 900;
-      const ps = st.bench === 'games' ? D.games.order.map(g => ({ title: D.games.names[g], series: toSeries(R.games[g] || []) })) : [{ title: null, series: toSeries(R.balrog) }];
+      const ps = st.bench === 'games' ? D.games.order.map(g => ({ title: D.games.names[g], series: toSeries(R.games[g] || []) })) : [{ title: null, series: toSeries(R[st.bench] || []) }];
       const multi = ps.length > 1; chartsEl.className = 'charts' + (multi ? ' multi' : '');
       const cols = multi ? Math.max(1, Math.floor(w / 240)) : 1; const cw = multi ? Math.floor((w - 12 * (cols - 1)) / cols) - 18 : Math.min(w - 20, 760);
       chartsEl.innerHTML = '';
@@ -343,7 +362,9 @@
         resChart(host, { width: Math.max(220, cw), small: multi, title: p.title, series: p.series, xmax: Math.max(1, ...p.series.map(s => s.pts[s.pts.length - 1][0])), aria: `${st.bench} ${p.title || ''} archive cells against sequential step` }); });
       noteEl.innerHTML = st.bench === 'games'
         ? 'One archive per game. Faded lines were reconstructed from the driver log of an equivalent-configuration run; solid lines are the exact per-step trace. Fixed-resolution arms are flat by construction and are shown where a trace survives.'
-        : 'One archive per arm: a single harness plays all eight tasks, so the three modes are directly comparable. Fixed resolution never splits; hierarchical expansion grows the archive on a prepared ladder; adaptive resolution splits on fitness variance and retreats when a split did not pay.';
+        : st.bench === 'balrog' ? 'One archive per arm: a single harness plays all eight tasks, so the three modes are directly comparable. Fixed resolution never splits; hierarchical expansion grows the archive on a prepared ladder; adaptive resolution splits on fitness variance and retreats when a split did not pay.'
+        : st.bench === 'nav_hard' ? 'SimWorld-MMNav hard ran adaptive resolution only, at k₀ = 2, 4 and 8 within the N = 16 budget. The traces show the archive growing by one or two cells and retreating when a split did not pay (k₀ = 2 at step 3, k₀ = 4 at step 5).'
+        : 'The easy-setting driver persisted only the final archive, so each faded line joins the initial k₀ to the final cell count after the run\u2019s last step (k₀ = 2: 6 splits and 2 retreats ended at 4 cells; k₀ = 4: 2 splits, 1 retreat, 5 cells; k₀ = 8: 2 splits, 1 retreat, 9 cells).';
     }
     $$('.seg button', root).forEach(b => { b.classList.toggle('on', b.dataset.v === st.bench); b.addEventListener('click', () => { st.bench = b.dataset.v; $$('.seg button', root).forEach(x => x.classList.toggle('on', x === b)); render(); }); });
     legend(); render();
@@ -409,8 +430,8 @@
       fx('hist').innerHTML = ROLES.map(r => { const p = c.nodes.filter(x => x[1] === r).length / n; return `<span class="role"><i style="background:${RCOL[r]}"></i>${r}</span><span class="track"><span class="bar" style="width:${p * 100}%;background:${RCOL[r]}"></span></span><span>${p.toFixed(2)}</span>`; }).join('');
       // the map: two cells, four candidates, the selected one highlighted, the compared one linked
       const mp = fx('map'); mp.innerHTML = '';
-      svgEl('polygon', { points: '0,0 168,0 132,250 0,250', fill: 'var(--cell1)', stroke: 'var(--line-2)' }, mp);
-      svgEl('polygon', { points: '168,0 300,0 300,250 132,250', fill: 'var(--cell3)', stroke: 'var(--line-2)' }, mp);
+      svgEl('polygon', { points: '0,0 168,0 132,250 0,250', fill: 'var(--cell6)', stroke: 'var(--cs6)', 'stroke-width': 1.6, 'stroke-dasharray': '5 3' }, mp);
+      svgEl('polygon', { points: '168,0 300,0 300,250 132,250', fill: 'var(--cell2)', stroke: 'var(--cs2)', 'stroke-width': 1.6, 'stroke-dasharray': '5 3' }, mp);
       svgEl('text', { x: 16, y: 24, 'font-size': 12, 'font-weight': 700, fill: 'var(--muted)' }, mp).textContent = 'cell A';
       svgEl('text', { x: 262, y: 24, 'font-size': 12, 'font-weight': 700, fill: 'var(--muted)' }, mp).textContent = 'cell B';
       [[60, 140], [226, 118]].forEach(([x, y]) => { svgEl('path', { d: `M${x - 4},${y - 4} L${x + 4},${y + 4} M${x - 4},${y + 4} L${x + 4},${y - 4}`, stroke: 'var(--muted)', 'stroke-width': 1.5 }, mp); });
@@ -426,6 +447,208 @@
     show(1);
   }
   if ($('#lab-factor')) factorLab($('#lab-factor'));
+
+  /* ======================================================= Table 2: QD-score and coverage across k0 */
+  const T2 = { k0: [2, 4, 8, 16, 32], series: [
+    { label: 'Meta-Harness', color: BCOL['Meta-Harness'], qd: [0.93, 1.30, 1.46, 2.27, 2.20], cov: [100, 70, 45, 32, 16] },
+    { label: 'DGM', color: BCOL['DGM'], qd: [0.96, 1.48, 1.62, 2.14, 1.97], cov: [100, 70, 45, 29, 12] },
+    { label: 'GEPA', color: BCOL['GEPA'], qd: [0.43, 0.49, 0.70, 0.83, 1.15], cov: [100, 70, 57, 32, 21] },
+    { label: 'ShinkaEvolve', color: BCOL['ShinkaEvolve'], qd: [0.36, 0.36, 0.46, 0.46, 0.46], cov: [90, 50, 30, 20, 8] },
+    { label: 'OpenEvolve', color: BCOL['OpenEvolve'], qd: [0.27, 0.29, 0.29, 0.29, 0.29], cov: [90, 55, 25, 15, 9] },
+    { label: 'Harness-MAP adaptive', color: 'var(--accent)', w: 2.6, qd: [1.16, 1.48, 2.43, 3.51, 7.25], cov: [100, 70, 64, 58, 57] },
+    { label: 'Harness-MAP fixed', color: 'var(--accent)', w: 1.8, dash: '7 4', qd: [1.15, 1.40, 2.38, 3.23, 7.89], cov: [100, 65, 55, 52, 52] },
+    { label: 'Harness-MAP hierarchical', color: 'var(--accent)', w: 1.8, dash: '2 4', qd: [1.25, 1.22, 2.30, 2.71, 6.68], cov: [100, 65, 57, 42, 49] }] };
+  function catLineChart(host, cfg) {
+    const W = cfg.width, H = Math.max(240, Math.min(360, Math.round(W * 0.62))), m = { l: 44, r: 16, t: 26, b: 40 }, fs = 11;
+    const n = cfg.cats.length, xs = i => m.l + (i + 0.5) / n * (W - m.l - m.r), ys = v => m.t + (1 - v / cfg.ymax) * (H - m.t - m.b);
+    host.innerHTML = '';
+    const svg = svgEl('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': cfg.title }, host); svg.style.fontFamily = 'inherit'; svg.style.overflow = 'visible';
+    svgEl('text', { x: m.l, y: 15, 'font-size': fs + 1.5, 'font-weight': 700, fill: 'var(--ink)' }, svg).textContent = cfg.title;
+    cfg.yticks.forEach(v => { svgEl('line', { x1: m.l, x2: W - m.r, y1: ys(v), y2: ys(v), stroke: 'var(--line)' }, svg); svgEl('text', { x: m.l - 6, y: ys(v) + 3.5, 'text-anchor': 'end', 'font-size': fs - 1, fill: 'var(--muted)' }, svg).textContent = v; });
+    cfg.cats.forEach((c, i) => svgEl('text', { x: xs(i), y: H - m.b + 16, 'text-anchor': 'middle', 'font-size': fs - 1, fill: 'var(--muted)' }, svg).textContent = c);
+    svgEl('text', { x: (m.l + W - m.r) / 2, y: H - 6, 'text-anchor': 'middle', 'font-size': fs, fill: 'var(--muted)' }, svg).textContent = cfg.xlabel;
+    cfg.series.forEach(s => {
+      const v = s[cfg.key];
+      svgEl('path', { d: v.map((y, i) => (i ? 'L' : 'M') + xs(i) + ',' + ys(y)).join(' '), fill: 'none', stroke: s.color, 'stroke-width': s.w || 1.5, 'stroke-dasharray': s.dash || 'none', 'stroke-linejoin': 'round' }, svg);
+      v.forEach((y, i) => svgEl('circle', { cx: xs(i), cy: ys(y), r: s.w > 2 ? 3.4 : 2.6, fill: s.color, stroke: 'var(--surface)', 'stroke-width': 1.2 }, svg));
+    });
+    const vline = svgEl('line', { x1: 0, x2: 0, y1: m.t, y2: ys(0), stroke: 'var(--ink)', 'stroke-opacity': .5, opacity: 0 }, svg);
+    const hit = svgEl('rect', { x: m.l, y: m.t, width: W - m.l - m.r, height: H - m.t - m.b, fill: 'transparent' }, svg);
+    const tip = el('div', 'tip'); host.appendChild(tip);
+    hit.addEventListener('mousemove', ev => {
+      const bb = svg.getBoundingClientRect(); const px = (ev.clientX - bb.left) * (W / bb.width);
+      const i = Math.max(0, Math.min(n - 1, Math.floor((px - m.l) / (W - m.l - m.r) * n)));
+      vline.setAttribute('x1', xs(i)); vline.setAttribute('x2', xs(i)); vline.setAttribute('opacity', 1);
+      const rows = cfg.series.map(s => ({ s, v: s[cfg.key][i] })).sort((a, b) => b.v - a.v);
+      tip.innerHTML = `<b>${cfg.catLabel} = ${cfg.cats[i]}</b>` + rows.map(r => `<div><i style="background:${r.s.color}${r.s.dash ? ';border-radius:0' : ''}"></i>${esc(r.s.label)}<span>${cfg.fmt(r.v)}</span></div>`).join('');
+      const hb = host.getBoundingClientRect(); const sx = bb.left - hb.left + xs(i) * (bb.width / W); const left = sx > hb.width * 0.58;
+      tip.style.left = (sx + (left ? -12 : 12)) + 'px'; tip.style.top = (ev.clientY - hb.top + 12) + 'px'; tip.classList.toggle('left', left); tip.classList.add('on');
+    });
+    hit.addEventListener('mouseleave', () => { vline.setAttribute('opacity', 0); tip.classList.remove('on'); });
+  }
+  function qdCharts(host) {
+    function render() {
+      host.innerHTML = ''; const w = host.clientWidth || 900; const cw = w > 760 ? Math.floor((w - 12) / 2) - 20 : w - 20;
+      [['qd', 'QD-score (sum of elite scores)', 8, [0, 2, 4, 6, 8], v => v.toFixed(2)], ['cov', 'Coverage (% of cells occupied)', 100, [0, 25, 50, 75, 100], v => v + '%']].forEach(([key, title, ymax, yt, fmt]) => {
+        const h = el('div', 'chart'); host.appendChild(h);
+        catLineChart(h, { width: cw, title, key, ymax, yticks: yt, fmt, cats: T2.k0, catLabel: 'k₀', xlabel: 'initial map resolution k₀', series: T2.series });
+      });
+      const sw = s => `<i class="line" style="background:${s.dash === '7 4' ? 'repeating-linear-gradient(90deg,' + s.color + ' 0 6px,transparent 6px 9px)' : s.dash === '2 4' ? 'repeating-linear-gradient(90deg,' + s.color + ' 0 2px,transparent 2px 5px)' : s.color}"></i>`;
+      const lg = el('div', 'chart-legend', T2.series.map(s => `<span>${sw(s)}${esc(s.label)}</span>`).join(''));
+      lg.style.gridColumn = '1 / -1'; host.appendChild(lg);
+    }
+    render(); let lastW = host.clientWidth; onResize(() => { if (host.clientWidth && Math.abs(host.clientWidth - lastW) > 30) { lastW = host.clientWidth; render(); } });
+  }
+  if ($('#qd-charts')) qdCharts($('#qd-charts'));
+
+  /* ======================================================= Table 3: descriptor ablation as grouped bars */
+  const T3 = { groups: ['Maze', 'Maze3D', 'Block3D', 'Rubik', 'Snake', 'Avg.'], series: [
+    { label: 'Harness-MAP loop · structure-token CVT', color: 'var(--k16)', v: [100, 100, 100, 100, 100, 100], nt: [[10, 1], [46, 7], [10, 1], [16, 2], [10, 1], null] },
+    { label: 'Harness-MAP loop · OpenEvolve descriptor', color: 'var(--k4)', v: [100, 84, 100, 100, 100, 96.2], nt: [[14, 4], [23, 4], [18, 3], [37, 7], [8, 1], null], note: [null, '25% coverage target (the descriptor could not fill half the cells)', null, null, null, null] },
+    { label: 'OpenEvolve loop · its own descriptor', color: 'var(--bar)', v: [60, 20, 5, 15, 10, 21.9], nt: [[37, 36], [50, 49], [50, 49], [50, 49], [50, 49], null] },
+    { label: 'OpenEvolve loop · structure-token CVT', color: 'var(--warm)', v: [100, 48, 100, 15, 100, 71.4], nt: [[6, 5], [50, 49], [6, 5], [50, 49], [26, 25], null] }] };
+  function ablChart(host) {
+    function render() {
+      host.innerHTML = ''; const W = Math.max(320, (host.clientWidth || 900) - 20), narrow = W < 560;
+      const H = narrow ? 300 : 340, m = { l: 40, r: 10, t: 24, b: 40 }, fs = narrow ? 10 : 11;
+      const G = T3.groups.length, S = T3.series.length, gw = (W - m.l - m.r) / G, bw = Math.min(26, (gw * 0.78) / S), ys = v => m.t + (1 - v / 100) * (H - m.t - m.b);
+      const hostC = el('div', 'chart'); host.appendChild(hostC);
+      const svg = svgEl('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': 'Descriptor ablation: success rate per game for the four loop and descriptor combinations' }, hostC); svg.style.fontFamily = 'inherit'; svg.style.overflow = 'visible';
+      [0, 25, 50, 75, 100].forEach(v => { svgEl('line', { x1: m.l, x2: W - m.r, y1: ys(v), y2: ys(v), stroke: 'var(--line)' }, svg); svgEl('text', { x: m.l - 6, y: ys(v) + 3.5, 'text-anchor': 'end', 'font-size': fs - 1, fill: 'var(--muted)' }, svg).textContent = v; });
+      svgEl('text', { x: 12, y: (m.t + H - m.b) / 2, 'text-anchor': 'middle', 'font-size': fs, fill: 'var(--muted)', transform: `rotate(-90 12 ${(m.t + H - m.b) / 2})` }, svg).textContent = 'success rate (%)';
+      const tip = el('div', 'tip'); hostC.appendChild(tip);
+      T3.groups.forEach((g, gi) => {
+        const x0 = m.l + gi * gw + (gw - bw * S) / 2;
+        svgEl('text', { x: m.l + gi * gw + gw / 2, y: H - m.b + 16, 'text-anchor': 'middle', 'font-size': fs, 'font-weight': gi === G - 1 ? 700 : 400, fill: gi === G - 1 ? 'var(--ink)' : 'var(--muted)' }, svg).textContent = g;
+        if (gi === G - 1) svgEl('line', { x1: m.l + gi * gw, x2: m.l + gi * gw, y1: m.t, y2: ys(0), stroke: 'var(--line-2)', 'stroke-dasharray': '3 3' }, svg);
+        T3.series.forEach((s, si) => {
+          const v = s.v[gi], x = x0 + si * bw, h = ys(0) - ys(v);
+          const r = svgEl('rect', { x: x + 1, y: ys(v), width: bw - 2, height: Math.max(1, h), rx: 3, fill: s.color, tabindex: 0, role: 'img', 'aria-label': `${s.label}, ${g}: ${v}%` }, svg);
+          if (!narrow || si === 0 || si === S - 1) svgEl('text', { x: x + bw / 2, y: ys(v) - 4, 'text-anchor': 'middle', 'font-size': fs - 2.5, fill: 'var(--muted)' }, svg).textContent = Number.isInteger(v) ? v : v.toFixed(1);
+          const nt = s.nt[gi];
+          const show = ev => { tip.innerHTML = `<b>${esc(g)} · ${esc(s.label)}</b><div>success<span>${v.toFixed(1)}%</span></div>` + (nt ? `<div>first reached at<span>N = ${nt[0]}, T = ${nt[1]}</span></div>` : '') + (s.note && s.note[gi] ? `<div style="white-space:normal;max-width:220px">${esc(s.note[gi])}</div>` : '');
+            const bb = svg.getBoundingClientRect(), hb = hostC.getBoundingClientRect(); const sx = bb.left - hb.left + (x + bw / 2) * (bb.width / W); const left = sx > hb.width * 0.58;
+            tip.style.left = (sx + (left ? -10 : 10)) + 'px'; tip.style.top = (bb.top - hb.top + ys(v) * (bb.height / H) - 8) + 'px'; tip.classList.toggle('left', left); tip.classList.add('on'); };
+          r.addEventListener('mouseenter', show); r.addEventListener('focus', show); r.addEventListener('mouseleave', () => tip.classList.remove('on')); r.addEventListener('blur', () => tip.classList.remove('on'));
+        });
+      });
+      host.appendChild(el('div', 'chart-legend', T3.series.map(s => `<span><i style="background:${s.color};border-radius:3px"></i>${esc(s.label)}</span>`).join('')));
+    }
+    render(); let lastW = host.clientWidth; onResize(() => { if (host.clientWidth && Math.abs(host.clientWidth - lastW) > 30) { lastW = host.clientWidth; render(); } });
+  }
+  if ($('#abl-chart')) ablChart($('#abl-chart'));
+
+  /* ======================================================= Table 5: generalization as dumbbells (search -> held-out) */
+  const T5 = { rows: [
+    { name: 'Qwen3-VL-30B, no search', short: 'no search', group: 'direct', snake: [10.7, 0.0], easy: [32.0, 32.5], hard: [29.0, 27.5], mhA: [10.0, 10.0], mhB: [10.0, 0.0] },
+    { name: 'Meta-Harness', group: 'base', snake: [100, 100], easy: [39.0, 40.0], hard: [36.0, 37.5], mhA: [75.0, 67.5], mhB: [75.0, 72.5] },
+    { name: 'GEPA', group: 'base', snake: [10, 5], easy: [41.0, 52.5], hard: [33.3, 34.0], mhA: [30, 20], mhB: [30, 30] },
+    { name: 'DGM', group: 'base', snake: [100, 100], easy: [40, 40], hard: [38.5, 45.0], mhA: [72.5, 55.0], mhB: [72.5, 65.0] },
+    { name: 'ShinkaEvolve', group: 'base', snake: [8, 5], easy: [40.5, 40.0], hard: [34.0, 42.5], mhA: [20, 10], mhB: [20, 27.5] },
+    { name: 'OpenEvolve', group: 'base', snake: [10, 5], easy: [36.5, 30.0], hard: [37.0, 35.0], mhA: [27.5, 17.5], mhB: [27.5, 15.0] },
+    { name: 'Harness-MAP k₀ = 2', short: 'k₀ = 2', group: 'ours', snake: [100, 100], easy: [46.5, 35.0], hard: [38.0, 32.5], mhA: [75, 57.5], mhB: [75, 62.5] },
+    { name: 'Harness-MAP k₀ = 4', short: 'k₀ = 4', group: 'ours', snake: [100, 100], easy: [44.0, 50.0], hard: [55.0, 60.0], mhA: [85, 70], mhB: [85, 57.5] },
+    { name: 'Harness-MAP k₀ = 8', short: 'k₀ = 8', group: 'ours', snake: [100, 100], easy: [45.5, 45.0], hard: [41.0, 25.0], mhA: [82.5, 75], mhB: [82.5, 60] },
+    { name: 'Harness-MAP k₀ = 16', short: 'k₀ = 16', group: 'ours', snake: [100, 100], easy: null, hard: null, mhA: [90, 72.5], mhB: [90, 47.5] },
+    { name: 'Harness-MAP k₀ = 32', short: 'k₀ = 32', group: 'ours', snake: [100, 100], easy: null, hard: null, mhA: [40, 35], mhB: [40, 50] }],
+    panels: [{ id: 'snake', title: 'SpatialWorld Snake · SR', held: 'unseen seeds' }, { id: 'easy', title: 'SimWorld-MMNav easy · SubSR', held: '10 unseen maps' }, { id: 'hard', title: 'SimWorld-MMNav hard · SubSR', held: '10 unseen maps' }, { id: 'mhA', title: 'MiniHack · holdout A', held: 'unseen seeds, same tasks' }, { id: 'mhB', title: 'MiniHack · holdout B', held: 'eight unseen tasks' }] };
+  function genCharts(host) {
+    function render() {
+      host.innerHTML = ''; const w = host.clientWidth || 900; const cols = Math.max(1, Math.min(5, Math.floor(w / 250))); const W = Math.floor((w - 12 * (cols - 1)) / cols) - 20;
+      T5.panels.forEach(p => {
+        const rows = T5.rows.filter(r => r[p.id]); const rh = 20, m = { l: 92, r: 14, t: 42, b: 26 }, H = m.t + rows.length * rh + m.b, fs = 10.5;
+        const xs = v => m.l + v / 100 * (W - m.l - m.r);
+        const h = el('div', 'chart'); host.appendChild(h);
+        const svg = svgEl('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': `${p.title}: search-split score and held-out score per method` }, h); svg.style.fontFamily = 'inherit'; svg.style.overflow = 'visible';
+        svgEl('text', { x: 4, y: 14, 'font-size': fs + 1.5, 'font-weight': 700, fill: 'var(--ink)' }, svg).textContent = p.title;
+        svgEl('text', { x: 4, y: 28, 'font-size': fs - 1, fill: 'var(--muted)' }, svg).textContent = `○ search split   ● ${p.held}`;
+        [0, 50, 100].forEach(v => { svgEl('line', { x1: xs(v), x2: xs(v), y1: m.t - 6, y2: H - m.b + 2, stroke: 'var(--line)' }, svg); svgEl('text', { x: xs(v), y: H - m.b + 14, 'text-anchor': 'middle', 'font-size': fs - 1, fill: 'var(--muted)' }, svg).textContent = v; });
+        const tip = el('div', 'tip'); h.appendChild(tip);
+        rows.forEach((r, i) => {
+          const y = m.t + i * rh + rh / 2, [a, b] = r[p.id], col = r.group === 'ours' ? 'var(--accent)' : r.group === 'base' ? 'var(--ink-2)' : 'var(--muted)';
+          svgEl('text', { x: m.l - 8, y: y + 3.5, 'text-anchor': 'end', 'font-size': fs, 'font-weight': r.group === 'ours' ? 700 : 400, fill: r.group === 'ours' ? 'var(--accent-ink)' : 'var(--ink-2)' }, svg).textContent = r.short || r.name;
+          svgEl('line', { x1: xs(a), x2: xs(b), y1: y, y2: y, stroke: col, 'stroke-width': 2, 'stroke-opacity': .55 }, svg);
+          svgEl('circle', { cx: xs(a), cy: y, r: 4.2, fill: 'var(--surface)', stroke: col, 'stroke-width': 2 }, svg);
+          svgEl('circle', { cx: xs(b), cy: y, r: 4.2, fill: col }, svg);
+          const hit = svgEl('rect', { x: m.l - 90, y: y - rh / 2, width: W - m.r - m.l + 90, height: rh, fill: 'transparent', tabindex: 0, role: 'img', 'aria-label': `${r.name}: search ${a}, held-out ${b}` }, svg);
+          const show = ev => { tip.innerHTML = `<b>${esc(r.name)}</b><div>search split<span>${a.toFixed(1)}</span></div><div>${esc(p.held)}<span>${b.toFixed(1)}</span></div><div>change<span>${(b - a) >= 0 ? '+' : ''}${(b - a).toFixed(1)}</span></div>`;
+            const bb = svg.getBoundingClientRect(), hb = h.getBoundingClientRect(); const sx = bb.left - hb.left + xs(Math.max(a, b)) * (bb.width / W); const left = sx > hb.width * 0.55;
+            tip.style.left = (sx + (left ? -10 : 10)) + 'px'; tip.style.top = (bb.top - hb.top + y * (bb.height / H) - 10) + 'px'; tip.classList.toggle('left', left); tip.classList.add('on'); };
+          hit.addEventListener('mouseenter', show); hit.addEventListener('focus', show); hit.addEventListener('mouseleave', () => tip.classList.remove('on')); hit.addEventListener('blur', () => tip.classList.remove('on'));
+        });
+      });
+    }
+    render(); let lastW = host.clientWidth; onResize(() => { if (host.clientWidth && Math.abs(host.clientWidth - lastW) > 30) { lastW = host.clientWidth; render(); } });
+  }
+  if ($('#gen-charts')) genCharts($('#gen-charts'));
+
+  /* ======================================================= harness anatomy: modules, roles, entry function (evolution packs) */
+  const ROLE_KEYS = ['controller', 'policy', 'recovery', 'perception', 'parse', 'spatial', 'prompt', 'toolcall', 'memory', 'validity', 'data', 'logic', 'tool'];
+  const roleColor = r => `var(--r-${ROLE_KEYS.includes(r) ? r : 'logic'})`;
+  function anatomyPanel(host, rows, pack) {
+    const A = DATA.anatomy && DATA.anatomy[pack];
+    if (!host || !A) { if (host) host.remove(); return { show() {} }; }
+    function show(i) {
+      const a = A[i], r = rows[i];
+      if (!a) { host.innerHTML = `<div class="an-head"><b>#${i} ${esc(r.label)}</b><span class="muted">no source available for this harness</span></div>`; return; }
+      const mods = a.modules, main = mods.find(m => m.main) || mods[0], others = mods.filter(m => m !== main);
+      const longest = Math.max(10, ...mods.map(m => m.name.length + 3));
+      const fs = longest > 18 ? 9.5 : 11, cw = Math.max(136, Math.ceil(longest * fs * 0.62) + 18);   // node width from the longest module name (monospace)
+      const cols = others.length > 6 ? 2 : 1, perCol = Math.ceil(others.length / cols) || 1, rowH = 54, nodeH = 46;
+      const mainW = Math.max(118, cw), W = 60 + mainW + 70 + cols * (cw + 26), H = Math.max(160, perCol * rowH + 24);
+      const pos = {}; pos[main.name] = [20 + mainW / 2, H / 2];
+      others.forEach((mo, k) => { const c = Math.floor(k / perCol), rr = k % perCol; const colX = 20 + mainW + 70 + cw / 2 + c * (cw + 26); const y0 = (H - perCol * rowH) / 2; pos[mo.name] = [colX, y0 + rr * rowH + rowH / 2]; });
+      const nodeW = n => (n.main ? mainW : cw);
+      let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Modules of ${esc(r.label)} with their roles and inter-module calls"><defs><marker id="an-arr-${pack}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink-2)"/></marker></defs>`;
+      a.edges.forEach(([s, t, n]) => {
+        const ps = pos[s], pt = pos[t]; if (!ps || !pt) return;
+        const sw = Math.min(3.2, 1 + 0.5 * n);
+        const [x1, y1] = ps, [x2, y2] = pt; const ms = mods.find(m => m.name === s), mt = mods.find(m => m.name === t);
+        let d;
+        if (Math.abs(x1 - x2) < 1) { const dir = y2 > y1 ? 1 : -1; d = `M${x1 + nodeW(ms) / 2},${y1} C${x1 + nodeW(ms) / 2 + 34},${y1} ${x2 + nodeW(mt) / 2 + 34},${y2} ${x2 + nodeW(mt) / 2},${y2 - dir * 4}`; }
+        else { const sx = x1 + (x2 > x1 ? nodeW(ms) / 2 : -nodeW(ms) / 2), ex = x2 + (x2 > x1 ? -nodeW(mt) / 2 - 2 : nodeW(mt) / 2 + 2); d = `M${sx},${y1} C${(sx + ex) / 2},${y1} ${(sx + ex) / 2},${y2} ${ex},${y2}`; }
+        svg += `<path d="${d}" fill="none" stroke="var(--ink-2)" stroke-opacity="${Math.abs(x2 - x1) > cw + 80 ? .35 : .7}" stroke-width="${sw}" marker-end="url(#an-arr-${pack})"><title>${esc(s)} → ${esc(t)}: ${n} call/import edge${n > 1 ? 's' : ''}</title></path>`;
+      });
+      mods.forEach(mo => {
+        const [x, y] = pos[mo.name], w = nodeW(mo), h = nodeH, nc = mo.components.length;
+        svg += `<g><rect x="${x - w / 2}" y="${y - h / 2}" width="${w}" height="${h}" rx="7" fill="var(--surface-2)" stroke="${roleColor(mo.role)}" stroke-width="${mo.main ? 2.4 : 1.8}"/><rect x="${x - w / 2}" y="${y - h / 2}" width="6" height="${h}" rx="3" fill="${roleColor(mo.role)}"/>` +
+          `<text x="${x + 3}" y="${y - 8}" text-anchor="middle" font-size="${fs}" font-weight="700" fill="var(--ink)" font-family="var(--mono)">${esc(mo.name)}.py</text>` +
+          `<text x="${x + 3}" y="${y + 4}" text-anchor="middle" font-size="9" fill="${roleColor(mo.role)}" font-weight="700">${esc(mo.main ? 'entry · ' : '')}${esc(mo.role)}</text>` +
+          `<text x="${x + 3}" y="${y + 15}" text-anchor="middle" font-size="8.5" fill="var(--muted)">${nc} component${nc === 1 ? '' : 's'} · ${mo.lines} lines</text>` +
+          `<title>${esc(mo.file)}: ${mo.components.map(c => c[0] + ' (' + c[1] + ')').join(', ')}</title></g>`;
+      });
+      svg += '</svg>';
+      const rolesPresent = Array.from(new Set(mods.flatMap(m => m.components.map(c => c[1]))));
+      const files = mods.map(m => `<span>${esc(m.file)} <i>${m.lines}</i></span>`).join('');
+      const diff = r.diff ? ` · diff vs parent: ${r.diff.files} file${r.diff.files === 1 ? '' : 's'}, +${r.diff.insertions} / −${r.diff.deletions}` : '';
+      host.innerHTML = `<div class="an-head"><b>#${i} ${esc(r.label)}</b><span class="muted">${esc(a.heading || '')}</span></div>
+        <div class="an-grid">
+          <div><div class="ph">Component graph · ${mods.length} module${mods.length === 1 ? '' : 's'}<span>${a.n_components} components, ${a.n_edges} edges</span></div>${svg}
+            <div class="an-legend">${rolesPresent.map(ro => `<span><i style="background:${roleColor(ro)}"></i>${esc(ro)}</span>`).join('')}</div>
+            <div class="an-files">${files}</div></div>
+          <div><div class="ph">${a.entry ? 'Entry function' : 'Source'}<span>${a.entry ? esc(a.entry.file + ' · ' + a.entry.name) : ''}</span></div>
+            <pre class="code">${a.entry ? esc(a.entry.src) : ''}</pre>
+            <p class="note small muted" style="margin:8px 0 0">${a.entry && a.entry.lines > 22 ? `First lines of a ${a.entry.lines}-line function. ` : ''}Component roles follow the release’s rule table (harness_map/qd/descriptors.py); edges are calls, references and imports between modules${esc(diff)}.</p></div>
+        </div>`;
+    }
+    return { show };
+  }
+
+  /* ======================================================= case analysis: the k0 = 4 arm module by module, and five champions */
+  const LADDER = [
+    { cand: 'candidate N03', score: 0.350, mod: '<code>tools/chart.py</code>: fixed spatial logic in Chart.observe', code: "def act(self, obs, prev_action):\n    self._refresh_legal(...)\n    update_observation(...)\n    chart = chart_mod.parse_map(...)\n    if self.last_how in ('kick-dir', 'modal'):\n        observe(...)\n    self._rung(...)\n    if action is not None:\n        return self._emit(response, action, how)" },
+    { cand: 'candidate N05', score: 0.600, mod: '<code>push_plan</code> in harness.py: a Sokoban BFS planner', code: "def act(self, obs, prev_action):\n    update_observation(...)\n    chart = parse_map(...)\n    if planned is not None:\n        # zero-token call\n        return self.emit(shell, planned, 'push-tape')" },
+    { cand: 'candidate N15', score: 0.720, mod: '<code>tools/quest.py</code>: the QuestErrand interaction protocol', code: "def act(self, obs, prev_action):\n    update_observation(...)\n    armed = quest_mod.armed(...)\n    if armed:\n        ans = prompt(...)\n        if ans is not None:\n            return self._shell(*ans)" },
+    { cand: 'candidate N21', score: 0.775, mod: 'recombined from r016_0: the quest and push modules in one dispatch', code: "def act(self, obs, prev_action):\n    for module in self.modules:\n        plan = claim(...)\n        if plan is not None and _no_call(plan[1]):\n            return self._shell(action, how)" },
+    { cand: 'candidates N39–N47', score: 0.850, from: 0.800, mod: 'VolleyOwner and MeleeOwner added to the owner ladder', code: "def act(self, obs, prev_action):\n    tick(...)\n    plan = self.claim_step(...)\n    if plan is not None:\n        out = self.emit(...)" }];
+  const CHAMPS = [
+    { k: 2, score: 0.750, para: '8-rung VetoBoard', code: "def act(self, obs, prev_action):\n    self._mount(...)\n    frame = parse_frame(...)\n    planner = StepPlanner(...)\n    self._arbitrate(...)\n    if need is not None:\n        response = generate(...)" },
+    { k: 4, score: 0.850, para: '9-entry priority owner ladder', code: "def act(self, obs, prev_action):\n    plan = self.claim_step(...)\n    if plan is not None:\n        out = self.emit(...)" },
+    { k: 8, score: 0.825, para: 'Situational routing + LLM', code: "def act(self, obs, prev_action):\n    self._classify(...)\n    messages = build_messages(...)\n    response = generate(...)\n    action = self._match(...)" },
+    { k: 16, score: 0.900, para: 'Pure compiled symbolic logic', llm: 'zero LLM calls', zero: true, top: true, code: "def act(self, obs, prev_action):\n    fr = parse_glyph_map(...)\n    c = Quest.armed(...)\n    for solver in (Sokoban, Quest, Chart):\n        got = getattr(solver, 'solve')(...)\n        if got is not None:\n            return got" },
+    { k: 32, score: 0.400, para: 'Lexicographic arbiter key', llm: 'most token-expensive', code: "def act(self, obs, prev_action):\n    messages = build_messages(...)\n    response = generate(...)" }];
+  if ($('#case-ladder')) $('#case-ladder').innerHTML = LADDER.map(r => `<div class="rung"><span class="cand">${esc(r.cand)}</span><span class="score">${r.score.toFixed(3)}${r.from ? `<small>from ${r.from.toFixed(3)}</small>` : ''}</span><div class="bar"><i style="width:${r.score * 100}%"></i></div><span class="mod">${r.mod}</span><pre class="code">${esc(r.code)}</pre></div>`).join('');
+  if ($('#case-champions')) $('#case-champions').innerHTML = CHAMPS.map(c => `<div class="champ${c.top ? ' top' : ''}"><span class="k">k₀ = ${c.k}</span><div class="score" style="color:${c.top ? 'var(--accent-ink)' : 'var(--ink)'}">${c.score.toFixed(3)}</div><div class="para">${esc(c.para)}</div>${c.llm ? `<span class="llm${c.zero ? ' zero' : ''}">${esc(c.llm)}</span>` : ''}<pre class="code">${esc(c.code)}</pre></div>`).join('');
 
   /* ======================================================= lineage chart (evolution packs) */
   function lineageChart(host, L, opts) {
@@ -538,33 +761,44 @@
     const LB = DATA.lineages.balrog, VB = DATA.videos.balrog.mazewalk;
     if ($('#chart-balrog') && VB.length === LB.rows.length) {
       let chart;
+      const an = anatomyPanel($('#anat-balrog'), LB.rows, 'balrog');
       const pl = player($('#player-balrog'), VB, {
         caption: (e, i) => `<b>#${i} ${esc(e.label)}</b> · search success ${fmt(e.score)} · MazeWalk-15x15 episode 00: ${esc(e.outcome)} ${badge(e, LB.rows[i])}`,
-        onChange: i => chart && chart.setSelected(i, true) });
+        onChange: i => { if (chart) chart.setSelected(i, true); an.show(i); } });
       chart = lineageChart($('#chart-balrog'), LB, { metric: 'success', ylabel: 'success on the 40 search episodes', clickable: true,
-        hint: 'Hover a harness for its score and diff; click it to watch the episode it played.', onSelect: i => pl.set(i, true) });
-      chart.setSelected(LB.rows.findIndex(r => r.best), true);
-      pl.set(LB.rows.findIndex(r => r.best), false);
+        hint: 'Hover a harness for its score and diff; click it to see its structure and watch the episode it played.', onSelect: i => pl.set(i, true) });
+      const bi = LB.rows.findIndex(r => r.best); chart.setSelected(bi, true); pl.set(bi, false);
     }
     const gameMeta = { maze3d_pro: ['Maze3D-Pro', 'level 7'], block3d: ['Block3D', 'level 12'], maze: ['Maze', 'level 1'], snake: ['Snake', 'seed 20'], rubik: ['Rubik', null] };
     Object.keys(gameMeta).forEach(g => {
       const L = DATA.lineages['games_' + g]; const host = $('#chart-' + g); if (!L || !host) return;
       const entries = (DATA.videos.games[g] || []).filter(e => e.i != null);
       const ph = $('#player-' + g);
+      const an = anatomyPanel($('#anat-' + g), L.rows, 'games_' + g);
+      const bi = L.rows.findIndex(r => r.best);
       if (ph && entries.length === L.rows.length) {
         let chart;
         const pl = player(ph, entries, {
           caption: (e, i) => `<b>#${i} ${esc(e.label)}</b> · search score ${fmt(e.score)} · ${gameMeta[g][0]} ${gameMeta[g][1]}: ` +
             (e.episode_score === 1 ? `solved in ${e.steps} steps` : `not solved in ${e.steps} steps`) + ' ' + badge(e, L.rows[i]),
-          onChange: i => chart && chart.setSelected(i, true) });
+          onChange: i => { if (chart) chart.setSelected(i, true); an.show(i); } });
         chart = lineageChart(host, L, { metric: 'score', ylabel: 'score on the search levels', clickable: true,
-          hint: 'Hover a harness for its score and diff; click it to watch the level it played.', onSelect: i => pl.set(i, true) });
-        const bi = L.rows.findIndex(r => r.best); chart.setSelected(bi, true); pl.set(bi, false);
+          hint: 'Hover a harness for its score and diff; click it to see its structure and watch the level it played.', onSelect: i => pl.set(i, true) });
+        chart.setSelected(bi, true); pl.set(bi, false);
       } else {
-        lineageChart(host, L, { metric: 'score', ylabel: 'score on the search levels', clickable: false });
+        const chart = lineageChart(host, L, { metric: 'score', ylabel: 'score on the search levels', clickable: true,
+          hint: 'Hover a harness for its score and diff; click it to see its structure.', onSelect: i => an.show(i) });
+        chart.setSelected(bi, true); an.show(bi);
       }
     });
     const LN = DATA.lineages.nav_hard;
-    if (LN && $('#chart-nav')) lineageChart($('#chart-nav'), LN, { metric: 'SubtaskSR', ylabel: 'Subtask SR on the 50 search tasks', clickable: false });
+    if (LN && $('#chart-nav')) {
+      const an = anatomyPanel($('#anat-nav'), LN.rows, 'nav_hard');
+      const chart = lineageChart($('#chart-nav'), LN, { metric: 'SubtaskSR', ylabel: 'Subtask SR on the 50 search tasks', clickable: true,
+        hint: 'Hover a harness for its score and diff; click it to see its structure.', onSelect: i => an.show(i) });
+      const bi = LN.rows.findIndex(r => r.best); chart.setSelected(bi, true); an.show(bi);
+    }
+    const LE = DATA.lineages.nav_easy;
+    if (LE && $('#chart-nav-easy')) lineageChart($('#chart-nav-easy'), LE, { metric: 'SubtaskSR', ylabel: 'Subtask SR on the 50 search tasks', clickable: false });
   }
 })();
