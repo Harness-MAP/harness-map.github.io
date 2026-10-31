@@ -21,7 +21,7 @@
 
 <nav class="topnav" aria-label="Page">
   <a class="brand" href="#top"><img src="static/img/icon-qd-map.svg" alt="" width="26" height="26">Harness-MAP</a>
-  <div class="links"><a href="#idea">Idea</a><a href="#method">Method</a><a href="#results">Results</a><a href="#evolution">Evolution</a><a href="#cases">Cases</a><a href="#bibtex">BibTeX</a></div>
+  <div class="links"><a href="#overview">Overview</a><a href="#method">Method</a><a href="#results">Results</a><a href="#evolution">Evolution</a><a href="#cases">Cases</a><a href="#bibtex">BibTeX</a></div>
   <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch between light and dark background" title="Light / dark">
     <svg class="sun" viewBox="0 0 24 24"><path d="M12 17a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-2a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-1-13h2v3h-2V2zm0 17h2v3h-2v-3zM2 11h3v2H2v-2zm17 0h3v2h-3v-2zM4.2 5.6l1.4-1.4 2.1 2.1-1.4 1.4-2.1-2.1zm12.1 12.1 1.4-1.4 2.1 2.1-1.4 1.4-2.1-2.1zM4.2 18.4l2.1-2.1 1.4 1.4-2.1 2.1-1.4-1.4zM16.3 6.3l2.1-2.1 1.4 1.4-2.1 2.1-1.4-1.4z"/></svg>
     <svg class="moon" viewBox="0 0 24 24"><path d="M14.5 2.5a9.5 9.5 0 1 0 7 15.9A8 8 0 0 1 14.5 2.5zm-1.9 2.2a10 10 0 0 0 6.7 13.2 7.5 7.5 0 1 1-6.7-13.2z"/></svg>
@@ -32,8 +32,8 @@
   <button type="button" class="sidetoc-close" aria-label="Hide the contents list">×</button>
   <div class="sidetoc-title">On this page</div>
   <ul>
-    <li><a href="#idea">The idea</a></li>
-    <li><a href="#method">Method</a><ul><li><a href="#lab-factor">Factorizing a harness</a></li><li><a href="#lab-loop">Searching over the map</a></li><li><a href="#lab-adapt">Adapting map resolution</a></li></ul></li>
+    <li><a href="#overview">Overview</a></li>
+    <li><a href="#method">Method</a><ul><li><a href="#lab-factor">Factorizing a harness</a></li><li><a href="#lab-loop">Searching over the map</a></li><li><a href="#lab-traj">A real search trajectory</a></li><li><a href="#lab-adapt">Adapting map resolution</a></li></ul></li>
     <li><a href="#results">Results</a><ul><li><a href="#res-table1">Budget-matched results</a></li><li><a href="#lab-dyn">Sample efficiency</a></li><li><a href="#lab-res">Resolution dynamics</a></li><li><a href="#lab-qd">Quality-diversity</a></li><li><a href="#lab-abl">Descriptor ablation</a></li><li><a href="#lab-gen">Generalization</a></li></ul></li>
     <li><a href="#evolution">Evolution packs</a></li>
     <li><a href="#cases">Case analysis</a></li>
@@ -55,50 +55,40 @@
     <p class="affil">Carnegie Mellon University</p>
     <p class="venue">Preprint · 2026</p>
     <div class="buttons">
-      <a class="btn" id="btn-paper" href="static/paper/harness-map.pdf"><svg viewBox="0 0 24 24"><path d="M6 2h8l6 6v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm7 1.5V9h5.5L13 3.5zM8 13h8v1.5H8V13zm0 3h8v1.5H8V16zm0-6h3v1.5H8V10z"/></svg>Paper (PDF)</a>
+      <a class="btn" id="btn-paper" href="static/paper/harness-map.pdf" data-arxiv=""><svg viewBox="0 0 24 24"><path d="M6 2h8l6 6v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm7 1.5V9h5.5L13 3.5zM8 13h8v1.5H8V13zm0 3h8v1.5H8V16zm0-6h3v1.5H8V10z"/></svg>arXiv</a>
       <a class="btn" href="https://github.com/Harness-MAP/harness-evolution"><svg viewBox="0 0 24 24"><path d="M12 .5A11.5 11.5 0 0 0 .5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56v-2.1c-3.2.7-3.87-1.37-3.87-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.19 1.76 1.19 1.03 1.76 2.69 1.25 3.35.96.1-.75.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.79 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.12 3.05.74.8 1.19 1.83 1.19 3.09 0 4.42-2.7 5.39-5.27 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5z"/></svg>Code</a>
-      <a class="btn ghost" href="https://github.com/Harness-MAP/harness-evolution/tree/main/examples"><svg viewBox="0 0 24 24"><path d="M4 4h16a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zm1 2v2h2V6H5zm0 4v2h2v-2H5zm0 4v2h2v-2H5zm12-8v2h2V6h-2zm0 4v2h2v-2h-2zm0 4v2h2v-2h-2zM9 6v12h6V6H9z"/></svg>Evolution packs</a>
-      <a class="btn ghost" href="#bibtex"><svg viewBox="0 0 24 24"><path d="M7 6h3.5L9 11H7V6zm7 0h3.5L16 11h-2V6zM7 13h3v5H7v-5zm7 0h3v5h-3v-5z"/></svg>BibTeX</a>
+      <a class="btn" id="btn-x" href="https://x.com/intent/post?text=Harness-MAP%3A%20Budget-Efficient%20Harness%20Search%20via%20Structure-Token%20Factorization&amp;url=https%3A%2F%2Fharness-map.github.io%2F"><svg viewBox="0 0 24 24"><path d="M17.5 3h3.1l-6.8 7.8L21.8 21h-6.3l-4.9-6.4L5 21H1.9l7.3-8.3L1.5 3h6.4l4.4 5.9L17.5 3zm-1.1 16.2h1.7L7 4.7H5.2l11.2 14.5z"/></svg>X</a>
     </div>
   </div>
 </header>
 
-<!-- ============================================================ THE IDEA -->
-<section id="idea" class="section idea">
+<!-- ============================================================ OVERVIEW -->
+<section id="overview" class="section idea">
   <div class="wrap wide">
-    <p class="eyebrow center">The idea</p>
+    <p class="eyebrow center">Overview</p>
     <div class="story">
-      <div class="story-card q">
-        <span class="label">The question</span>
-        <p class="big">How can we efficiently search for a <b>diverse set of high-quality harnesses</b> under a <b>tight evaluation budget</b>?</p>
-        <p>Automating harness evolution via naive meta-agent search is prohibitively expensive: a full search loop may require hundreds of meta-agent calls, and a single candidate evaluation can take minutes to hours. A core issue in prior work is the unstructured space, where a harness has no coordinates, so a search step has no size and a search trajectory has no coverage.</p>
+      <div class="story-text">
+        <div class="story-item q"><span class="label">The question</span><p class="big">How can we efficiently search for a <b>diverse set of high-quality harnesses</b> under a <b>tight evaluation budget</b>?</p></div>
+        <div class="story-arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M11 4h2v12.2l4.6-4.6 1.4 1.4-7 7-7-7 1.4-1.4 4.6 4.6z"/></svg></div>
+        <div class="story-item a"><span class="label">The idea</span><p class="big">Structure the search space by <b>factorizing <span class="hi-s">graph-level program structures</span> from <span class="hi-t">token-level implementations</span></b>.</p></div>
       </div>
-      <div class="story-card a">
-        <span class="label">The idea</span>
-        <p class="big">Structure the search space by <b>factorizing graph-level program structures from token-level implementations</b>.</p>
-        <p>Bilevel search over this <b class="hi-s">structure</b>–<b class="hi-t">token</b> representation space illuminates an archive of diverse, high-quality harnesses. The map also enables a resolution-adaptive search strategy: partitions with high fitness variance are sub-split, and ineffective refinements are retracted, so evaluation budget concentrates where deeper search yields performance gains.</p>
-      </div>
-    </div>
-
-    <figure class="teaser-fig">
+      <figure class="teaser-fig">
       <div class="figbar plain"><span>Figure 1</span><a class="textbtn" href="static/img/fig1_teaser_method.svg" target="_blank" rel="noopener">View full figure <svg viewBox="0 0 24 24"><path d="M14 4h6v6h-2V7.4l-5.3 5.3-1.4-1.4L16.6 6H14V4zM4 14h2v2.6l5.3-5.3 1.4 1.4L7.4 18H10v2H4v-6z"/></svg></a></div>
       __TEASER_SVG__
       <figcaption><b>Figure 1.</b> Conceptual overview of Harness-MAP. <b>(a)</b> Naive search rapidly collapses into narrow local lineages over a metric-free search space. <b>(b)</b> Harness-MAP (Ours) factorizes candidates into a structure-token space and dynamically sub-splits high-variance cells (at t+1) with resolution-adaptive search. The paper's panel (c), performance growth on SpatialWorld-3DGames against Meta-Harness (<a href="https://arxiv.org/abs/2603.28052" rel="noopener">Lee et al., 2026</a>) and Map-Elites (<a href="https://arxiv.org/abs/1504.04909" rel="noopener">Mouret &amp; Clune, 2015</a>)-based OpenEvolve (<a href="https://github.com/codelion/openevolve" rel="noopener">Sharma, 2025</a>), is the interactive chart in the <a href="#lab-dyn">results</a>.</figcaption>
     </figure>
+    </div>
 
-    <p class="overview-description">Harness-MAP is a budget-efficient harness search method built on <b>structure-token factorization</b>. It gives every harness <b class="hi-s">coordinates</b> from its program structure and token-level implementation, keeps an archive of the best harness in each cell of the resulting <b>map</b>, and adapts the map's <b class="hi-t">resolution</b> while searching, sub-splitting high-variance cells and retracting refinements that do not pay.</p>
     <details class="abstract">
       <summary>Read the abstract <svg viewBox="0 0 24 24"><path d="M12 15.5 5.5 9l1.4-1.4 5.1 5.1 5.1-5.1L18.5 9z"/></svg></summary>
       <div class="abstract-copy"><p>Automating harness evolution via naive meta-agent search is <mark>prohibitively expensive</mark>, requiring hundreds of meta-agent calls and minutes-to-hours per evaluation. How can we efficiently search for a diverse set of high-quality harnesses under a tight evaluation budget? To address this, we introduce Harness-MAP to structure the search space, <mark>factorizing graph-level program structures from token-level implementations</mark>. Bilevel search over this structure-token representation space illuminates an archive of diverse, high-quality harnesses. The map also enables a <mark>resolution-adaptive search strategy</mark> that navigates this space efficiently, <mark>sub-splitting partitions with high fitness variance while retracting ineffective refinements</mark>. Across three interactive spatial navigation benchmarks with the frozen Qwen3-VL-30B-A3B-Instruct backbone model, our search approach rapidly achieves performance leaps under minimal evaluation budgets: <mark>10.7% → 100.0% on SpatialWorld-3dgames (39 evals)</mark>, <mark>10.0% → 90.0% on BALROG-MiniHack (41 evals)</mark>, and <mark>32.5% → 46.5% on SimWorld-Robotics (6 evals)</mark>. Harness-MAP <mark>outperforms prior harness evolution methods across both search and held-out tasks</mark>, establishing factorized representations as an effective Quality-Diversity paradigm for budget-aware agent harness search.</p></div>
     </details>
 
-    <p class="backbone">Every number on this page comes from the same frozen <code>Qwen3-VL-30B-A3B-Instruct</code>; only the harness around it changes.</p>
-
     <div class="metrics" aria-label="Headline results from Table 1">
       <div><span class="value"><span class="from">10.7%</span><span class="arrow">→</span>100.0<span>%</span></span><span class="label">SpatialWorld-3DGames</span><span class="detail">task success · 39 harness evaluations</span></div>
       <div><span class="value"><span class="from">10.0%</span><span class="arrow">→</span>90.0<span>%</span></span><span class="label">BALROG-MiniHack</span><span class="detail">task success · 41 harness evaluations</span></div>
-      <div><span class="value"><span class="from">32.0%</span><span class="arrow">→</span>46.5<span>%</span></span><span class="label">SimWorld-MMNav · easy</span><span class="detail">subtask success · budget N = 16</span></div>
-      <div><span class="value"><span class="from">29.0%</span><span class="arrow">→</span>55.5<span>%</span></span><span class="label">SimWorld-MMNav · hard</span><span class="detail">subtask success · budget N = 16</span></div>
+      <div><span class="value"><span class="from">32.0%</span><span class="arrow">→</span>46.5<span>%</span></span><span class="label">SimWorld-MMNav (easy)</span><span class="detail">subtask success · 16 harness evaluations</span></div>
+      <div><span class="value"><span class="from">29.0%</span><span class="arrow">→</span>55.5<span>%</span></span><span class="label">SimWorld-MMNav (hard)</span><span class="detail">subtask success · 16 harness evaluations</span></div>
     </div>
   </div>
 </section>
@@ -108,18 +98,7 @@
   <div class="wrap wide">
     <div class="section-heading split">
       <div><p class="eyebrow">Method</p><h2>A factorized map, searched at adaptive resolution.</h2></div>
-      <p class="lead">Harness-MAP structures harness candidates into a factorized representation space and searches across two levels: high-level steps refine the structural skeleton shared across a family of harnesses, while low-level steps flesh out that skeleton with token-level implementations.</p>
-    </div>
-
-    <div class="overview">
-      <p>Given a frozen foundation model <i>M</i> and a task distribution, a harness <i>H</i> is the executable program that turns <i>M</i> into a functional agent: executing it on a task yields a trajectory scored by the task reward, and harness search seeks the harness with the highest expected reward. Existing harness evolution paradigms conduct this search directly over the raw, token-level space of possible harnesses, relying on an LLM proposer to iteratively edit low-level programs. Since that unstructured space lacks coordinate metrics, they search blindly, without insight into unexplored regions or search coverage.</p>
-      <p>Harness-MAP instead restructures the space into a map of cell partitions and maintains an archive that stores, for each cell, the elite candidate with best-so-far performance. Occupied cells provide an explicit view of search coverage and fitness distribution, and mapping candidates to this coordinate space makes search step sizes measurable along visible trajectories: intra-cell movement for minor edits, inter-cell movement for major structural shifts.</p>
-    </div>
-
-    <div class="steps3">
-      <a class="step" href="#lab-factor"><span class="idx">Factorize</span><h3>A factorized representation space.</h3><p>Decoupling graph-level program structures from token-level implementations forms a coordinate space where search step sizes and exploration coverage become explicitly quantifiable.</p><span class="go">Harness-MAP construction</span></a>
-      <a class="step" href="#lab-loop"><span class="idx">Search</span><h3>LLM-guided search over the map.</h3><p>The loop continuously selects elites across the map, diagnoses local failure modes, and generates targeted candidates to expand coverage and optimize performance.</p><span class="go">Searching over the map</span></a>
-      <a class="step" href="#lab-adapt"><span class="idx">Adapt</span><h3>Resolution-adaptive search.</h3><p>Regions exhibiting high performance variance are sub-divided for deeper exploration, while ineffective refinements are retracted, at zero evaluation cost.</p><span class="go">Adapting map resolution</span></a>
+      <p class="lead wide">Harness-MAP is a budget-efficient harness search method built on <b>structure-token factorization</b>. It gives every harness <b class="hi-s">coordinates</b> from its program structure and token-level implementation, keeps an archive of the best harness in each cell of the resulting <b>map</b>, and adapts the map's <b class="hi-t">resolution</b> while searching, sub-splitting high-variance cells and retracting refinements that do not pay.</p>
     </div>
 
     <!-- ---- construction (§3.2) -->
@@ -152,12 +131,18 @@
       <div class="budget"><span class="formula">N = ⌈<i>m</i>·k₀⌉ + G · P · C</span><span class="muted">Steps 1–6 repeat for G generations with P parents and C children each. Every method in the paper is compared at the same N, so initialization counts against the budget too.</span></div>
     </div>
 
+    <!-- ---- a real search trajectory -->
+    <div class="lab" id="lab-traj">
+      <div class="lab-head"><div><span class="micro">The search, step by step</span><h3>A real search trajectory</h3></div><span class="lab-note">BALROG-MiniHack · k₀ = 16</span></div>
+      <p>The run behind the BALROG-MiniHack entry of Table 1: adaptive resolution from k₀ = 16 cells, P = 4 parents and C = 1 child per step, N = 48 evaluations in total, best-so-far success 0.900 at evaluation 41. Every dot is an evaluated harness at its structure-token coordinates, coloured by success; the cells are the archive's partitions at that step. Step through the search to watch coverage grow, a high-variance cell sub-split, one split revert, and the lineage of the best harness cross the map.</p>
+      <div class="traj" id="traj"></div>
+      <p class="caption">Tiles are the archive's cells, ordered by the first principal component of the 16 initial centroids; where a dot sits inside a tile is not meaningful. Each dot is one evaluated harness coloured by its search-split success; a solid ring marks a cell elite, a dashed ring the children bred in the shown step, and the warm path the lineage of the best harness, cand_r68_0. A dashed outline marks a cell born by sub-splitting in that step; a reverted split is merged back into its parent. Hover a dot for its tasks. Source: the run's archive trace and driver log.</p>
+    </div>
+
     <!-- ---- adaptive resolution (§3.4) -->
     <div class="lab" id="lab-adapt">
       <div class="lab-head"><div><span class="micro">Adapting map resolution</span><h3>Sub-splitting as a localized, data-driven hypothesis</h3></div><span class="lab-note">§3.4, Algorithm 2</span></div>
       <p>Standard MAP-Elites uses static search granularity, which wastes evaluations on uniform cells while ignoring distinct candidates in high-variance ones. At each search step \(t\), Harness-MAP adapts cell resolution at zero evaluation cost. <b>Sub-splitting.</b> The single occupied cell with the largest internal fitness range is divided via local clustering CVT; the other cells remain unchanged, avoiding partitioning on flat and saturated task landscapes. <b>Reversion and memory.</b> A sub-split is retained only if the child cells outperform the original parent elite; otherwise the subdivision is reversed, and the parent cell logs a memory of its fitness distribution, avoiding redundant re-splitting until a novel candidate alters it.</p>
-      <div class="storyboard">__STORYBOARD_SVG__</div>
-      <p class="small muted">Dots are evaluated harnesses placed by their coordinates and coloured by fitness on the scale of Figure 1; ringed dots are cell elites; dashed rings are the children bred in that step.</p>
     </div>
   </div>
 </section>
@@ -378,6 +363,7 @@
 <script type="application/json" id="data-curves">__CURVES_JSON__</script>
 <script type="application/json" id="data-anatomy">__ANATOMY_JSON__</script>
 <script type="application/json" id="data-cases">__CASES_JSON__</script>
+<script type="application/json" id="data-traj">__TRAJ_JSON__</script>
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.js" crossorigin="anonymous" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/contrib/auto-render.min.js" crossorigin="anonymous" defer></script>
 <script src="static/js/main.js" defer></script>
