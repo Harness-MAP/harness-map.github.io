@@ -545,3 +545,10 @@ p.caption b{color:var(--ink-2)}
 .cellnote{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
 .cellnote span{font-size:13px;color:var(--ink-2);background:var(--surface-2);border-radius:999px;padding:4px 12px}
 .cellnote span b{font-family:var(--mono);font-size:11px;margin-right:6px;color:var(--accent-ink)}
+
+/* KaTeX's hidden MathML copy must not widen the page on narrow screens */
+.katex .katex-mathml{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(1px,1px,1px,1px);clip-path:inset(50%);white-space:nowrap}
+.katex-display{overflow-x:auto;overflow-y:hidden;max-width:100%}
+.pipeline li{min-width:0;overflow-wrap:anywhere}
+.pipeline li .katex{max-width:100%;display:inline-block;overflow-x:auto;overflow-y:hidden;vertical-align:middle}
+@media (max-width:560px){.pipeline{grid-template-columns:1fr}}
