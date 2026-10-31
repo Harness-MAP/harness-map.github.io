@@ -197,6 +197,27 @@
     return { setReveal(x) { const full = x >= xmax; crect.setAttribute('width', full ? W - m.l : Math.max(0, xs(x) - m.l + 1.5)); labels.style.opacity = full ? 1 : 0; reveal = full ? null : x; } };
   }
 
+  /* ======================================================= enlarge any chart in a lightbox */
+  function openLightbox(title, renderBig, grid) {
+    let lb = $('#lightbox');
+    if (!lb) {
+      lb = el('div', 'lightbox'); lb.id = 'lightbox';
+      lb.innerHTML = '<div class="lb-box" role="dialog" aria-modal="true"><div class="lb-head"><span class="lb-title"></span><button type="button" class="lb-close" aria-label="Close">×</button></div><div class="lb-body chart"></div></div>';
+      document.body.appendChild(lb);
+      lb.addEventListener('click', e => { if (e.target === lb || e.target.classList.contains('lb-close')) closeLightbox(); });
+      document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+    }
+    $('.lb-title', lb).textContent = title; const body = $('.lb-body', lb); body.innerHTML = ''; body.className = 'lb-body' + (grid ? ' grid' : ' chart');
+    lb.classList.add('on'); document.body.style.overflow = 'hidden';
+    const w = Math.min(1160, window.innerWidth - 48) - 34; renderBig(body, grid ? Math.floor((w - 12) / 2) - 20 : w);
+  }
+  function closeLightbox() { const lb = $('#lightbox'); if (lb) { lb.classList.remove('on'); document.body.style.overflow = ''; } }
+  function zoomable(host, title, renderBig) {
+    const b = el('button', 'zoom-btn', '⤢'); b.type = 'button'; b.title = 'Enlarge'; b.setAttribute('aria-label', 'Enlarge ' + title);
+    b.addEventListener('click', () => openLightbox(title, renderBig)); host.appendChild(b);
+  }
+  const gridCols = (w, n) => (n >= 5 ? (w >= 860 ? (n === 5 ? 5 : 4) : w >= 520 ? (n === 5 ? 3 : 2) : w >= 360 ? 2 : 1) : n === 2 ? (w >= 480 ? 2 : 1) : n >= 3 ? (w >= 700 ? n : w >= 420 ? 2 : 1) : 1);
+
   /* ======================================================= search dynamics panel (Figures 3, 6, 7) */
   const BCOL = { 'Meta-Harness': 'var(--c-mh)', 'DGM': 'var(--c-dgm)', 'GEPA': 'var(--c-gepa)', 'ShinkaEvolve': 'var(--c-shinka)', 'OpenEvolve': 'var(--c-oe)' };
   const MODE_LABEL = { adaptive: 'adaptive', fixed: 'fixed', hier: 'hierarchical' };
@@ -242,18 +263,20 @@
     }
     function render(keepReveal) {
       const ps = panels(); const w = chartsEl.clientWidth || 900; const multi = ps.length > 1;
-      chartsEl.className = 'charts' + (multi ? ' multi' : '');
-      const cols = multi ? Math.max(1, Math.floor(w / 240)) : 1; const cw = multi ? Math.floor((w - 12 * (cols - 1)) / cols) - 18 : w - 20;
+      const cols = multi ? gridCols(w, ps.length) : 1; chartsEl.className = 'charts'; chartsEl.style.gridTemplateColumns = `repeat(${cols},1fr)`;
+      const cw = Math.floor((w - 12 * (cols - 1)) / cols) - 20;
       const sets = ps.map(p => { const b = block(p.key); return { p, b, series: seriesFor(b), anchor: anchorFor(b) }; });
       const cap = BENCH.find(b => b.id === st.bench).cap;
       xmax = st.axis === 'n' ? cap : Math.max(1, ...sets.flatMap(s => s.series.map(q => q.pts[q.pts.length - 1][0])));
       chartsEl.innerHTML = ''; charts = [];
       sets.forEach(s => {
         const host = el('div', 'chart'); chartsEl.appendChild(host);
-        charts.push(curveChart(host, { width: Math.max(220, cw), small: multi, title: s.p.title, series: s.series, anchor: s.anchor, axis: st.axis, xmax,
+        const cfg = { width: Math.max(200, cw), small: multi, title: s.p.title, series: s.series, anchor: s.anchor, axis: st.axis, xmax,
           xlabel: st.axis === 'n' ? 'harness evaluations N' : 'sequential proposal steps T',
           ylabel: st.bench === 'games' && st.view === 'agg' ? 'best-so-far success, mean over 5 games (%)' : isNav(st.bench) ? 'best-so-far subtask success (%)' : 'best-so-far success rate (%)',
-          aria: `${BENCH.find(b => b.id === st.bench).label} ${s.p.title || 'aggregate'}: best-so-far success against ${st.axis === 'n' ? 'evaluations' : 'steps'}` }));
+          aria: `${BENCH.find(b => b.id === st.bench).label} ${s.p.title || 'aggregate'}: best-so-far success against ${st.axis === 'n' ? 'evaluations' : 'steps'}` };
+        charts.push(curveChart(host, cfg));
+        zoomable(host, `${BENCH.find(b => b.id === st.bench).label}${s.p.title ? ' · ' + s.p.title : ''}`, (body, bw) => curveChart(body, Object.assign({}, cfg, { width: bw, small: false })));
       });
       slider.max = xmax; slider.min = st.axis === 'n' ? 1 : 0;
       if (!keepReveal || st.reveal == null || st.reveal > xmax) st.reveal = xmax;
@@ -340,10 +363,11 @@
   function resolutionPanel(root) {
     const D = DATA.curves; if (!D) return;
     const R = D.resolution, K0 = D.meta.k0, MODES = D.meta.modes;
+    const RB = [{ id: 'games', label: 'SpatialWorld-3DGames' }, { id: 'balrog', label: 'BALROG-MiniHack' }, { id: 'nav', label: 'SimWorld-MMNav' }];
     const st = { bench: 'games', show: { k0: Object.fromEntries(K0.map(k => [k, true])), mode: Object.fromEntries(MODES.map(m => [m, true])) } };
-    root.innerHTML = `<div class="toolbar"><div class="seg" data-ctl="bench">${BENCH.map(b => `<button type="button" data-v="${b.id}">${b.label}</button>`).join('')}</div></div>
-      <div class="legend-toggles" data-legend></div><div class="charts" data-charts></div><p class="note small muted" data-note></p>`;
-    const chartsEl = $('[data-charts]', root), legendEl = $('[data-legend]', root), noteEl = $('[data-note]', root);
+    root.innerHTML = `<div class="toolbar"><div class="seg" data-ctl="bench">${RB.map(b => `<button type="button" data-v="${b.id}">${b.label}</button>`).join('')}</div></div>
+      <div class="legend-toggles" data-legend></div><div class="charts" data-charts></div><div class="charts-tools" data-tools></div><p class="note small muted" data-note></p>`;
+    const chartsEl = $('[data-charts]', root), legendEl = $('[data-legend]', root), noteEl = $('[data-note]', root), toolsEl = $('[data-tools]', root);
     function legend() {
       legendEl.innerHTML = '';
       const add = (label, sw, on, cb) => { const b = el('button', '', `<i class="${sw.cls || ''}" style="--sw:${sw.color}"></i>${label}`); b.type = 'button'; b.setAttribute('aria-pressed', on ? 'true' : 'false'); b.addEventListener('click', () => { cb(); render(); }); legendEl.appendChild(b); };
@@ -353,19 +377,24 @@
       K0.forEach(k => add(`k${SUB[k]} = ${k}`, { color: `var(--k${k})` }, st.show.k0[k], () => { st.show.k0[k] = !st.show.k0[k]; }));
     }
     const toSeries = list => list.filter(s => st.show.mode[s.mode] && st.show.k0[s.k0]).map(s => ({ mode: s.mode, k0: s.k0, exact: s.exact, pts: s.pts, color: `var(--k${s.k0})`, label: `${MODE_LABEL[s.mode]}, k${SUB[s.k0]}` }));
+    const panelsFor = () => (st.bench === 'games' ? D.games.order.map(g => ({ title: D.games.names[g], series: toSeries(R.games[g] || []) }))
+      : st.bench === 'balrog' ? [{ title: 'BALROG-MiniHack', series: toSeries(R.balrog) }]
+      : [{ title: 'SimWorld-MMNav · easy', series: toSeries(R.nav_easy || []) }, { title: 'SimWorld-MMNav · hard', series: toSeries(R.nav_hard || []) }]);
+    function cfgFor(p, width, small) { return { width, small, title: p.title, series: p.series, xmax: Math.max(1, ...p.series.map(s => s.pts[s.pts.length - 1][0])), aria: `${p.title}: archive cells against sequential step` }; }
     function render() {
-      const w = chartsEl.clientWidth || 900;
-      const ps = st.bench === 'games' ? D.games.order.map(g => ({ title: D.games.names[g], series: toSeries(R.games[g] || []) })) : [{ title: null, series: toSeries(R[st.bench] || []) }];
-      const multi = ps.length > 1; chartsEl.className = 'charts' + (multi ? ' multi' : '');
-      const cols = multi ? Math.max(1, Math.floor(w / 240)) : 1; const cw = multi ? Math.floor((w - 12 * (cols - 1)) / cols) - 18 : Math.min(w - 20, 760);
+      const w = chartsEl.clientWidth || 900; const ps = panelsFor();
+      const cols = ps.length === 5 ? gridCols(w, 5) : (w >= 480 ? 2 : 1);     // BALROG's single panel takes one of two slots, so it matches the SimWorld panels
+      chartsEl.style.gridTemplateColumns = `repeat(${cols},1fr)`;
+      const cw = Math.floor((w - 12 * (cols - 1)) / cols) - 20, small = cols > 2;
       chartsEl.innerHTML = '';
-      ps.forEach(p => { const host = el('div', 'chart'); chartsEl.appendChild(host);
-        resChart(host, { width: Math.max(220, cw), small: multi, title: p.title, series: p.series, xmax: Math.max(1, ...p.series.map(s => s.pts[s.pts.length - 1][0])), aria: `${st.bench} ${p.title || ''} archive cells against sequential step` }); });
+      ps.forEach(p => { const host = el('div', 'chart'); chartsEl.appendChild(host); resChart(host, cfgFor(p, Math.max(200, cw), small));
+        zoomable(host, `${p.title} · archive cells vs. step T`, (body, bw) => resChart(body, cfgFor(p, bw, false))); });
+      toolsEl.innerHTML = '';
+      if (ps.length > 1) { const b = el('button', '', `Enlarge all ${ps.length} panels`); b.type = 'button'; b.addEventListener('click', () => openLightbox(`${RB.find(x => x.id === st.bench).label} · archive cells vs. step T`, (body, bw) => { ps.forEach(p => { const h = el('div', 'chart'); body.appendChild(h); resChart(h, cfgFor(p, bw, false)); }); }, true)); toolsEl.appendChild(b); }
       noteEl.innerHTML = st.bench === 'games'
         ? 'One archive per game. Faded lines were reconstructed from the driver log of an equivalent-configuration run; solid lines are the exact per-step trace. Fixed-resolution arms are flat by construction and are shown where a trace survives.'
         : st.bench === 'balrog' ? 'One archive per arm: a single harness plays all eight tasks, so the three modes are directly comparable. Fixed resolution never splits; hierarchical expansion grows the archive on a prepared ladder; adaptive resolution splits on fitness variance and retreats when a split did not pay.'
-        : st.bench === 'nav_hard' ? 'SimWorld-MMNav hard ran adaptive resolution only, at k₀ = 2, 4 and 8 within the N = 16 budget. The traces show the archive growing by one or two cells and retreating when a split did not pay (k₀ = 2 at step 3, k₀ = 4 at step 5).'
-        : 'The easy-setting driver persisted only the final archive, so each faded line joins the initial k₀ to the final cell count after the run\u2019s last step (k₀ = 2: 6 splits and 2 retreats ended at 4 cells; k₀ = 4: 2 splits, 1 retreat, 5 cells; k₀ = 8: 2 splits, 1 retreat, 9 cells).';
+        : 'SimWorld ran adaptive resolution only, at k₀ = 2, 4 and 8 within the N = 16 budget. Hard (right) has per-step traces: the archive grows by one or two cells and retreats when a split did not pay. The easy driver persisted only the final archive, so each faded line on the left joins the initial k₀ to the final cell count (k₀ = 2: 6 splits and 2 retreats, 4 cells; k₀ = 4: 2 splits, 1 retreat, 5 cells; k₀ = 8: 2 splits, 1 retreat, 9 cells).';
     }
     $$('.seg button', root).forEach(b => { b.classList.toggle('on', b.dataset.v === st.bench); b.addEventListener('click', () => { st.bench = b.dataset.v; $$('.seg button', root).forEach(x => x.classList.toggle('on', x === b)); render(); }); });
     legend(); render();
@@ -379,25 +408,29 @@
   const codeHtml = src => esc(src).replace(/«u»/g, '<u>').replace(/«\/u»/g, '</u>').replace(/«h»/g, '<mark>').replace(/«\/h»/g, '</mark>');
   /* graph: main node on top, the other modules in a row; `edges` are [from,to] module names, `stages` the pipeline order */
   function graphSvg(g) {
-    const kids = g.nodes.filter(n => n.name !== g.main), n = kids.length, rows = n > 4 ? 3 : 2, W = Math.max(260, 70 + 46 * n), H = 112 + rows * 11, top = [W / 2, 30], color = nd => (F2ROLES[nd.role] || `var(--r-${nd.role})` || 'var(--bar)');
-    const span = Math.min(W - 70, 52 * Math.max(1, n - 1)), x0 = W / 2 - span / 2;
-    const pos = {}; pos[g.main] = top; kids.forEach((k, i) => { pos[k.name] = [n > 1 ? x0 + i * span / (n - 1) : W / 2, 96]; });
-    let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="component graph"><defs><marker id="f2arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--bar)"/></marker></defs>`;
-    (g.edges || []).forEach(([a, b, dashed]) => { const p = pos[a], q = pos[b]; if (!p || !q) return;
-      if (p[1] === q[1]) { const dir = q[0] > p[0] ? 1 : -1; s += `<path d="M${p[0] + dir * 13},${p[1]} L${q[0] - dir * 13},${q[1]}" stroke="var(--bar)" stroke-width="1.6" fill="none" marker-end="url(#f2arr)"${dashed ? ' stroke-dasharray="3 3"' : ''}/>`; }
-      else s += `<path d="M${p[0]},${p[1] + 12} L${q[0]},${q[1] - 12}" stroke="var(--bar)" stroke-width="1.5" fill="none" marker-end="url(#f2arr)"${dashed ? ' stroke-dasharray="3 3"' : ''}/>`; });
+    const kids = g.nodes.filter(n => n.name !== g.main), n = kids.length, rows = n > 4 ? 3 : 2, fs = n > 5 ? 8.5 : 9.5;
+    const labelPx = Math.max(0, ...kids.map(k => (k.label || k.name).length)) * fs * 0.6, margin = Math.max(36, labelPx / 2 + 8);
+    const span = n > 1 ? (n > 5 ? 46 : 52) * (n - 1) : 0, W = Math.max(260, span + 2 * margin), H = 112 + rows * 11, top = [W / 2, 30], color = nd => (F2ROLES[nd.role] || `var(--r-${nd.role})`);
+    const x0 = (W - span) / 2;
+    const pos = {}, idx = {}; pos[g.main] = top; kids.forEach((k, i) => { pos[k.name] = [n > 1 ? x0 + i * span / (n - 1) : W / 2, 96]; idx[k.name] = i; });
+    let s = `<svg viewBox="0 0 ${W} ${H}" style="max-width:${Math.round(W * 1.45)}px" role="img" aria-label="component graph"><defs><marker id="f2arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--bar)"/></marker></defs>`;
+    (g.edges || []).forEach(([a, b, dashed]) => {
+      const p = pos[a], q = pos[b]; if (!p || !q || a === b) return; const dash = dashed === true ? ' stroke-dasharray="3 3"' : '';
+      if (p[1] !== q[1]) { const dir = q[1] > p[1] ? 1 : -1; s += `<path d="M${p[0]},${p[1] + dir * 12} L${q[0]},${q[1] - dir * 12}" stroke="var(--bar)" stroke-width="1.5" fill="none" marker-end="url(#f2arr)"${dash}/>`; }
+      else { const d = Math.abs(idx[a] - idx[b]), dir = q[0] > p[0] ? 1 : -1;
+        if (d === 1) s += `<path d="M${p[0] + dir * 13},${p[1]} L${q[0] - dir * 13},${q[1]}" stroke="var(--bar)" stroke-width="1.6" fill="none" marker-end="url(#f2arr)"${dash}/>`;
+        else s += `<path d="M${p[0]},${p[1] - 11} Q${(p[0] + q[0]) / 2},${p[1] - 16 - 6 * d} ${q[0]},${q[1] - 11}" stroke="var(--bar)" stroke-width="1.2" fill="none" marker-end="url(#f2arr)"${dash}/>`; }
+    });
     if (g.loop) { const [a, b] = g.loop; const p = pos[a], q = pos[b]; if (p && q) { s += `<path d="M${p[0]},${p[1] + 13} C${p[0] - 10},${p[1] + 42} ${q[0] + 10},${q[1] + 42} ${q[0]},${q[1] + 13}" stroke="var(--r-ctrl)" stroke-width="1.4" fill="none" marker-end="url(#f2arr)"/><text x="${(p[0] + q[0]) / 2}" y="${p[1] + 44}" text-anchor="middle" font-size="8.5" fill="var(--r-ctrl)" font-weight="700">${esc(g.loopLabel || '')}</text>`; } }
-    // per-step self loop on the main node
     s += `<path d="M${top[0] - 12},${top[1] + 2} C${top[0] - 34},${top[1] + 8} ${top[0] - 34},${top[1] - 20} ${top[0] - 9},${top[1] - 10}" stroke="var(--r-orch)" stroke-width="1.3" fill="none" marker-end="url(#f2arr)"/><text x="${top[0] - 36}" y="${top[1] + 2}" text-anchor="end" font-size="8.5" fill="var(--r-orch)" font-weight="700">per-step</text>`;
-    const fs = n > 5 ? 8.5 : 9.5;
-    g.nodes.forEach(nd => { const [x, y] = pos[nd.name], main = nd.name === g.main, idx = kids.indexOf(nd), below = main ? -1 : (idx % rows) + 1;
+    g.nodes.forEach(nd => { const [x, y] = pos[nd.name], main = nd.name === g.main, i = kids.indexOf(nd), below = main ? -1 : (i % rows) + 1;
       s += `<circle cx="${x}" cy="${y}" r="${main ? 12 : 10}" fill="${color(nd)}" stroke="var(--surface)" stroke-width="1.5"><title>${esc(nd.name)} · ${esc(nd.role)}</title></circle>`;
       s += `<text x="${x}" y="${main ? y - 20 : y + 12 + below * 11}" text-anchor="middle" font-size="${main ? 9.5 : fs}" font-weight="${main ? 700 : 500}" fill="var(--ink)" font-family="var(--mono)">${esc(nd.label || nd.name)}</text>`; });
     return s + '</svg>';
   }
   function f2card(c) {
     return `<div class="f2card ${c.cls || ''}"><div class="f2head"><span class="badge-letter">${esc(c.letter)}</span>${esc(c.name)}${c.rel ? `<span class="rel">${esc(c.rel)}</span>` : ''}${c.score != null ? `<span class="score">${c.scoreLabel || 'success'} ${c.score.toFixed(3)}</span>` : ''}</div>` +
-      `<div class="f2body"><div><div class="ph">Component graph</div>${graphSvg(c.graph)}</div><div><div class="ph">Pseudocode</div><pre class="code">${codeHtml(c.code)}</pre></div></div>` +
+      `<div class="f2body"><div><div class="ph">Component graph</div>${graphSvg(c.graph)}${c.files ? `<div class="f2files">${c.files}</div>` : ''}</div><div><div class="ph">${esc(c.codeLabel || 'Pseudocode')}</div><pre class="code">${codeHtml(c.code)}</pre></div></div>` +
       (c.note ? `<p class="f2note">${c.note}</p>` : '') +
       (c.entry ? `<details><summary>Actual entry function · ${esc(c.entry.file)} · ${esc(c.entry.name)}</summary><pre class="code">${esc(c.entry.src)}</pre></details>` : '') + '</div>';
   }
@@ -441,7 +474,7 @@
     const c = DATA.cases && DATA.cases[key]; const t = CASE_TEXT[key] || {}; extra = extra || {};
     if (!c) return `<div class="f2card ${extra.cls || ''}"><div class="f2head"><span class="badge-letter">${esc(extra.letter || '?')}</span>${esc(extra.name || key)}</div><div class="f2body"><div><div class="ph">Component graph</div><p class="small muted">Not resolvable from the archived ledger.</p></div><div><div class="ph">Pseudocode</div><pre class="code">${codeHtml(extra.code || t.code || '')}</pre></div></div>${extra.note ? `<p class="f2note">${extra.note}</p>` : ''}</div>`;
     return f2card({ letter: extra.letter || c.display.replace(/[^0-9k₀=]/g, '').slice(0, 3) || 'N', name: `${c.display} · ${c.label}`, cls: extra.cls || '', score: c.score, scoreLabel: 'success',
-      graph: caseGraph(c), code: extra.code || t.code || '', entry: c.entry,
+      graph: caseGraph(c), code: c.pseudo || extra.code || t.code || '', codeLabel: c.pseudo ? 'Pseudocode · entry functions, real arguments' : 'Pseudocode', entry: c.entry,
       note: (extra.note || t.mod || (t.para ? `<b>${esc(t.para)}</b>` : '')) + (c.parent ? ` · parent ${esc(c.parent.replace(/cand_r0*(\d+)_/, 'cand_r$1_'))}${c.parent_score != null ? ` (${c.parent_score.toFixed(3)})` : ''}` : '') });
   }
   function caseBlocks(host) {
@@ -457,17 +490,23 @@
       { idx: 'Finding 3 · Case 3, failure modes', h: 'Search failures stem from excessively fine resolution and wasteful parent selection.',
         finding: 'Uniform selection repeatedly samples low-scoring cells, wasting compute and capping k₀ = 32 performance at 0.400. Overly permissive rules in new modules incorrectly override the LLM fallback logic, causing severe performance drops (0.900 → 0.225).',
         text: '<b>Allocation stalls</b> (arm k₀ = 32, capped at 0.400): candidates N44–N46 spend their iterations absorbing reflections without breeding elites. <b>Over-admitting predicates</b> (arm k₀ = 16): an unsound reflex predicate prematurely overrides the LLM fallback.',
-        cards: [['fail_k32_n44', { letter: '44', cls: 'bad', code: CASE_TEXT.stall.code }], ['fail_k32_n45', { letter: '45', cls: 'bad', code: CASE_TEXT.stall.code }], ['fail_k32_n46', { letter: '46', cls: 'bad', code: CASE_TEXT.stall.code }], ['fail_k16_n43', { letter: '43', cls: 'bad', name: 'N43 (k₀ = 16) · 0.900 → 0.225', code: CASE_TEXT.overadmit.code, note: 'The paper’s N43 regression; the archived k₀ = 16 ledger holds no child of the 0.900 harness that scored 0.225, so only the paper’s pseudocode is shown.' }]] },
+        cards: [['fail_k32_n44', { letter: '44', cls: 'bad' }], ['fail_k32_n45', { letter: '45', cls: 'bad' }], ['fail_k32_n46', { letter: '46', cls: 'bad' }], ['fail_k16_n43', { letter: '43', cls: 'bad', note: 'The paper\u2019s over-admitting regression in the k₀ = 16 arm: a chart plus a router now decide and the model is only the fallback. Running best 0.900 at N = 41; this candidate 0.250 (the paper rounds the drop to 0.225)' }]] },
       { idx: 'Finding 4 · Case 4, map dynamics', h: 'Dynamic map partitioning focuses search on high-potential regions.',
         finding: 'All major breakthroughs originate from newly subdivided cells (Cell 23 yielding the 0.900 champion). The system self-corrects by merging uninformative sub-trees while expanding resolution in high-variance regions.',
         text: '<span class="cellnote"><span><b>Cell 3</b>depth-1 split in round 1 on a score spread of 0.05; the sub-elites failed to outperform the parent, merged back in round 2</span><span><b>Cell 21</b>partitioned in round 5, producing cand_r052 (0.600) and tools/quest.py</span><span><b>Cell 23</b>depth-2 high-variance partition in round 8; its children averaged 0.756 and yielded the champion</span></span>',
-        cards: [['cell21_r52', { letter: '21', code: CASE_TEXT.case1_n15.code, note: 'Cell 21 child; introduces <code>tools/quest.py</code>' }], ['cell23_r64', { letter: '23', cls: 'top', code: CASE_TEXT.champ_k16.code, note: 'Cell 23 child, cand_r064; the 0.900 champion cand_r068 reuses its stage table' }]] }];
+        cards: [['cell21_r52', { letter: '21', note: 'Cell 21 child; introduces <code>tools/quest.py</code>' }], ['cell23_r64', { letter: '23', cls: 'top', note: 'Cell 23 child, cand_r064; the 0.900 champion cand_r068 reuses its stage table' }]] }];
     host.innerHTML = blocks.map(b => `<div class="case-block"><div class="finding"><div><span class="idx">${esc(b.idx)}</span><h3>${esc(b.h)}</h3><p>${esc(b.finding)}</p></div><div class="case-text">${b.text}</div></div><div class="case-cards">${b.cards.map(([k, x]) => caseCard(k, x)).join('')}</div></div>`).join('');
   }
   if ($('#case-blocks')) caseBlocks($('#case-blocks'));
 
-  /* ======================================================= floating contents: scroll-spy */
+  /* ======================================================= floating contents: scroll-spy, hide/show */
   (function () {
+    const toc = $('.sidetoc'), closeB = $('.sidetoc-close'), openB = $('.sidetoc-open');
+    if (toc && closeB && openB) {
+      const setHidden = h => { toc.classList.toggle('hidden', h); openB.hidden = !h; try { localStorage.setItem('toc-hidden', h ? '1' : '0'); } catch (e) {} };
+      closeB.addEventListener('click', () => setHidden(true)); openB.addEventListener('click', () => setHidden(false));
+      try { if (localStorage.getItem('toc-hidden') === '1') setHidden(true); } catch (e) {}
+    }
     const links = $$('.sidetoc a'); if (!links.length) return;
     const targets = links.map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
     let current = null;
@@ -533,43 +572,6 @@
   }
   if ($('#qd-charts')) qdCharts($('#qd-charts'));
 
-  /* ======================================================= Table 3: descriptor ablation as grouped bars */
-  const T3 = { groups: ['Maze', 'Maze3D', 'Block3D', 'Rubik', 'Snake', 'Avg.'], series: [
-    { label: 'Harness-MAP loop · structure-token CVT', color: 'var(--k16)', v: [100, 100, 100, 100, 100, 100], nt: [[10, 1], [46, 7], [10, 1], [16, 2], [10, 1], null] },
-    { label: 'Harness-MAP loop · OpenEvolve descriptor', color: 'var(--k4)', v: [100, 84, 100, 100, 100, 96.2], nt: [[14, 4], [23, 4], [18, 3], [37, 7], [8, 1], null], note: [null, '25% coverage target (the descriptor could not fill half the cells)', null, null, null, null] },
-    { label: 'OpenEvolve loop · its own descriptor', color: 'var(--bar)', v: [60, 20, 5, 15, 10, 21.9], nt: [[37, 36], [50, 49], [50, 49], [50, 49], [50, 49], null] },
-    { label: 'OpenEvolve loop · structure-token CVT', color: 'var(--warm)', v: [100, 48, 100, 15, 100, 71.4], nt: [[6, 5], [50, 49], [6, 5], [50, 49], [26, 25], null] }] };
-  function ablChart(host) {
-    function render() {
-      host.innerHTML = ''; const W = Math.max(320, (host.clientWidth || 900) - 20), narrow = W < 560;
-      const H = narrow ? 300 : 340, m = { l: 40, r: 10, t: 24, b: 40 }, fs = narrow ? 10 : 11;
-      const G = T3.groups.length, S = T3.series.length, gw = (W - m.l - m.r) / G, bw = Math.min(26, (gw * 0.78) / S), ys = v => m.t + (1 - v / 100) * (H - m.t - m.b);
-      const hostC = el('div', 'chart'); host.appendChild(hostC);
-      const svg = svgEl('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': 'Descriptor ablation: success rate per game for the four loop and descriptor combinations' }, hostC); svg.style.fontFamily = 'inherit'; svg.style.overflow = 'visible';
-      [0, 25, 50, 75, 100].forEach(v => { svgEl('line', { x1: m.l, x2: W - m.r, y1: ys(v), y2: ys(v), stroke: 'var(--line)' }, svg); svgEl('text', { x: m.l - 6, y: ys(v) + 3.5, 'text-anchor': 'end', 'font-size': fs - 1, fill: 'var(--muted)' }, svg).textContent = v; });
-      svgEl('text', { x: 12, y: (m.t + H - m.b) / 2, 'text-anchor': 'middle', 'font-size': fs, fill: 'var(--muted)', transform: `rotate(-90 12 ${(m.t + H - m.b) / 2})` }, svg).textContent = 'success rate (%)';
-      const tip = el('div', 'tip'); hostC.appendChild(tip);
-      T3.groups.forEach((g, gi) => {
-        const x0 = m.l + gi * gw + (gw - bw * S) / 2;
-        svgEl('text', { x: m.l + gi * gw + gw / 2, y: H - m.b + 16, 'text-anchor': 'middle', 'font-size': fs, 'font-weight': gi === G - 1 ? 700 : 400, fill: gi === G - 1 ? 'var(--ink)' : 'var(--muted)' }, svg).textContent = g;
-        if (gi === G - 1) svgEl('line', { x1: m.l + gi * gw, x2: m.l + gi * gw, y1: m.t, y2: ys(0), stroke: 'var(--line-2)', 'stroke-dasharray': '3 3' }, svg);
-        T3.series.forEach((s, si) => {
-          const v = s.v[gi], x = x0 + si * bw, h = ys(0) - ys(v);
-          const r = svgEl('rect', { x: x + 1, y: ys(v), width: bw - 2, height: Math.max(1, h), rx: 3, fill: s.color, tabindex: 0, role: 'img', 'aria-label': `${s.label}, ${g}: ${v}%` }, svg);
-          if (!narrow || si === 0 || si === S - 1) svgEl('text', { x: x + bw / 2, y: ys(v) - 4, 'text-anchor': 'middle', 'font-size': fs - 2.5, fill: 'var(--muted)' }, svg).textContent = Number.isInteger(v) ? v : v.toFixed(1);
-          const nt = s.nt[gi];
-          const show = ev => { tip.innerHTML = `<b>${esc(g)} · ${esc(s.label)}</b><div>success<span>${v.toFixed(1)}%</span></div>` + (nt ? `<div>first reached at<span>N = ${nt[0]}, T = ${nt[1]}</span></div>` : '') + (s.note && s.note[gi] ? `<div style="white-space:normal;max-width:220px">${esc(s.note[gi])}</div>` : '');
-            const bb = svg.getBoundingClientRect(), hb = hostC.getBoundingClientRect(); const sx = bb.left - hb.left + (x + bw / 2) * (bb.width / W); const left = sx > hb.width * 0.58;
-            tip.style.left = (sx + (left ? -10 : 10)) + 'px'; tip.style.top = (bb.top - hb.top + ys(v) * (bb.height / H) - 8) + 'px'; tip.classList.toggle('left', left); tip.classList.add('on'); };
-          r.addEventListener('mouseenter', show); r.addEventListener('focus', show); r.addEventListener('mouseleave', () => tip.classList.remove('on')); r.addEventListener('blur', () => tip.classList.remove('on'));
-        });
-      });
-      host.appendChild(el('div', 'chart-legend', T3.series.map(s => `<span><i style="background:${s.color};border-radius:3px"></i>${esc(s.label)}</span>`).join('')));
-    }
-    render(); let lastW = host.clientWidth; onResize(() => { if (host.clientWidth && Math.abs(host.clientWidth - lastW) > 30) { lastW = host.clientWidth; render(); } });
-  }
-  if ($('#abl-chart')) ablChart($('#abl-chart'));
-
   /* ======================================================= Table 5: generalization as dumbbells (search -> held-out) */
   const T5 = { rows: [
     { name: 'Qwen3-VL-30B, no search', short: 'no search', group: 'direct', snake: [10.7, 0.0], easy: [32.0, 32.5], hard: [29.0, 27.5], mhA: [10.0, 10.0], mhB: [10.0, 0.0] },
@@ -584,31 +586,35 @@
     { name: 'Harness-MAP k₀ = 16', short: 'k₀ = 16', group: 'ours', snake: [100, 100], easy: null, hard: null, mhA: [90, 72.5], mhB: [90, 47.5] },
     { name: 'Harness-MAP k₀ = 32', short: 'k₀ = 32', group: 'ours', snake: [100, 100], easy: null, hard: null, mhA: [40, 35], mhB: [40, 50] }],
     panels: [{ id: 'snake', title: 'SpatialWorld Snake · SR', held: 'unseen seeds' }, { id: 'easy', title: 'SimWorld-MMNav easy · SubSR', held: '10 unseen maps' }, { id: 'hard', title: 'SimWorld-MMNav hard · SubSR', held: '10 unseen maps' }, { id: 'mhA', title: 'MiniHack · holdout A', held: 'unseen seeds, same tasks' }, { id: 'mhB', title: 'MiniHack · holdout B', held: 'eight unseen tasks' }] };
+  function genPanel(h, p, W, small) {
+    const rows = T5.rows.filter(r => r[p.id]), nrows = Math.max(...T5.panels.map(q => T5.rows.filter(r => r[q.id]).length));
+    const rh = small ? 18 : 24, m = { l: small ? 78 : 110, r: 14, t: 44, b: 28 }, H = m.t + nrows * rh + m.b, fs = small ? 9.5 : 11.5;
+    const xs = v => m.l + v / 100 * (W - m.l - m.r);
+    const svg = svgEl('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': `${p.title}: search-split score and held-out score per method` }, h); svg.style.fontFamily = 'inherit'; svg.style.overflow = 'visible';
+    svgEl('text', { x: 4, y: 14, 'font-size': fs + 1.5, 'font-weight': 700, fill: 'var(--ink)' }, svg).textContent = p.title;
+    svgEl('text', { x: 4, y: 29, 'font-size': fs - 1, fill: 'var(--muted)' }, svg).textContent = `○ search split   ● ${p.held}`;
+    [0, 50, 100].forEach(v => { svgEl('line', { x1: xs(v), x2: xs(v), y1: m.t - 6, y2: H - m.b + 2, stroke: 'var(--line)' }, svg); svgEl('text', { x: xs(v), y: H - m.b + 14, 'text-anchor': 'middle', 'font-size': fs - 1, fill: 'var(--muted)' }, svg).textContent = v; });
+    const tip = el('div', 'tip'); h.appendChild(tip);
+    rows.forEach((r, i) => {
+      const y = m.t + i * rh + rh / 2, [a, b] = r[p.id], col = r.group === 'ours' ? 'var(--accent)' : r.group === 'base' ? 'var(--ink-2)' : 'var(--muted)';
+      svgEl('text', { x: m.l - 8, y: y + 3.5, 'text-anchor': 'end', 'font-size': fs, 'font-weight': r.group === 'ours' ? 700 : 400, fill: r.group === 'ours' ? 'var(--accent-ink)' : 'var(--ink-2)' }, svg).textContent = r.short || r.name;
+      svgEl('line', { x1: xs(a), x2: xs(b), y1: y, y2: y, stroke: col, 'stroke-width': 2, 'stroke-opacity': .55 }, svg);
+      svgEl('circle', { cx: xs(a), cy: y, r: small ? 3.8 : 5, fill: 'var(--surface)', stroke: col, 'stroke-width': 2 }, svg);
+      svgEl('circle', { cx: xs(b), cy: y, r: small ? 3.8 : 5, fill: col }, svg);
+      const hit = svgEl('rect', { x: 0, y: y - rh / 2, width: W - m.r, height: rh, fill: 'transparent', tabindex: 0, role: 'img', 'aria-label': `${r.name}: search ${a}, held-out ${b}` }, svg);
+      const show = () => { tip.innerHTML = `<b>${esc(r.name)}</b><div>search split<span>${a.toFixed(1)}</span></div><div>${esc(p.held)}<span>${b.toFixed(1)}</span></div><div>change<span>${(b - a) >= 0 ? '+' : ''}${(b - a).toFixed(1)}</span></div>`;
+        const bb = svg.getBoundingClientRect(), hb = h.getBoundingClientRect(); const sx = bb.left - hb.left + xs(Math.max(a, b)) * (bb.width / W); const left = sx > hb.width * 0.55;
+        tip.style.left = (sx + (left ? -10 : 10)) + 'px'; tip.style.top = (bb.top - hb.top + y * (bb.height / H) - 10) + 'px'; tip.classList.toggle('left', left); tip.classList.add('on'); };
+      hit.addEventListener('mouseenter', show); hit.addEventListener('focus', show); hit.addEventListener('mouseleave', () => tip.classList.remove('on')); hit.addEventListener('blur', () => tip.classList.remove('on'));
+    });
+  }
   function genCharts(host) {
     function render() {
-      host.innerHTML = ''; const w = host.clientWidth || 900; const cols = Math.max(1, Math.min(5, Math.floor(w / 250))); const W = Math.floor((w - 12 * (cols - 1)) / cols) - 20;
-      T5.panels.forEach(p => {
-        const rows = T5.rows.filter(r => r[p.id]); const rh = 20, m = { l: 92, r: 14, t: 42, b: 26 }, H = m.t + rows.length * rh + m.b, fs = 10.5;
-        const xs = v => m.l + v / 100 * (W - m.l - m.r);
-        const h = el('div', 'chart'); host.appendChild(h);
-        const svg = svgEl('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': `${p.title}: search-split score and held-out score per method` }, h); svg.style.fontFamily = 'inherit'; svg.style.overflow = 'visible';
-        svgEl('text', { x: 4, y: 14, 'font-size': fs + 1.5, 'font-weight': 700, fill: 'var(--ink)' }, svg).textContent = p.title;
-        svgEl('text', { x: 4, y: 28, 'font-size': fs - 1, fill: 'var(--muted)' }, svg).textContent = `○ search split   ● ${p.held}`;
-        [0, 50, 100].forEach(v => { svgEl('line', { x1: xs(v), x2: xs(v), y1: m.t - 6, y2: H - m.b + 2, stroke: 'var(--line)' }, svg); svgEl('text', { x: xs(v), y: H - m.b + 14, 'text-anchor': 'middle', 'font-size': fs - 1, fill: 'var(--muted)' }, svg).textContent = v; });
-        const tip = el('div', 'tip'); h.appendChild(tip);
-        rows.forEach((r, i) => {
-          const y = m.t + i * rh + rh / 2, [a, b] = r[p.id], col = r.group === 'ours' ? 'var(--accent)' : r.group === 'base' ? 'var(--ink-2)' : 'var(--muted)';
-          svgEl('text', { x: m.l - 8, y: y + 3.5, 'text-anchor': 'end', 'font-size': fs, 'font-weight': r.group === 'ours' ? 700 : 400, fill: r.group === 'ours' ? 'var(--accent-ink)' : 'var(--ink-2)' }, svg).textContent = r.short || r.name;
-          svgEl('line', { x1: xs(a), x2: xs(b), y1: y, y2: y, stroke: col, 'stroke-width': 2, 'stroke-opacity': .55 }, svg);
-          svgEl('circle', { cx: xs(a), cy: y, r: 4.2, fill: 'var(--surface)', stroke: col, 'stroke-width': 2 }, svg);
-          svgEl('circle', { cx: xs(b), cy: y, r: 4.2, fill: col }, svg);
-          const hit = svgEl('rect', { x: m.l - 90, y: y - rh / 2, width: W - m.r - m.l + 90, height: rh, fill: 'transparent', tabindex: 0, role: 'img', 'aria-label': `${r.name}: search ${a}, held-out ${b}` }, svg);
-          const show = ev => { tip.innerHTML = `<b>${esc(r.name)}</b><div>search split<span>${a.toFixed(1)}</span></div><div>${esc(p.held)}<span>${b.toFixed(1)}</span></div><div>change<span>${(b - a) >= 0 ? '+' : ''}${(b - a).toFixed(1)}</span></div>`;
-            const bb = svg.getBoundingClientRect(), hb = h.getBoundingClientRect(); const sx = bb.left - hb.left + xs(Math.max(a, b)) * (bb.width / W); const left = sx > hb.width * 0.55;
-            tip.style.left = (sx + (left ? -10 : 10)) + 'px'; tip.style.top = (bb.top - hb.top + y * (bb.height / H) - 10) + 'px'; tip.classList.toggle('left', left); tip.classList.add('on'); };
-          hit.addEventListener('mouseenter', show); hit.addEventListener('focus', show); hit.addEventListener('mouseleave', () => tip.classList.remove('on')); hit.addEventListener('blur', () => tip.classList.remove('on'));
-        });
-      });
+      host.innerHTML = ''; const w = host.clientWidth || 900; const cols = gridCols(w, 5); host.style.gridTemplateColumns = `repeat(${cols},1fr)`;
+      const W = Math.floor((w - 12 * (cols - 1)) / cols) - 20, small = cols > 2;
+      T5.panels.forEach(p => { const h = el('div', 'chart'); host.appendChild(h); genPanel(h, p, Math.max(200, W), small); zoomable(h, `${p.title} · search → held-out`, (body, bw) => genPanel(body, p, bw, false)); });
+      const tools = el('div', 'charts-tools'); tools.style.gridColumn = '1 / -1'; const b = el('button', '', 'Enlarge all 5 panels'); b.type = 'button';
+      b.addEventListener('click', () => openLightbox('Generalization · search split → held-out', (body, bw) => T5.panels.forEach(p => { const h = el('div', 'chart'); body.appendChild(h); genPanel(h, p, bw, false); }), true)); tools.appendChild(b); host.appendChild(tools);
     }
     render(); let lastW = host.clientWidth; onResize(() => { if (host.clientWidth && Math.abs(host.clientWidth - lastW) > 30) { lastW = host.clientWidth; render(); } });
   }
@@ -617,51 +623,19 @@
   /* ======================================================= harness anatomy: modules, roles, entry function (evolution packs) */
   const ROLE_KEYS = ['controller', 'policy', 'recovery', 'perception', 'parse', 'spatial', 'prompt', 'toolcall', 'memory', 'validity', 'data', 'logic', 'tool'];
   const roleColor = r => `var(--r-${ROLE_KEYS.includes(r) ? r : 'logic'})`;
-  function anatomyPanel(host, rows, pack) {
+  function anatomyPanel(host, rows, pack, metric) {
     const A = DATA.anatomy && DATA.anatomy[pack];
     if (!host || !A) { if (host) host.remove(); return { show() {} }; }
     function show(i) {
       const a = A[i], r = rows[i];
-      if (!a) { host.innerHTML = `<div class="an-head"><b>#${i} ${esc(r.label)}</b><span class="muted">no source available for this harness</span></div>`; return; }
-      const mods = a.modules, main = mods.find(m => m.main) || mods[0], others = mods.filter(m => m !== main);
-      const longest = Math.max(10, ...mods.map(m => m.name.length + 3));
-      const fs = longest > 18 ? 9.5 : 11, cw = Math.max(136, Math.ceil(longest * fs * 0.62) + 18);   // node width from the longest module name (monospace)
-      const cols = others.length > 6 ? 2 : 1, perCol = Math.ceil(others.length / cols) || 1, rowH = 54, nodeH = 46;
-      const mainW = Math.max(118, cw), W = 60 + mainW + 70 + cols * (cw + 26), H = Math.max(160, perCol * rowH + 24);
-      const pos = {}; pos[main.name] = [20 + mainW / 2, H / 2];
-      others.forEach((mo, k) => { const c = Math.floor(k / perCol), rr = k % perCol; const colX = 20 + mainW + 70 + cw / 2 + c * (cw + 26); const y0 = (H - perCol * rowH) / 2; pos[mo.name] = [colX, y0 + rr * rowH + rowH / 2]; });
-      const nodeW = n => (n.main ? mainW : cw);
-      let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Modules of ${esc(r.label)} with their roles and inter-module calls"><defs><marker id="an-arr-${pack}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink-2)"/></marker></defs>`;
-      a.edges.forEach(([s, t, n]) => {
-        const ps = pos[s], pt = pos[t]; if (!ps || !pt) return;
-        const sw = Math.min(3.2, 1 + 0.5 * n);
-        const [x1, y1] = ps, [x2, y2] = pt; const ms = mods.find(m => m.name === s), mt = mods.find(m => m.name === t);
-        let d;
-        if (Math.abs(x1 - x2) < 1) { const dir = y2 > y1 ? 1 : -1; d = `M${x1 + nodeW(ms) / 2},${y1} C${x1 + nodeW(ms) / 2 + 34},${y1} ${x2 + nodeW(mt) / 2 + 34},${y2} ${x2 + nodeW(mt) / 2},${y2 - dir * 4}`; }
-        else { const sx = x1 + (x2 > x1 ? nodeW(ms) / 2 : -nodeW(ms) / 2), ex = x2 + (x2 > x1 ? -nodeW(mt) / 2 - 2 : nodeW(mt) / 2 + 2); d = `M${sx},${y1} C${(sx + ex) / 2},${y1} ${(sx + ex) / 2},${y2} ${ex},${y2}`; }
-        svg += `<path d="${d}" fill="none" stroke="var(--ink-2)" stroke-opacity="${Math.abs(x2 - x1) > cw + 80 ? .35 : .7}" stroke-width="${sw}" marker-end="url(#an-arr-${pack})"><title>${esc(s)} → ${esc(t)}: ${n} call/import edge${n > 1 ? 's' : ''}</title></path>`;
-      });
-      mods.forEach(mo => {
-        const [x, y] = pos[mo.name], w = nodeW(mo), h = nodeH, nc = mo.components.length;
-        svg += `<g><rect x="${x - w / 2}" y="${y - h / 2}" width="${w}" height="${h}" rx="7" fill="var(--surface-2)" stroke="${roleColor(mo.role)}" stroke-width="${mo.main ? 2.4 : 1.8}"/><rect x="${x - w / 2}" y="${y - h / 2}" width="6" height="${h}" rx="3" fill="${roleColor(mo.role)}"/>` +
-          `<text x="${x + 3}" y="${y - 8}" text-anchor="middle" font-size="${fs}" font-weight="700" fill="var(--ink)" font-family="var(--mono)">${esc(mo.name)}.py</text>` +
-          `<text x="${x + 3}" y="${y + 4}" text-anchor="middle" font-size="9" fill="${roleColor(mo.role)}" font-weight="700">${esc(mo.main ? 'entry · ' : '')}${esc(mo.role)}</text>` +
-          `<text x="${x + 3}" y="${y + 15}" text-anchor="middle" font-size="8.5" fill="var(--muted)">${nc} component${nc === 1 ? '' : 's'} · ${mo.lines} lines</text>` +
-          `<title>${esc(mo.file)}: ${mo.components.map(c => c[0] + ' (' + c[1] + ')').join(', ')}</title></g>`;
-      });
-      svg += '</svg>';
-      const rolesPresent = Array.from(new Set(mods.flatMap(m => m.components.map(c => c[1]))));
-      const files = mods.map(m => `<span>${esc(m.file)} <i>${m.lines}</i></span>`).join('');
-      const diff = r.diff ? ` · diff vs parent: ${r.diff.files} file${r.diff.files === 1 ? '' : 's'}, +${r.diff.insertions} / −${r.diff.deletions}` : '';
-      host.innerHTML = `<div class="an-head"><b>#${i} ${esc(r.label)}</b><span class="muted">${esc(a.heading || '')}</span></div>
-        <div class="an-grid">
-          <div><div class="ph">Component graph · ${mods.length} module${mods.length === 1 ? '' : 's'}<span>${a.n_components} components, ${a.n_edges} edges</span></div>${svg}
-            <div class="an-legend">${rolesPresent.map(ro => `<span><i style="background:${roleColor(ro)}"></i>${esc(ro)}</span>`).join('')}</div>
-            <div class="an-files">${files}</div></div>
-          <div><div class="ph">${a.entry ? 'Entry function' : 'Source'}<span>${a.entry ? esc(a.entry.file + ' · ' + a.entry.name) : ''}</span></div>
-            <pre class="code">${a.entry ? esc(a.entry.src) : ''}</pre>
-            <p class="note small muted" style="margin:8px 0 0">${a.entry && a.entry.lines > 22 ? `First lines of a ${a.entry.lines}-line function. ` : ''}Component roles follow the release’s rule table (harness_map/qd/descriptors.py); edges are calls, references and imports between modules${esc(diff)}.</p></div>
-        </div>`;
+      if (!a) { host.innerHTML = `<div class="f2card"><div class="f2head"><span class="badge-letter">#${i}</span>${esc(r.label)}</div><p class="f2note">No source is available for this harness.</p></div>`; return; }
+      const g = caseGraph(a), roles = Array.from(new Set(g.nodes.map(n => n.role)));
+      const diff = r.diff ? `diff vs parent: ${r.diff.files} file${r.diff.files === 1 ? '' : 's'}, +${r.diff.insertions} / −${r.diff.deletions}` : '';
+      host.innerHTML = f2card({ letter: '#' + i, name: r.label, cls: r.best ? 'top' : '', score: r.score, scoreLabel: metric || 'score', graph: g,
+        code: a.entry ? a.entry.src : '', codeLabel: a.entry ? `Entry function · ${a.entry.file} · ${a.entry.name}` : 'Source',
+        files: a.modules.map(m => `<span>${esc(m.file)} <i>${m.lines}</i></span>`).join(''),
+        note: `${esc(a.heading || '')}${a.heading && diff ? ' · ' : ''}${esc(diff)}` }) +
+        `<div class="f2legend">${roles.map(ro => `<span><i style="background:${F2ROLES[ro] || `var(--r-${ro})`}"></i>${esc(ro)}</span>`).join('')}</div>`;
     }
     return { show };
   }
@@ -793,7 +767,7 @@
     const LB = DATA.lineages.balrog, VB = DATA.videos.balrog.mazewalk;
     if ($('#chart-balrog') && VB.length === LB.rows.length) {
       let chart;
-      const an = anatomyPanel($('#anat-balrog'), LB.rows, 'balrog');
+      const an = anatomyPanel($('#anat-balrog'), LB.rows, 'balrog', 'success');
       const pl = player($('#player-balrog'), VB, {
         caption: (e, i) => `<b>#${i} ${esc(e.label)}</b> · search success ${fmt(e.score)} · MazeWalk-15x15 episode 00: ${esc(e.outcome)} ${badge(e, LB.rows[i])}`,
         onChange: i => { if (chart) chart.setSelected(i, true); an.show(i); } });
@@ -806,7 +780,7 @@
       const L = DATA.lineages['games_' + g]; const host = $('#chart-' + g); if (!L || !host) return;
       const entries = (DATA.videos.games[g] || []).filter(e => e.i != null);
       const ph = $('#player-' + g);
-      const an = anatomyPanel($('#anat-' + g), L.rows, 'games_' + g);
+      const an = anatomyPanel($('#anat-' + g), L.rows, 'games_' + g, 'score');
       const bi = L.rows.findIndex(r => r.best);
       if (ph && entries.length === L.rows.length) {
         let chart;
@@ -825,7 +799,7 @@
     });
     const LN = DATA.lineages.nav_hard;
     if (LN && $('#chart-nav')) {
-      const an = anatomyPanel($('#anat-nav'), LN.rows, 'nav_hard');
+      const an = anatomyPanel($('#anat-nav'), LN.rows, 'nav_hard', 'SubtaskSR');
       const chart = lineageChart($('#chart-nav'), LN, { metric: 'SubtaskSR', ylabel: 'Subtask SR on the 50 search tasks', clickable: true,
         hint: 'Hover a harness for its score and diff; click it to see its structure.', onSelect: i => an.show(i) });
       const bi = LN.rows.findIndex(r => r.best); chart.setSelected(bi, true); an.show(bi);

@@ -29,16 +29,18 @@
 </nav>
 
 <aside class="sidetoc" aria-label="On this page">
+  <button type="button" class="sidetoc-close" aria-label="Hide the contents list">×</button>
   <div class="sidetoc-title">On this page</div>
   <ul>
     <li><a href="#idea">The idea</a></li>
-    <li><a href="#method">Method</a><ul><li><a href="#lab-factor">Harness-MAP construction</a></li><li><a href="#lab-loop">Searching over the map</a></li><li><a href="#lab-adapt">Adapting map resolution</a></li></ul></li>
+    <li><a href="#method">Method</a><ul><li><a href="#lab-factor">Factorizing a harness</a></li><li><a href="#lab-loop">Searching over the map</a></li><li><a href="#lab-adapt">Adapting map resolution</a></li></ul></li>
     <li><a href="#results">Results</a><ul><li><a href="#res-table1">Budget-matched results</a></li><li><a href="#lab-dyn">Sample efficiency</a></li><li><a href="#lab-res">Resolution dynamics</a></li><li><a href="#lab-qd">Quality-diversity</a></li><li><a href="#lab-abl">Descriptor ablation</a></li><li><a href="#lab-gen">Generalization</a></li></ul></li>
     <li><a href="#evolution">Evolution packs</a></li>
     <li><a href="#cases">Case analysis</a></li>
     <li><a href="#bibtex">BibTeX</a></li>
   </ul>
 </aside>
+<button type="button" class="sidetoc-open" hidden aria-label="Show the contents list">Contents</button>
 
 <header class="hero" id="top">
   <div class="wrap">
@@ -65,12 +67,6 @@
 <section id="idea" class="section idea">
   <div class="wrap wide">
     <p class="eyebrow center">The idea</p>
-    <figure class="teaser-fig">
-      <div class="figbar plain"><span>Figure 1</span><a class="textbtn" href="static/img/fig1_teaser_method.svg" target="_blank" rel="noopener">View full figure <svg viewBox="0 0 24 24"><path d="M14 4h6v6h-2V7.4l-5.3 5.3-1.4-1.4L16.6 6H14V4zM4 14h2v2.6l5.3-5.3 1.4 1.4L7.4 18H10v2H4v-6z"/></svg></a></div>
-      __TEASER_SVG__
-      <figcaption><b>Figure 1.</b> Conceptual overview of Harness-MAP. <b>(a)</b> Naive search rapidly collapses into narrow local lineages over a metric-free search space. <b>(b)</b> Harness-MAP (Ours) factorizes candidates into a structure-token space and dynamically sub-splits high-variance cells (at t+1) with resolution-adaptive search. The paper's panel (c), performance growth on SpatialWorld-3DGames against Meta-Harness (<a href="https://arxiv.org/abs/2603.28052" rel="noopener">Lee et al., 2026</a>) and Map-Elites (<a href="https://arxiv.org/abs/1504.04909" rel="noopener">Mouret &amp; Clune, 2015</a>)-based OpenEvolve (<a href="https://github.com/codelion/openevolve" rel="noopener">Sharma, 2025</a>), is the interactive chart in the <a href="#lab-dyn">results</a>.</figcaption>
-    </figure>
-
     <div class="story">
       <div class="story-card q">
         <span class="label">The question</span>
@@ -84,12 +80,19 @@
       </div>
     </div>
 
-    <p class="backbone">Every number on this page comes from the same frozen <code>Qwen3-VL-30B-A3B-Instruct</code>; only the harness around it changes.</p>
+    <figure class="teaser-fig">
+      <div class="figbar plain"><span>Figure 1</span><a class="textbtn" href="static/img/fig1_teaser_method.svg" target="_blank" rel="noopener">View full figure <svg viewBox="0 0 24 24"><path d="M14 4h6v6h-2V7.4l-5.3 5.3-1.4-1.4L16.6 6H14V4zM4 14h2v2.6l5.3-5.3 1.4 1.4L7.4 18H10v2H4v-6z"/></svg></a></div>
+      __TEASER_SVG__
+      <figcaption><b>Figure 1.</b> Conceptual overview of Harness-MAP. <b>(a)</b> Naive search rapidly collapses into narrow local lineages over a metric-free search space. <b>(b)</b> Harness-MAP (Ours) factorizes candidates into a structure-token space and dynamically sub-splits high-variance cells (at t+1) with resolution-adaptive search. The paper's panel (c), performance growth on SpatialWorld-3DGames against Meta-Harness (<a href="https://arxiv.org/abs/2603.28052" rel="noopener">Lee et al., 2026</a>) and Map-Elites (<a href="https://arxiv.org/abs/1504.04909" rel="noopener">Mouret &amp; Clune, 2015</a>)-based OpenEvolve (<a href="https://github.com/codelion/openevolve" rel="noopener">Sharma, 2025</a>), is the interactive chart in the <a href="#lab-dyn">results</a>.</figcaption>
+    </figure>
 
-    <div class="abstract-full">
-      <span class="label">Abstract</span>
-      <p>Automating harness evolution via naive meta-agent search is <mark>prohibitively expensive</mark>, requiring hundreds of meta-agent calls and minutes-to-hours per evaluation. How can we efficiently search for a diverse set of high-quality harnesses under a tight evaluation budget? To address this, we introduce Harness-MAP to structure the search space, <mark>factorizing graph-level program structures from token-level implementations</mark>. Bilevel search over this structure-token representation space illuminates an archive of diverse, high-quality harnesses. The map also enables a <mark>resolution-adaptive search strategy</mark> that navigates this space efficiently, <mark>sub-splitting partitions with high fitness variance while retracting ineffective refinements</mark>. Across three interactive spatial navigation benchmarks with the frozen Qwen3-VL-30B-A3B-Instruct backbone model, our search approach rapidly achieves performance leaps under minimal evaluation budgets: <mark>10.7% → 100.0% on SpatialWorld-3dgames (39 evals)</mark>, <mark>10.0% → 90.0% on BALROG-MiniHack (41 evals)</mark>, and <mark>32.5% → 46.5% on SimWorld-Robotics (6 evals)</mark>. Harness-MAP <mark>outperforms prior harness evolution methods across both search and held-out tasks</mark>, establishing factorized representations as an effective Quality-Diversity paradigm for budget-aware agent harness search.</p>
-    </div>
+    <p class="overview-description">Harness-MAP is a budget-efficient harness search method built on <b>structure-token factorization</b>. It gives every harness <b class="hi-s">coordinates</b> from its program structure and token-level implementation, keeps an archive of the best harness in each cell of the resulting <b>map</b>, and adapts the map's <b class="hi-t">resolution</b> while searching, sub-splitting high-variance cells and retracting refinements that do not pay.</p>
+    <details class="abstract">
+      <summary>Read the abstract <svg viewBox="0 0 24 24"><path d="M12 15.5 5.5 9l1.4-1.4 5.1 5.1 5.1-5.1L18.5 9z"/></svg></summary>
+      <div class="abstract-copy"><p>Automating harness evolution via naive meta-agent search is <mark>prohibitively expensive</mark>, requiring hundreds of meta-agent calls and minutes-to-hours per evaluation. How can we efficiently search for a diverse set of high-quality harnesses under a tight evaluation budget? To address this, we introduce Harness-MAP to structure the search space, <mark>factorizing graph-level program structures from token-level implementations</mark>. Bilevel search over this structure-token representation space illuminates an archive of diverse, high-quality harnesses. The map also enables a <mark>resolution-adaptive search strategy</mark> that navigates this space efficiently, <mark>sub-splitting partitions with high fitness variance while retracting ineffective refinements</mark>. Across three interactive spatial navigation benchmarks with the frozen Qwen3-VL-30B-A3B-Instruct backbone model, our search approach rapidly achieves performance leaps under minimal evaluation budgets: <mark>10.7% → 100.0% on SpatialWorld-3dgames (39 evals)</mark>, <mark>10.0% → 90.0% on BALROG-MiniHack (41 evals)</mark>, and <mark>32.5% → 46.5% on SimWorld-Robotics (6 evals)</mark>. Harness-MAP <mark>outperforms prior harness evolution methods across both search and held-out tasks</mark>, establishing factorized representations as an effective Quality-Diversity paradigm for budget-aware agent harness search.</p></div>
+    </details>
+
+    <p class="backbone">Every number on this page comes from the same frozen <code>Qwen3-VL-30B-A3B-Instruct</code>; only the harness around it changes.</p>
 
     <div class="metrics" aria-label="Headline results from Table 1">
       <div><span class="value"><span class="from">10.7%</span><span class="arrow">→</span>100.0<span>%</span></span><span class="label">SpatialWorld-3DGames</span><span class="detail">task success · 39 harness evaluations</span></div>
@@ -125,13 +128,12 @@
     <!-- ---- construction (§3.2) -->
     <div class="lab" id="lab-factor">
       <div class="lab-head"><div><span class="micro">Harness-MAP construction</span><h3>Factorizing a harness</h3></div><span class="lab-note">§3.2</span></div>
-      <p>Built on CVT-MAP-Elites, Harness-MAP constructs its representation space by factorizing each harness into a structural skeleton and a token-level implementation, \(H = (s, \theta)\). The joint descriptor</p>
-      <div class="eq">\[ \phi(H) = \big(\phi_S(s);\ \phi_T(\theta)\big) \in \mathbb R^{d_S} \times \mathbb R^{d_T} \tag{3} \]</div>
-      <p>allows structural and token moves to be measured independently.</p>
+      <p>Built on CVT-MAP-Elites, Harness-MAP factorizes each harness into a structural skeleton and a token-level implementation, \(H = (s, \theta)\), and reads its coordinates from the source alone:</p>
+      <div class="eq">\[ \phi(H) = \big(\phi_S(s);\ \phi_T(\theta)\big) \tag{3} \]</div>
       <div class="defs">
-        <div class="def s"><b><span class="hi-s">Structural descriptor</span> \(\phi_S(s)\)</b><p>The skeleton of \(s\) is its top-level architectural wiring, encoded as a directed graph \(G(s) = (V, E)\): vertices are top-level components (functions, classes, modules) and edges are call, reference or import dependencies extracted by AST parsing. Vertices receive initial functional role labels \(\ell_0(v)\) (e.g., perception, policy, controller). \(L\) rounds of Weisfeiler–Lehman refinement capture role-aware multi-hop topology, \[ \ell_{t+1}(v) = \mathrm{hash}\big(\ell_t(v),\ \{\!\{\ell_t(u) : u \in N(v)\}\!\}\big), \tag{4} \] and \(\phi_S(s)\) is the normalized histogram over the codebase-wide pattern space \(\Lambda = \bigcup_{t \le L} \Lambda_t\): \[ \phi_S(s) = \Big[\, \tfrac{\#_t(\lambda)}{|V|} \,\Big]_{t \le L,\ \lambda \in \Lambda_t}. \tag{5} \] Each dimension is a specific \(t\)-hop component-connectivity pattern; its value is the proportion of components exhibiting it.</p></div>
-        <div class="def t"><b><span class="hi-t">Token-level descriptor</span> \(\phi_T(\theta)\)</b><p>Three feature blocks capture the internal implementation logic: AST control-flow statistics \(f_{\mathrm{AST}}\), numeric constant parameters \(f_{\mathrm{num}}\) and documentation embeddings \(f_{\mathrm{doc}}\). Each block is z-score standardized and rescaled by its dimension, \[ \phi_T(\theta) = \Big[\, \sqrt{\alpha_1}\tfrac{\hat f_{\mathrm{AST}}}{\sqrt{d_{\mathrm{AST}}}};\ \sqrt{\alpha_2}\tfrac{\hat f_{\mathrm{num}}}{\sqrt{d_{\mathrm{num}}}};\ \sqrt{\alpha_3}\tfrac{\hat f_{\mathrm{doc}}}{\sqrt{d_{\mathrm{doc}}}} \,\Big], \tag{6} \] with \(\alpha_1 = \alpha_2 = \alpha_3 = 1\), so that no block dominates the distance metric and \(\phi_T\) is invariant to codebase size.</p></div>
-        <div class="def m"><b>Partitioning into cells</b><p>To prevent sparse partitions in high dimensions, the space is partitioned with a Centroidal Voronoi Tessellation: fitting \(k\) centroids \(Z = \{z_1, \dots, z_k\}\) by k-means over sampled descriptors defines each cell \[ C_i = \big\{ H \in \mathcal H : \|\phi(H) - z_i\| \le \|\phi(H) - z_j\|\ \ \forall j \big\}, \tag{7} \] so a candidate is assigned by nearest-centroid lookup. Fitting centroids relies on static descriptors and consumes zero evaluation budget; the resolution parameter \(k\) is optimized dynamically during search.</p></div>
+        <div class="def s"><b><span class="hi-s">Structural descriptor</span> \(\phi_S(s)\)</b><p><b>What it reads.</b> The top-level wiring of the harness as a directed graph: vertices are top-level components (functions, classes, modules), edges are the call, reference and import dependencies found by AST parsing. Programs inside components are parsed only for inter-component references.</p><p><b>How it is encoded.</b> Each component gets a functional role label (perception, policy, controller, …). Weisfeiler–Lehman refinement then hashes every component's role-aware neighbourhood over a few hops, and \(\phi_S\) is the normalized histogram of those hashes: each dimension is one connectivity pattern, its value the proportion of components carrying it. Deterministic, training-free and invariant to code refactoring.</p></div>
+        <div class="def t"><b><span class="hi-t">Token-level descriptor</span> \(\phi_T(\theta)\)</b><p><b>What it reads.</b> The implementation inside the components, as three feature blocks: AST control-flow statistics, numeric constant parameters and documentation embeddings.</p><p><b>How it is encoded.</b> Each block is z-score standardized and rescaled by its dimension, so that no block dominates the distance metric and \(\phi_T\) is invariant to codebase size.</p></div>
+        <div class="def m"><b>Partitioning into cells</b><p><b>Centroidal Voronoi Tessellation.</b> \(k\) centroids are fitted by k-means over sampled descriptors; a candidate is assigned to its nearest centroid.</p><p><b>Zero evaluation cost.</b> Fitting relies on static descriptors only. The resolution \(k\) controls the archive granularity and search step size, and is optimized dynamically during search (§3.4).</p></div>
       </div>
       <div class="fig2" id="fig2"></div>
       <p class="caption"><b>Figure 2.</b> Concrete harness examples illustrating structure-token factorization. Candidates from a Rubik's cube corpus exemplify cell placement in CVT clustering. <b>a vs. b (Δs):</b> structural module additions reassign the anchor harness a from Cell A to Cell B. <b>b vs. c (Δθ only):</b> same-step candidates with identical structures (s) but distinct token-level implementations (θ) stay in Cell B. <b>b vs. d (Δs, Δθ):</b> a subsequent candidate altering both coordinates still maps to Cell B due to structure-token proximity.</p>
@@ -139,18 +141,18 @@
 
     <!-- ---- search loop (§3.3) -->
     <div class="lab" id="lab-loop">
-      <div class="lab-head"><div><span class="micro">Searching over the Harness-MAP</span><h3>Quality-diversity archiving with LLM-guided variation</h3></div><span class="lab-note">§3.3, Algorithm 1</span></div>
-      <p>Standard CVT-MAP-Elites maintains quality-diversity in a coordinate space but lacks semantic guidance; typical harness evolution methods operate over an unstructured loop (propose → evaluate → diagnose → refine) driven by LLM feedback and, lacking structured spatial coverage, waste expensive rollouts on candidates that yield marginal gains or homogeneous behaviors. Harness-MAP (Algorithm 1b) unifies QD archiving with LLM-guided evolutionary search. Steps marked <span class="tag agent">meta-agent</span> call the language model; steps marked <span class="tag map">map</span> read only the archive.</p>
+      <div class="lab-head"><div><span class="micro">Searching over the Harness-MAP</span><h3>Searching over the map</h3></div><span class="lab-note">§3.3, Algorithm 1</span></div>
+      <p>Standard CVT-MAP-Elites mutates blindly; a standard harness-evolution loop (propose, evaluate, diagnose, refine) has no spatial coverage. Harness-MAP runs the LLM-guided loop <i>across</i> the archive. Steps marked <span class="tag agent">meta-agent</span> are headless, tool-using sessions over a candidate directory; steps marked <span class="tag map">map</span> read only the archive and cost no rollout.</p>
       <ol class="pipeline">
-        <li class="agent"><span class="n">0</span><b>Coverage initialization</b><p>The meta-agent proposes candidate root harnesses to populate the base cells. Each proposal undergoes a post-verifier of validity filtering before evaluation. Sampling continues until occupied cells satisfy a target coverage percentage of the initial \(k_0\) cells (\(m\%\,k_0\)).</p></li>
-        <li class="map"><span class="n">1</span><b>Batched selection</b><p>\(H_{\mathrm{batch}} \leftarrow \mathrm{selection}(\mathcal H, B)\): elites are selected across the map rather than along a single lineage.</p></li>
-        <li class="agent"><span class="n">2</span><b>Diagnosis</b><p>\(\mathrm{diag} \leftarrow \texttt{meta\_agent.diagnosis}(H, \mathcal H)\): an accumulated diagnosis of the parent's local failure modes.</p></li>
-        <li class="agent"><span class="n">3</span><b>Directive-steered variation</b><p>For each of the \(b\) children, a component-aware directive translates target coordinates into explicit structural or token-level refinements, and \(H' = \texttt{meta\_agent.variation}(H, \mathrm{diag}, \mathrm{directive}_j)\).</p></li>
-        <li class="judge"><span class="n">4</span><b>Validity filter</b><p>\(\texttt{is\_valid}(H')\): invalid harnesses are filtered before any rollout is spent.</p></li>
-        <li class="map"><span class="n">5</span><b>Add to archive</b><p>The child is evaluated, assigned to its nearest-centroid cell and kept if it improves on the cell's elite.</p></li>
-        <li class="map zero"><span class="n">6</span><b>Adapt resolution</b><p>\(\texttt{ADAPT\_RESOLUTION}(\mathcal H, P, C)\): the dynamic sub-split of §3.4, at zero evaluation cost.</p></li>
+        <li class="agent"><span class="n">0</span><b>Coverage-gated initialization</b><p>The meta-agent proposes root harnesses, each checked by the validity filter, until ⌈<i>m</i>·k₀⌉ cells hold an evaluated founder (<i>m</i> = 50%).</p></li>
+        <li class="map"><span class="n">1</span><b>Select elites</b><p>Each step breeds from P = ⌈log₂ k₀⌉ cell elites, cycling through the occupied cells so every region keeps getting chances.</p></li>
+        <li class="agent"><span class="n">2</span><b>Diagnose</b><p>A diagnostician reads the parent's code and episode traces end to end and names the binding constraint: a harness bug, a model ceiling or a task gap.</p></li>
+        <li class="agent"><span class="n">3</span><b>Directive-steered variation</b><p>Each of the C children gets a target cell translated into a structural or token-level directive, so siblings diverge by construction.</p></li>
+        <li class="judge"><span class="n">4</span><b>Validity filter</b><p>A child must keep the entry-point contract and pass an adversarial anti-cheat judge that rules on the mechanism in code and traces, never on the score.</p></li>
+        <li class="map"><span class="n">5</span><b>Evaluate and archive</b><p>The child is scored on the search split, placed in its nearest cell and kept if it is that cell's best.</p></li>
+        <li class="map zero"><span class="n">6</span><b>Adapt resolution</b><p>Sub-split the occupied cell with the largest fitness range; keep the split only if a child cell's elite improves, else revert and remember. Zero evaluations.</p></li>
       </ol>
-      <div class="budget"><span class="muted">Feedback-conditioned code mutations often suffer from unguided behavior drift. Conditioning candidate generation jointly on the parent harness, the accumulated diagnosis and a component-aware directive (e.g., more or fewer perception components for structural edits, similar implementations of a specific module for token-level mutations) steers evolution toward targeted map cells, concentrating compute on functional candidates that fill distinct behavioral cells.</span></div>
+      <div class="budget"><span class="formula">N = ⌈<i>m</i>·k₀⌉ + G · P · C</span><span class="muted">Steps 1–6 repeat for G generations with P parents and C children each. Every method in the paper is compared at the same N, so initialization counts against the budget too.</span></div>
     </div>
 
     <!-- ---- adaptive resolution (§3.4) -->
@@ -209,22 +211,17 @@
     </div>
 
     <div class="lab" id="lab-abl">
-      <div class="lab-head"><div><span class="micro">Table 3 · descriptor ablation</span><h3>The descriptor and the search loop, crossed</h3></div><span class="lab-note">k₀ = 8</span></div>
-      <p class="concl">The structure-token descriptor helps independently of the search loop: OpenEvolve run over our CVT cells rises from 21.9% to 71.4%, while our loop run over OpenEvolve's two-dimensional descriptor loses efficiency and fails to cover Maze3D.</p>
-      <div class="charts" id="abl-chart"></div>
-      <details class="numeric"><summary>Table 3 as numbers <svg viewBox="0 0 24 24"><path d="M12 15.5 5.5 9l1.4-1.4 5.1 5.1 5.1-5.1L18.5 9z"/></svg></summary>
-      <div class="scroll"><table class="tbl">
-        <caption><b>Table 3.</b> Descriptor ablation: success rate, with the evaluation N and the step T at which it was first reached.</caption>
-        <thead><tr><th>Method</th><th>Maze</th><th>Maze3D</th><th>Block3D</th><th>Rubik</th><th>Snake</th><th>Avg.</th></tr></thead>
+      <div class="lab-head"><div><span class="micro">Table 3 · descriptor ablation</span><h3>The descriptor and the search loop, crossed</h3></div><span class="lab-note">SpatialWorld-3DGames · k₀ = 8</span></div>
+      <p>To isolate the representation from the search loop, we cross the two loops (Harness-MAP's and OpenEvolve's) with the two descriptors (our structure-token CVT cells and OpenEvolve's two-dimensional complexity–diversity descriptor) on SpatialWorld-3DGames at k₀ = 8 under the same budget. Each cell reports the success rate, its drop from the full method, and the evaluation N and step T at which that score was first reached.</p>
+      <div class="scroll"><table class="tbl abltab">
+        <thead><tr><th>Loop · descriptor</th><th>Maze</th><th>Maze3D</th><th>Block3D</th><th>Rubik</th><th>Snake</th><th>Avg.</th></tr></thead>
         <tbody>
-          <tr class="grp"><td colspan="7">Harness-MAP loop</td></tr>
-          <tr class="ours"><td>Harness-MAP, structure-token CVT</td><td>100.0 / 10 / 1</td><td>100.0 / 46 / 7</td><td>100.0 / 10 / 1</td><td>100.0 / 16 / 2</td><td>100.0 / 10 / 1</td><td class="best">100.0</td></tr>
-          <tr><td>Harness-MAP, OpenEvolve descriptor</td><td>100.0 / 14 / 4</td><td>84.0 / 23 / 4 †</td><td>100.0 / 18 / 3</td><td>100.0 / 37 / 7</td><td>100.0 / 8 / 1</td><td>96.2</td></tr>
-          <tr class="grp"><td colspan="7">OpenEvolve loop</td></tr>
-          <tr><td>OpenEvolve, its own descriptor</td><td>60.0 / 37 / 36</td><td>20.0 / 50 / 49</td><td>5.0 / 50 / 49</td><td>15.0 / 50 / 49</td><td>10.0 / 50 / 49</td><td>21.9</td></tr>
-          <tr><td>OpenEvolve, structure-token CVT</td><td>100.0 / 6 / 5</td><td>48.0 / 50 / 49</td><td>100.0 / 6 / 5</td><td>15.0 / 50 / 49</td><td>100.0 / 26 / 25</td><td>71.4</td></tr>
+<tr class="ours"><td><span class="loop">Harness-MAP loop</span><br><span class="desc">structure-token CVT (full)</span></td><td class="abl best" style="--d:0"><b>100.0</b><span class="nt">N 10 · T 1</span></td><td class="abl best" style="--d:0"><b>100.0</b><span class="nt">N 46 · T 7</span></td><td class="abl best" style="--d:0"><b>100.0</b><span class="nt">N 10 · T 1</span></td><td class="abl best" style="--d:0"><b>100.0</b><span class="nt">N 16 · T 2</span></td><td class="abl best" style="--d:0"><b>100.0</b><span class="nt">N 10 · T 1</span></td><td class="abl best" style="--d:0"><b>100.0</b></td></tr>
+<tr class=""><td><span class="loop">Harness-MAP loop</span><br><span class="desc">OpenEvolve descriptor</span></td><td class="abl" style="--d:0"><b>100.0</b><span class="nt">N 14 · T 4</span></td><td class="abl" style="--d:16"><b>84.0</b><span class="drop">−16.0</span><span class="nt">N 23 · T 4 †</span></td><td class="abl" style="--d:0"><b>100.0</b><span class="nt">N 18 · T 3</span></td><td class="abl" style="--d:0"><b>100.0</b><span class="nt">N 37 · T 7</span></td><td class="abl" style="--d:0"><b>100.0</b><span class="nt">N 8 · T 1</span></td><td class="abl" style="--d:3.8"><b>96.2</b><span class="drop">−3.8</span></td></tr>
+<tr class=""><td><span class="loop">OpenEvolve loop</span><br><span class="desc">its own descriptor</span></td><td class="abl" style="--d:40"><b>60.0</b><span class="drop">−40.0</span><span class="nt">N 37 · T 36</span></td><td class="abl" style="--d:80"><b>20.0</b><span class="drop">−80.0</span><span class="nt">N 50 · T 49</span></td><td class="abl" style="--d:95"><b>5.0</b><span class="drop">−95.0</span><span class="nt">N 50 · T 49</span></td><td class="abl" style="--d:85"><b>15.0</b><span class="drop">−85.0</span><span class="nt">N 50 · T 49</span></td><td class="abl" style="--d:90"><b>10.0</b><span class="drop">−90.0</span><span class="nt">N 50 · T 49</span></td><td class="abl" style="--d:78.1"><b>21.9</b><span class="drop">−78.1</span></td></tr>
+<tr class=""><td><span class="loop">OpenEvolve loop</span><br><span class="desc">structure-token CVT</span></td><td class="abl" style="--d:0"><b>100.0</b><span class="nt">N 6 · T 5</span></td><td class="abl" style="--d:52"><b>48.0</b><span class="drop">−52.0</span><span class="nt">N 50 · T 49</span></td><td class="abl" style="--d:0"><b>100.0</b><span class="nt">N 6 · T 5</span></td><td class="abl" style="--d:85"><b>15.0</b><span class="drop">−85.0</span><span class="nt">N 50 · T 49</span></td><td class="abl" style="--d:0"><b>100.0</b><span class="nt">N 26 · T 25</span></td><td class="abl" style="--d:28.6"><b>71.4</b><span class="drop">−28.6</span></td></tr>
         </tbody></table></div>
-      <p class="small muted">† OpenEvolve's descriptor could not fill 50% of the k₀ cells on Maze3D, so this cell ran at a 25% coverage target.</p></details>
+      <p class="small muted">Success rate (%) with the drop from the full method in red; darker cells are larger drops. † OpenEvolve's descriptor could not fill 50% of the k₀ cells on Maze3D, so this cell ran at a 25% coverage target.</p>
     </div>
 
     <div class="lab" id="lab-gen">

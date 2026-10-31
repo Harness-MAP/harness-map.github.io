@@ -9,21 +9,33 @@ OUT = f"{S}/shots"
 try:
     with sync_playwright() as p:
         b = p.chromium.launch(executable_path=exe, args=["--no-sandbox", "--disable-gpu"])
-        for width, tag, dark in [(1680, "wide", False), (1280, "desk", False), (390, "phone", False), (1280, "dark", True)]:
-            pg = b.new_page(viewport={"width": width, "height": 950}); logs = []
-            if dark: pg.emulate_media(color_scheme="dark")
-            pg.on("pageerror", lambda e: logs.append(f"PAGEERROR: {e}")); pg.on("console", lambda m: logs.append(m.text[:120]) if m.type == "error" and "harness-map.pdf" not in m.text else None)
-            pg.goto("http://127.0.0.1:8778/index.html", wait_until="networkidle"); pg.wait_for_timeout(1200)
-            print(tag, "hscroll:", pg.evaluate("document.documentElement.scrollWidth > document.documentElement.clientWidth"), "| katex nodes:", pg.evaluate("document.querySelectorAll('.katex').length"), "| sidetoc visible:", pg.evaluate("getComputedStyle(document.querySelector('.sidetoc')).display"), "| teaser px:", pg.evaluate("Math.round(document.querySelector('.teaser-svg').getBoundingClientRect().width)"), "| errors:", logs or "none")
-            if tag == "wide":
-                pg.evaluate("window.scrollTo(0, document.querySelector('#lab-loop').offsetTop)"); pg.wait_for_timeout(400); pg.screenshot(path=f"{OUT}/wide_viewport_loop.png")
-                continue
-            pg.add_style_tag(content=".topnav{position:static!important}")
-            shots = [("#idea", "idea"), (".overview", "overview"), ("#lab-factor", "factor"), ("#lab-loop", "loop"), ("#lab-adapt", "adapt"), ("#results .section-heading, #res-table1", "res_head"), ("#lab-dyn", "dyn"), ("#cases", "cases")] if tag != "phone" else [("#idea", "idea"), ("#lab-factor", "factor"), ("#cases .case-block", "case1")]
-            for sel, name in shots:
-                e = pg.query_selector(sel)
-                if not e: print("  missing", sel); continue
-                e.scroll_into_view_if_needed(); pg.wait_for_timeout(250); e.screenshot(path=f"{OUT}/{tag}_{name}.png")
+        pg = b.new_page(viewport={"width": 1280, "height": 950}); logs = []
+        pg.on("pageerror", lambda e: logs.append(f"PAGEERROR: {e}")); pg.on("console", lambda m: logs.append(m.text[:140]) if m.type == "error" and "harness-map.pdf" not in m.text else None)
+        pg.goto("http://127.0.0.1:8765/index.html", wait_until="networkidle"); pg.wait_for_timeout(1200)
+        print("sidetoc display @1280:", pg.evaluate("getComputedStyle(document.querySelector('.sidetoc')).display"), "| errors:", logs or "none")
+        pg.evaluate("window.scrollTo(0, document.querySelector('#lab-res').offsetTop - 60)"); pg.wait_for_timeout(400); pg.screenshot(path=f"{OUT}/viewport_res_with_toc.png")
+        pg.add_style_tag(content=".topnav{position:static!important}.sidetoc{display:none!important}")
+        def shot(sel, name):
+            e = pg.query_selector(sel)
+            if not e: print("  missing", sel); return
+            e.scroll_into_view_if_needed(); pg.wait_for_timeout(250); e.screenshot(path=f"{OUT}/{name}.png")
+        shot("#idea", "idea"); pg.click("details.abstract summary"); pg.wait_for_timeout(300); shot("details.abstract", "abstract_open")
+        shot("#lab-factor", "factor"); shot("#lab-loop", "loop"); shot("#lab-res", "res_games"); shot("#lab-abl", "abl"); shot("#lab-gen", "gen")
+        pg.click("#lab-res .seg [data-v=balrog]"); pg.wait_for_timeout(400); shot("#lab-res .charts", "res_balrog")
+        pg.click("#lab-res .seg [data-v=nav]"); pg.wait_for_timeout(400); shot("#lab-res", "res_nav")
+        pg.click("#lab-dyn [data-ctl=view] [data-v=per]"); pg.wait_for_timeout(500); shot("#lab-dyn .charts", "dyn_pergame")
+        shot("#evo-balrog .showcase", "evo_balrog")
+        pg.click("#tab-evo-nav-hard"); pg.wait_for_timeout(500); shot("#anat-nav", "anat_nav")
+        # lightbox
+        pg.click("#lab-res .charts .chart:first-child .zoom-btn"); pg.wait_for_timeout(500); pg.screenshot(path=f"{OUT}/lightbox.png"); print("lightbox on:", pg.evaluate("document.querySelector('#lightbox').classList.contains('on')"))
+        pg.keyboard.press("Escape"); pg.wait_for_timeout(200); print("lightbox after Esc:", pg.evaluate("document.querySelector('#lightbox').classList.contains('on')"))
+        pg.click("#lab-gen .charts-tools button"); pg.wait_for_timeout(600); pg.screenshot(path=f"{OUT}/lightbox_gen_all.png"); pg.keyboard.press("Escape")
+        print("errors:", logs or "none")
+        pg.close()
+        for width in (360, 480, 768, 1100, 1680):
+            pg = b.new_page(viewport={"width": width, "height": 900}); pg.goto("http://127.0.0.1:8765/index.html", wait_until="networkidle"); pg.wait_for_timeout(600)
+            print(width, "hscroll:", pg.evaluate("document.documentElement.scrollWidth > document.documentElement.clientWidth"), "| toc:", pg.evaluate("getComputedStyle(document.querySelector('.sidetoc')).display"))
+            if width == 360: pg.add_style_tag(content=".topnav{position:static!important}"); e = pg.query_selector("#lab-res"); e.scroll_into_view_if_needed(); pg.wait_for_timeout(200); e.screenshot(path=f"{OUT}/phone_res.png")
             pg.close()
         b.close()
 finally:

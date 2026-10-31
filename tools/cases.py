@@ -67,14 +67,86 @@ SPEC = [  # (case id, arm, selector, display name used in the paper)
     ("champ_k8", "adaptive_k8_c1p3", ("best",), "k₀ = 8 champion"), ("champ_k16", "adaptive_k16_c1p4", ("best",), "k₀ = 16 champion"),
     ("champ_k32", "adaptive_k32_c1p5", ("best",), "k₀ = 32 champion"),
     ("fail_k32_n44", "adaptive_k32_c1p5", ("idx", 44), "N44"), ("fail_k32_n45", "adaptive_k32_c1p5", ("idx", 45), "N45"), ("fail_k32_n46", "adaptive_k32_c1p5", ("idx", 46), "N46"),
+    ("fail_k16_n43", "adaptive_k16_c1p4", ("idx", 43), "N43"),
     ("cell21_r52", "adaptive_k16_c1p4", ("label", "cand_r52_"), "cand_r052"), ("cell23_r64", "adaptive_k16_c1p4", ("label", "cand_r64_"), "cand_r064"),
 ]
+CA = Path("/home/azureuser/workspace/AutoSpatial/balrog/results/case_analysis")
+FOLDER = {"case1_n03": "case1_steady_improvement/N03_35pct_cand_r10_0_spatial-grounding", "case1_n05": "case1_steady_improvement/N05_60pct_cand_r11_0_spatial-grounding",
+          "case1_n15": "case1_steady_improvement/N15_72pct_cand_r16_0_spatial-grounding", "case1_n21": "case1_steady_improvement/N21_78pct_cand_r19_0_spatial-grounding",
+          "case1_n39": "case1_steady_improvement/N39_80pct_cand_r28_0_spatial-grounding", "case1_n47": "case1_steady_improvement/N47_85pct_cand_r32_0_spatial-grounding",
+          "champ_k2": "case2_champion_diversity/k02_75pct_VLM", "champ_k4": "case2_champion_diversity/k04_85pct_VLM", "champ_k8": "case2_champion_diversity/k08_82pct_VLM",
+          "champ_k16": "case2_champion_diversity/k16_90pct_noVLM", "champ_k32": "case2_champion_diversity/k32_40pct_VLM",
+          "fail_k32_n44": "case3_failure/a_stalled_arm_k32_late_N44_20pct", "fail_k32_n45": "case3_failure/a_stalled_arm_k32_late_N45_22pct",
+          "fail_k32_n46": "case3_failure/a_stalled_arm_k32_late_N46_30pct", "fail_k16_n43": "case3_failure/b_regression_k16_N43_25pct_from90"}
+
+def pseudocode(cdir, maxlines=26):
+    """The entry functions (act, then build_agent) as pseudocode in source order: calls and control flow with their
+    real arguments (ast.unparse), docstrings and comments dropped. Calls into the harness's own modules are marked
+    «u»…«/u» (structure-bearing)."""
+    cdir = Path(cdir); hp = cdir / "harness.py"
+    if not hp.exists(): return ""
+    tree = ast.parse(hp.read_text(errors="ignore"))
+    mods = {Path(rel).stem for rel, _ in harness_pyfiles(cdir)} - {"harness", "__init__"}
+    alias = {}
+    for n in ast.walk(tree):
+        if isinstance(n, ast.Import):
+            for a in n.names:
+                stem = a.name.split(".")[-1]
+                if stem in mods: alias[a.asname or stem] = stem
+        elif isinstance(n, ast.ImportFrom):
+            for a in n.names:
+                if a.name in mods: alias[a.asname or a.name] = a.name
+    names = sorted(alias, key=len, reverse=True)
+    pat = re.compile(r"\b(" + "|".join(map(re.escape, names)) + r")\.(\w+)") if names else None
+    mark = lambda line: pat.sub(lambda m: f"«u»{m.group(1)}.{m.group(2)}«/u»", line) if pat else line
+    out = []
+    def block(body, depth):
+        """a compound statement's body: the selected lines, or its first statement verbatim when nothing was selected"""
+        n0 = len(out); walk(body, depth)
+        if len(out) == n0 and len(out) < maxlines and body: out.append("    " * depth + ast.unparse(body[0]).split("\n")[0])
+    def walk(body, depth):
+        for st in body:
+            if len(out) >= maxlines: return
+            pad = "    " * depth
+            if isinstance(st, ast.Expr) and isinstance(getattr(st, "value", None), ast.Constant) and isinstance(st.value.value, str): continue
+            if isinstance(st, ast.If):
+                out.append(f"{pad}if {ast.unparse(st.test)}:"); block(st.body, depth + 1)
+                if st.orelse:
+                    if len(st.orelse) == 1 and isinstance(st.orelse[0], ast.If): walk([st.orelse[0]], depth)   # elif chain
+                    else: out.append(f"{pad}else:"); block(st.orelse, depth + 1)
+            elif isinstance(st, ast.For): out.append(f"{pad}for {ast.unparse(st.target)} in {ast.unparse(st.iter)}:"); block(st.body, depth + 1)
+            elif isinstance(st, ast.While): out.append(f"{pad}while {ast.unparse(st.test)}:"); block(st.body, depth + 1)
+            elif isinstance(st, ast.With): out.append(f"{pad}with {', '.join(ast.unparse(i) for i in st.items)}:"); block(st.body, depth + 1)
+            elif isinstance(st, ast.Try):
+                out.append(f"{pad}try:"); block(st.body, depth + 1)
+                for h in st.handlers: out.append(f"{pad}except {ast.unparse(h.type) if h.type else ''}:".replace(' :', ':')); block(h.body, depth + 1)
+            elif isinstance(st, ast.Return): out.append(f"{pad}return {ast.unparse(st.value) if st.value else ''}".rstrip())
+            elif isinstance(st, (ast.Assign, ast.AugAssign, ast.AnnAssign, ast.Expr)):
+                if not any(isinstance(c, ast.Call) for c in ast.walk(st)): continue
+                out.append(pad + ast.unparse(st))
+            elif isinstance(st, (ast.Break, ast.Continue)): out.append(pad + ("break" if isinstance(st, ast.Break) else "continue"))
+    fns = []
+    for n in tree.body:
+        if isinstance(n, ast.ClassDef):
+            for m in n.body:
+                if isinstance(m, (ast.FunctionDef, ast.AsyncFunctionDef)) and m.name == "act": fns.append(m)
+        elif isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)) and n.name == "build_agent": fns.append(n)
+    fns.sort(key=lambda f: 0 if f.name == "act" else 1)
+    for fn in fns:
+        if len(out) >= maxlines: break
+        out.append(f"def {fn.name}({', '.join(a.arg for a in fn.args.args)}):"); walk(fn.body, 1); out.append("")
+    while out and out[-1] == "": out.pop()
+    if len(out) >= maxlines: out.append("    ...")
+    return "\n".join(mark(l) for l in out)
+
 out = {}
 for cid, arm, sel, disp in SPEC:
     r = by_index(arm, sel[1]) if sel[0] == "idx" else best_of(arm) if sel[0] == "best" else by_label(arm, sel[1])
     if not r: print("MISSING", cid); continue
     parent = next((p for p in LED[arm] if p["label"] and r["parent"] and re.sub(r"cand_r0*(\d+)_", r"cand_r\1_", p["label"]) == re.sub(r"cand_r0*(\d+)_", r"cand_r\1_", r["parent"])), None)
     a = anatomy(r["src"])
-    out[cid] = {"arm": arm, "N": r["i"] + 1, "label": r["label"], "score": r["score"], "parent": r["parent"], "parent_score": parent["score"] if parent else None, "display": disp, **a}
+    src = CA / FOLDER[cid] if cid in FOLDER and (CA / FOLDER[cid]).exists() else Path(r["src"])
+    out[cid] = {"arm": arm, "N": r["i"] + 1, "label": r["label"], "score": r["score"], "parent": r["parent"], "parent_score": parent["score"] if parent else None, "display": disp,
+                "pseudo": pseudocode(src), "pseudo_src": str(src.relative_to(CA)) if src.is_relative_to(CA) else "run dir", **a}
     print(f"{cid:14s} {arm:18s} N{r['i']+1:02d} {r['label']:34s} {r['score']}  parent={r['parent']} ({out[cid]['parent_score']})  modules={[m['name'] for m in a['modules']]}")
 p = SITE / "static/data/cases.json"; p.write_text(json.dumps(out, separators=(",", ":"))); print("wrote", p, p.stat().st_size, "bytes")
