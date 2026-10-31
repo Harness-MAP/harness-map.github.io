@@ -10,6 +10,7 @@
     DATA.videos = JSON.parse($('#data-videos').textContent);
     DATA.curves = JSON.parse($('#data-curves').textContent);
     DATA.anatomy = JSON.parse($('#data-anatomy').textContent);
+    DATA.cases = JSON.parse($('#data-cases').textContent);
   } catch (e) { console.error('embedded data missing', e); }
 
   /* ---------------- light / dark toggle (persisted; follows the system until the first click) ---------------- */
@@ -373,80 +374,111 @@
   }
   $$('[data-dyn]').forEach(r => (r.dataset.dyn === 'search' ? dynamicsPanel(r) : resolutionPanel(r)));
 
-  /* ======================================================= factorization lab (Figure 2's four Rubik's-cube candidates) */
-  function factorLab(root) {
-    const ROLES = ['orchestrator', 'capture', 'perception', 'controller', 'solver'];
-    const RCOL = { orchestrator: 'var(--r-orch)', capture: 'var(--r-capture)', perception: 'var(--r-perc)', controller: 'var(--r-ctrl)', solver: 'var(--r-solver)' };
-    const C = [
-      { id: 'a', name: 'anchor', files: 'main.py · vlm.py',
-        code: 'def build_agent(ev):\n    ev.prompt = ROLE + RULES\n    async def step(frame):\n        # frozen VLM emits the move\n        return await vlm.decide(frame)\n    return step',
-        note: 'One frozen VLM emits every move: no perception, no solver of its own.',
-        nodes: [['main.py', 'orchestrator'], ['vlm.py', 'controller']], edges: [[0, 1]], cell: 'A', pos: [72, 148], from: null,
-        delta: 'The reference harness. Its component graph has one edge, and the descriptor places it in cell A.' },
-      { id: 'b', name: 'cand_r004_0', files: 'main.py · frame.py · sticker.py · vlm.py · action.py',
-        code: 'def build_agent(ev):\n    ev.prompt = ROLE + READ + RULES\n    lens = sticker.StickerLens()\n    solver = action.CubeSolver()\n    async def step(frame):\n        px = frame.capture()\n        fl = lens.read(px)\n        state = vlm.identify(fl)\n        return solver.solve(state)\n    return step',
-        note: 'Reads facelets through a sticker lens, then hands a full solve to action.py.',
-        nodes: [['main.py', 'orchestrator'], ['frame.py', 'capture'], ['sticker.py', 'perception'], ['vlm.py', 'controller'], ['action.py', 'solver']], edges: [[0, 1], [0, 2], [0, 3], [0, 4]], cell: 'B', pos: [206, 108], from: 'a',
-        delta: 'Δs versus a: three new modules and three new call edges change φS, and the harness moves from cell A to cell B.' },
-      { id: 'c', name: 'cand_r004_1', files: 'main.py · frame.py · grounding.py · vlm.py · action.py',
-        code: 'def build_agent(ev):\n    ev.prompt = ROLE + RULES\n    eyes = grounding.Eyes()\n    solver = action.CubeSolver()\n    async def step(frame):\n        px = frame.capture()\n        obs = eyes.read(px)\n        plan = vlm.decide(obs)\n        return solver.step(plan)\n    return step',
-        note: 'Same four-stage pipeline as b; different grounding module and call names.',
-        nodes: [['main.py', 'orchestrator'], ['frame.py', 'capture'], ['grounding.py', 'perception'], ['vlm.py', 'controller'], ['action.py', 'solver']], edges: [[0, 1], [0, 2], [0, 3], [0, 4]], cell: 'B', pos: [224, 124], from: 'b',
-        delta: 'Δθ only versus b: the component graph and φS are identical, so only the token descriptor moves, a little, and the cell stays B.' },
-      { id: 'd', name: 'cand_r005_1', files: 'main.py · frame.py · vlm.py · action.py',
-        code: 'def build_agent(ev):\n    ev.prompt = ROLE + RULES\n    belief = action.ScramblePosterior()\n    async def step(frame):\n        if belief.worth_asking():  # VoI\n            c = vlm.ask(frame)\n            belief.update(c)\n        return belief.best_move()\n    return step',
-        note: 'No perception module: keeps a belief over the scramble; asks the VLM when it pays.',
-        nodes: [['main.py', 'orchestrator'], ['frame.py', 'capture'], ['vlm.py', 'controller'], ['action.py', 'solver']], edges: [[0, 1], [0, 2], [0, 3], [3, 2]], cell: 'B', pos: [204, 62], from: 'b',
-        delta: 'Δs and Δθ versus b: a different graph (no perception, a belief loop) and different code, yet structure-token proximity still maps it to cell B.' }];
-    const tabsEl = $('.cand-tabs', root), fx = k => $(`[data-fx=${k}]`, root);
-    C.forEach((c, i) => { const b = el('button', '', `<i>${c.id}</i>${esc(c.name)}`); b.type = 'button'; b.setAttribute('role', 'tab'); b.addEventListener('click', () => show(i)); tabsEl.appendChild(b); });
-    fx('legend').innerHTML = ROLES.map(r => `<span><i style="background:${RCOL[r]}"></i>${r}</span>`).join('') + '<span><i class="edge"></i>structure-bearing call: adds a graph edge</span><span><i class="edge tok"></i>token-only difference: same graph</span>';
-    function show(i) {
-      const c = C[i];
-      $$('button', tabsEl).forEach((b, j) => b.setAttribute('aria-selected', i === j ? 'true' : 'false'));
-      fx('code').textContent = c.code; fx('files').textContent = c.files; fx('note').textContent = c.note;
-      // component graph: orchestrator left, modules in a column on the right, calls as edges
-      const g = fx('graph'); g.innerHTML = '';
-      const W = 360, H = 250, others = c.nodes.slice(1), gap = Math.min(52, (H - 40) / others.length);
-      const P = c.nodes.map((n, k) => (k === 0 ? [70, H / 2] : [262, H / 2 - gap * (others.length - 1) / 2 + gap * (k - 1)]));
-      const defs = svgEl('defs', {}, g);
-      const mk = svgEl('marker', { id: 'arr-' + c.id, viewBox: '0 0 10 10', refX: 9, refY: 5, markerWidth: 7, markerHeight: 7, orient: 'auto-start-reverse' }, defs);
-      svgEl('path', { d: 'M0,0 L10,5 L0,10 z', fill: 'var(--ink-2)' }, mk);
-      c.edges.forEach(([a, b]) => {
-        const [x1, y1] = P[a], [x2, y2] = P[b], loop = a !== 0;
-        const d = loop ? `M${x2 + 54},${y2 + 6} C${x2 + 92},${y2 + 6} ${x2 + 92},${y1 - 6} ${x2 + 54},${y1 - 6}` : `M${x1 + 50},${y1} C${(x1 + x2) / 2},${y1} ${(x1 + x2) / 2},${y2} ${x2 - 56},${y2}`;
-        svgEl('path', { d, fill: 'none', stroke: 'var(--ink-2)', 'stroke-width': 1.6, 'stroke-dasharray': loop ? '3 3' : 'none', 'marker-end': `url(#arr-${c.id})` }, g);
-        if (loop) svgEl('text', { x: x2 + 96, y: (y1 + y2) / 2 + 4, 'font-size': 9.5, fill: 'var(--muted)' }, g).textContent = 'asks when it pays';
-      });
-      c.nodes.forEach(([name, role], k) => {
-        const [x, y] = P[k], w = k === 0 ? 100 : 112;
-        svgEl('rect', { x: x - w / 2, y: y - 19, width: w, height: 38, rx: 8, fill: 'var(--surface-2)', stroke: RCOL[role], 'stroke-width': 2 }, g);
-        svgEl('rect', { x: x - w / 2, y: y - 19, width: 6, height: 38, rx: 3, fill: RCOL[role] }, g);
-        svgEl('text', { x: x + 4, y: y - 3, 'text-anchor': 'middle', 'font-size': 12, 'font-weight': 700, fill: 'var(--ink)', 'font-family': 'var(--mono)' }, g).textContent = name;
-        svgEl('text', { x: x + 4, y: y + 12, 'text-anchor': 'middle', 'font-size': 10, fill: 'var(--muted)' }, g).textContent = role;
-      });
-      // φS at t = 0: proportion of components carrying each role
-      const n = c.nodes.length;
-      fx('hist').innerHTML = ROLES.map(r => { const p = c.nodes.filter(x => x[1] === r).length / n; return `<span class="role"><i style="background:${RCOL[r]}"></i>${r}</span><span class="track"><span class="bar" style="width:${p * 100}%;background:${RCOL[r]}"></span></span><span>${p.toFixed(2)}</span>`; }).join('');
-      // the map: two cells, four candidates, the selected one highlighted, the compared one linked
-      const mp = fx('map'); mp.innerHTML = '';
-      svgEl('polygon', { points: '0,0 168,0 132,250 0,250', fill: 'var(--cell6)', stroke: 'var(--cs6)', 'stroke-width': 1.6, 'stroke-dasharray': '5 3' }, mp);
-      svgEl('polygon', { points: '168,0 300,0 300,250 132,250', fill: 'var(--cell2)', stroke: 'var(--cs2)', 'stroke-width': 1.6, 'stroke-dasharray': '5 3' }, mp);
-      svgEl('text', { x: 16, y: 24, 'font-size': 12, 'font-weight': 700, fill: 'var(--muted)' }, mp).textContent = 'cell A';
-      svgEl('text', { x: 262, y: 24, 'font-size': 12, 'font-weight': 700, fill: 'var(--muted)' }, mp).textContent = 'cell B';
-      [[60, 140], [226, 118]].forEach(([x, y]) => { svgEl('path', { d: `M${x - 4},${y - 4} L${x + 4},${y + 4} M${x - 4},${y + 4} L${x + 4},${y - 4}`, stroke: 'var(--muted)', 'stroke-width': 1.5 }, mp); });
-      svgEl('text', { x: 150, y: 242, 'text-anchor': 'middle', 'font-size': 9.5, fill: 'var(--muted)' }, mp).textContent = '× centroids · nearest-centroid lookup places a candidate';
-      if (c.from) { const f = C.find(x => x.id === c.from); svgEl('line', { x1: f.pos[0], y1: f.pos[1], x2: c.pos[0], y2: c.pos[1], stroke: 'var(--ink-2)', 'stroke-width': 1.5, 'stroke-dasharray': '4 3' }, mp);
-        const vert = Math.abs(c.pos[0] - f.pos[0]) < Math.abs(c.pos[1] - f.pos[1]), mx = (f.pos[0] + c.pos[0]) / 2, my = (f.pos[1] + c.pos[1]) / 2;
-        svgEl('text', { x: vert ? mx - 9 : mx + 6, y: vert ? my + 4 : my - 6, 'text-anchor': vert ? 'end' : 'start', 'font-size': 11, 'font-weight': 700, fill: 'var(--ink-2)' }, mp).textContent = c.id === 'b' ? 'Δs' : c.id === 'c' ? 'Δθ' : 'Δs, Δθ'; }
-      C.forEach(x => { const on = x === c; svgEl('circle', { cx: x.pos[0], cy: x.pos[1], r: on ? 7 : 5, fill: on ? 'var(--accent)' : 'var(--line-2)', stroke: 'var(--surface)', 'stroke-width': 2 }, mp);
-        if (on) svgEl('circle', { cx: x.pos[0], cy: x.pos[1], r: 12, fill: 'none', stroke: 'var(--accent)', 'stroke-width': 1.5, 'stroke-dasharray': '3 2' }, mp);
-        svgEl('text', { x: x.pos[0] + (x.id === 'a' ? 12 : 12), y: x.pos[1] + 4, 'font-size': 12, 'font-weight': 700, fill: on ? 'var(--accent-ink)' : 'var(--muted)' }, mp).textContent = x.id; });
-      fx('cell').textContent = c.delta;
-    }
-    show(1);
+  /* ======================================================= Figure-2 style cards: component graph + pseudocode */
+  const F2ROLES = { orchestrator: 'var(--r-orch)', capture: 'var(--r-capture)', perception: 'var(--r-perc)', controller: 'var(--r-ctrl)', solver: 'var(--r-solver)' };
+  const codeHtml = src => esc(src).replace(/«u»/g, '<u>').replace(/«\/u»/g, '</u>').replace(/«h»/g, '<mark>').replace(/«\/h»/g, '</mark>');
+  /* graph: main node on top, the other modules in a row; `edges` are [from,to] module names, `stages` the pipeline order */
+  function graphSvg(g) {
+    const kids = g.nodes.filter(n => n.name !== g.main), n = kids.length, rows = n > 4 ? 3 : 2, W = Math.max(260, 70 + 46 * n), H = 112 + rows * 11, top = [W / 2, 30], color = nd => (F2ROLES[nd.role] || `var(--r-${nd.role})` || 'var(--bar)');
+    const span = Math.min(W - 70, 52 * Math.max(1, n - 1)), x0 = W / 2 - span / 2;
+    const pos = {}; pos[g.main] = top; kids.forEach((k, i) => { pos[k.name] = [n > 1 ? x0 + i * span / (n - 1) : W / 2, 96]; });
+    let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="component graph"><defs><marker id="f2arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--bar)"/></marker></defs>`;
+    (g.edges || []).forEach(([a, b, dashed]) => { const p = pos[a], q = pos[b]; if (!p || !q) return;
+      if (p[1] === q[1]) { const dir = q[0] > p[0] ? 1 : -1; s += `<path d="M${p[0] + dir * 13},${p[1]} L${q[0] - dir * 13},${q[1]}" stroke="var(--bar)" stroke-width="1.6" fill="none" marker-end="url(#f2arr)"${dashed ? ' stroke-dasharray="3 3"' : ''}/>`; }
+      else s += `<path d="M${p[0]},${p[1] + 12} L${q[0]},${q[1] - 12}" stroke="var(--bar)" stroke-width="1.5" fill="none" marker-end="url(#f2arr)"${dashed ? ' stroke-dasharray="3 3"' : ''}/>`; });
+    if (g.loop) { const [a, b] = g.loop; const p = pos[a], q = pos[b]; if (p && q) { s += `<path d="M${p[0]},${p[1] + 13} C${p[0] - 10},${p[1] + 42} ${q[0] + 10},${q[1] + 42} ${q[0]},${q[1] + 13}" stroke="var(--r-ctrl)" stroke-width="1.4" fill="none" marker-end="url(#f2arr)"/><text x="${(p[0] + q[0]) / 2}" y="${p[1] + 44}" text-anchor="middle" font-size="8.5" fill="var(--r-ctrl)" font-weight="700">${esc(g.loopLabel || '')}</text>`; } }
+    // per-step self loop on the main node
+    s += `<path d="M${top[0] - 12},${top[1] + 2} C${top[0] - 34},${top[1] + 8} ${top[0] - 34},${top[1] - 20} ${top[0] - 9},${top[1] - 10}" stroke="var(--r-orch)" stroke-width="1.3" fill="none" marker-end="url(#f2arr)"/><text x="${top[0] - 36}" y="${top[1] + 2}" text-anchor="end" font-size="8.5" fill="var(--r-orch)" font-weight="700">per-step</text>`;
+    const fs = n > 5 ? 8.5 : 9.5;
+    g.nodes.forEach(nd => { const [x, y] = pos[nd.name], main = nd.name === g.main, idx = kids.indexOf(nd), below = main ? -1 : (idx % rows) + 1;
+      s += `<circle cx="${x}" cy="${y}" r="${main ? 12 : 10}" fill="${color(nd)}" stroke="var(--surface)" stroke-width="1.5"><title>${esc(nd.name)} · ${esc(nd.role)}</title></circle>`;
+      s += `<text x="${x}" y="${main ? y - 20 : y + 12 + below * 11}" text-anchor="middle" font-size="${main ? 9.5 : fs}" font-weight="${main ? 700 : 500}" fill="var(--ink)" font-family="var(--mono)">${esc(nd.label || nd.name)}</text>`; });
+    return s + '</svg>';
   }
-  if ($('#lab-factor')) factorLab($('#lab-factor'));
+  function f2card(c) {
+    return `<div class="f2card ${c.cls || ''}"><div class="f2head"><span class="badge-letter">${esc(c.letter)}</span>${esc(c.name)}${c.rel ? `<span class="rel">${esc(c.rel)}</span>` : ''}${c.score != null ? `<span class="score">${c.scoreLabel || 'success'} ${c.score.toFixed(3)}</span>` : ''}</div>` +
+      `<div class="f2body"><div><div class="ph">Component graph</div>${graphSvg(c.graph)}</div><div><div class="ph">Pseudocode</div><pre class="code">${codeHtml(c.code)}</pre></div></div>` +
+      (c.note ? `<p class="f2note">${c.note}</p>` : '') +
+      (c.entry ? `<details><summary>Actual entry function · ${esc(c.entry.file)} · ${esc(c.entry.name)}</summary><pre class="code">${esc(c.entry.src)}</pre></details>` : '') + '</div>';
+  }
+  const FIG2 = [
+    { letter: 'a', name: 'anchor', cls: 'a', graph: { main: 'main.py', nodes: [{ name: 'main.py', role: 'orchestrator' }, { name: 'vlm.py', role: 'controller' }], edges: [['main.py', 'vlm.py']] },
+      code: 'def build_agent(ev):\n    ev.prompt = ROLE + RULES\n    async def step(frame):\n        # frozen VLM emits the move\n        return await «u»vlm.decide«/u»(frame)\n    return step',
+      note: 'One frozen VLM emits every move — no perception, no solver of its own.' },
+    { letter: 'b', name: 'cand_r004_0', cls: 'b', rel: 'different s from a', graph: { main: 'main.py', nodes: [{ name: 'main.py', role: 'orchestrator' }, { name: 'frame.py', role: 'capture' }, { name: 'sticker.py', role: 'perception' }, { name: 'vlm.py', role: 'controller' }, { name: 'action.py', role: 'solver' }], edges: [['main.py', 'frame.py'], ['main.py', 'sticker.py'], ['main.py', 'vlm.py'], ['main.py', 'action.py'], ['frame.py', 'sticker.py'], ['sticker.py', 'vlm.py'], ['vlm.py', 'action.py']] },
+      code: 'def build_agent(ev):\n    ev.prompt = ROLE + «h»READ«/h» + RULES\n    lens = «h»sticker.StickerLens«/h»()\n    solver = action.CubeSolver()\n    async def step(frame):\n        px = «u»frame.capture«/u»()\n        fl = «u»lens.read«/u»(px)\n        state = «u»vlm.identify«/u»(fl)\n        return «u»solver.solve«/u»(state)\n    return step',
+      note: 'Reads facelets through a sticker lens, then hands a full solve to action.py.' },
+    { letter: 'c', name: 'cand_r004_1', cls: 'c', rel: 'same s as b, different θ', graph: { main: 'main.py', nodes: [{ name: 'main.py', role: 'orchestrator' }, { name: 'frame.py', role: 'capture' }, { name: 'grounding.py', role: 'perception' }, { name: 'vlm.py', role: 'controller' }, { name: 'action.py', role: 'solver' }], edges: [['main.py', 'frame.py'], ['main.py', 'grounding.py'], ['main.py', 'vlm.py'], ['main.py', 'action.py'], ['frame.py', 'grounding.py'], ['grounding.py', 'vlm.py'], ['vlm.py', 'action.py']] },
+      code: 'def build_agent(ev):\n    ev.prompt = ROLE + RULES\n    eyes = «h»grounding.Eyes«/h»()\n    solver = action.CubeSolver()\n    async def step(frame):\n        px = «u»frame.capture«/u»()\n        obs = «u»eyes.read«/u»(px)\n        plan = «u»vlm.decide«/u»(obs)\n        return «u»solver.step«/u»(plan)\n    return step',
+      note: 'Same four-stage pipeline as b; different grounding module and call names.' },
+    { letter: 'd', name: 'cand_r005_1', cls: 'd', rel: 'different s and θ from b', graph: { main: 'main.py', nodes: [{ name: 'main.py', role: 'orchestrator' }, { name: 'frame.py', role: 'capture' }, { name: 'vlm.py', role: 'controller' }, { name: 'action.py', role: 'solver' }], edges: [['main.py', 'frame.py'], ['main.py', 'vlm.py'], ['main.py', 'action.py'], ['frame.py', 'vlm.py'], ['vlm.py', 'action.py']], loop: ['action.py', 'vlm.py'], loopLabel: 'belief update' },
+      code: 'def build_agent(ev):\n    ev.prompt = ROLE + RULES\n    belief = «h»action.ScramblePosterior«/h»()\n    async def step(frame):\n        if «h»belief.worth_asking«/h»():  # VoI\n            c = «u»vlm.ask«/u»(frame)\n            belief.update(c)\n        return «u»belief.best_move«/u»()\n    return step',
+      note: 'No perception module: keeps a belief over the scramble; asks when it pays.' }];
+  if ($('#fig2')) $('#fig2').innerHTML = FIG2.map(f2card).join('') + `<div class="f2legend" style="grid-column:1/-1">${Object.keys(F2ROLES).map(r => `<span><i style="background:${F2ROLES[r]}"></i>${r}</span>`).join('')}<span><i class="ul"></i>structure-bearing call — adds a graph edge</span><span><i class="hl"></i>token-only difference — same graph</span></div>`;
+
+  /* ======================================================= case analysis: findings tied to candidates */
+  function caseGraph(c) {   // from cases.json: module-level nodes with the release's roles
+    const main = (c.modules.find(m => m.main) || c.modules[0]).name;
+    const nodes = c.modules.map(m => ({ name: m.name, label: m.name + '.py', role: m.main ? 'orchestrator' : m.role }));
+    const edges = c.edges.map(e => [e[0], e[1]]);
+    return { main, nodes, edges };
+  }
+  const CASE_TEXT = {
+    case1_n03: { mod: '<code>tools/chart.py</code>: fixed spatial logic in Chart.observe', code: "def act(self, obs, prev_action):\n    self._refresh_legal(...)\n    update_observation(...)\n    chart = «u»chart_mod.parse_map«/u»(...)\n    if self.last_how in ('kick-dir', 'modal'):\n        observe(...)\n    self._rung(...)\n    if action is not None:\n        return self._emit(response, action, how)" },
+    case1_n05: { mod: '<code>push_plan</code> in harness.py: a Sokoban BFS planner', code: "def act(self, obs, prev_action):\n    update_observation(...)\n    chart = parse_map(...)\n    if planned is not None:\n        # zero-token call\n        return self.emit(shell, «u»planned«/u», 'push-tape')" },
+    case1_n15: { mod: '<code>tools/quest.py</code>: the QuestErrand interaction protocol', code: "def act(self, obs, prev_action):\n    update_observation(...)\n    armed = «u»quest_mod.armed«/u»(...)\n    if armed:\n        ans = prompt(...)\n        if ans is not None:\n            return self._shell(*ans)" },
+    case1_n21: { mod: 'recombined from r016_0: the quest and push modules in one dispatch', code: "def act(self, obs, prev_action):\n    for module in self.modules:\n        plan = «u»claim«/u»(...)\n        if plan is not None and _no_call(plan[1]):\n            return self._shell(action, how)" },
+    case1_n39: { mod: 'VolleyOwner added to the owner ladder', code: "def act(self, obs, prev_action):\n    tick(...)\n    plan = «u»self.claim_step«/u»(...)\n    if plan is not None:\n        out = self.emit(...)" },
+    case1_n47: { mod: 'MeleeOwner added; the arm’s champion', code: "def act(self, obs, prev_action):\n    tick(...)\n    plan = «u»self.claim_step«/u»(...)\n    if plan is not None:\n        out = self.emit(...)" },
+    champ_k2: { para: '8-rung VetoBoard', code: "def act(self, obs, prev_action):\n    self._mount(...)\n    frame = parse_frame(...)\n    planner = StepPlanner(...)\n    self._arbitrate(...)\n    if need is not None:\n        response = generate(...)" },
+    champ_k4: { para: '9-entry priority owner ladder', code: "def act(self, obs, prev_action):\n    plan = self.claim_step(...)\n    if plan is not None:\n        out = self.emit(...)" },
+    champ_k8: { para: 'Situational routing + LLM', code: "def act(self, obs, prev_action):\n    self._classify(...)\n    messages = build_messages(...)\n    response = generate(...)\n    action = self._match(...)" },
+    champ_k16: { para: 'Pure compiled symbolic logic, zero LLM calls', code: "def act(self, obs, prev_action):\n    fr = parse_glyph_map(...)\n    c = Quest.armed(...)\n    for solver in (Sokoban, Quest, Chart):\n        got = getattr(solver, 'solve')(...)\n        if got is not None:\n            return got" },
+    champ_k32: { para: 'Lexicographic arbiter key', code: "def act(self, obs, prev_action):\n    messages = build_messages(...)\n    response = generate(...)" },
+    stall: { code: "def act(self, obs, prev_action):\n    if stall and self.reflections < REFLECT_BUDGET:\n        base = build_messages(...)\n        «h»absorb_reflection«/h»(...)  # iterations spent, no elite bred" },
+    overadmit: { code: "def act(self, obs, prev_action):\n    owned = «h»self.reflex«/h»(...)         # overly permissive predicate\n    if owned and owned[0] in legal:\n        return self.reply(*owned)    # overrides the LLM fallback" } };
+  function caseCard(key, extra) {
+    const c = DATA.cases && DATA.cases[key]; const t = CASE_TEXT[key] || {}; extra = extra || {};
+    if (!c) return `<div class="f2card ${extra.cls || ''}"><div class="f2head"><span class="badge-letter">${esc(extra.letter || '?')}</span>${esc(extra.name || key)}</div><div class="f2body"><div><div class="ph">Component graph</div><p class="small muted">Not resolvable from the archived ledger.</p></div><div><div class="ph">Pseudocode</div><pre class="code">${codeHtml(extra.code || t.code || '')}</pre></div></div>${extra.note ? `<p class="f2note">${extra.note}</p>` : ''}</div>`;
+    return f2card({ letter: extra.letter || c.display.replace(/[^0-9k₀=]/g, '').slice(0, 3) || 'N', name: `${c.display} · ${c.label}`, cls: extra.cls || '', score: c.score, scoreLabel: 'success',
+      graph: caseGraph(c), code: extra.code || t.code || '', entry: c.entry,
+      note: (extra.note || t.mod || (t.para ? `<b>${esc(t.para)}</b>` : '')) + (c.parent ? ` · parent ${esc(c.parent.replace(/cand_r0*(\d+)_/, 'cand_r$1_'))}${c.parent_score != null ? ` (${c.parent_score.toFixed(3)})` : ''}` : '') });
+  }
+  function caseBlocks(host) {
+    const blocks = [
+      { idx: 'Finding 1 · Case 1, the k₀ = 4 arm', h: 'Performance consistently improves through incremental modular edits.',
+        finding: 'Success rates rise from 0.275 to 0.850 through incremental additions of deterministic code-owner modules (spatial pathfinding fixes, Sokoban BFS solvers, interaction protocols). Performance growth is primarily driven by MAP-archive recombination, combining dispatch skeletons with byte-identical modules from disparate cell elites rather than direct linear mutations.',
+        text: 'The candidates named in §A.9, in evaluation order of the k₀ = 4 arm (N is the position in that arm’s evaluation history).',
+        cards: [['case1_n03', { letter: '1' }], ['case1_n05', { letter: '2' }], ['case1_n15', { letter: '3' }], ['case1_n21', { letter: '4' }], ['case1_n39', { letter: '5' }], ['case1_n47', { letter: '6', cls: 'top' }]] },
+      { idx: 'Finding 2 · Case 2, five champions', h: 'Discovered optimal harnesses exhibit high structural and algorithmic diversity.',
+        finding: 'The champions show high design diversity (pairwise textual similarity below 0.093) and complementary task coverage, achieving 100% success via an oracle selector. Perception converges on shared parsers, while control paradigms diverge across BFS and heuristic search. Performance correlates inversely with token cost: the top-performing harness (k₀ = 16, 0.900) uses traditional algorithms without any LLM calls during evaluation, whereas the most token-expensive elite (k₀ = 32) yields the lowest score (0.400).',
+        text: 'The best harness of each initial resolution.',
+        cards: [['champ_k2', { letter: '2' }], ['champ_k4', { letter: '4' }], ['champ_k8', { letter: '8' }], ['champ_k16', { letter: '16', cls: 'top' }], ['champ_k32', { letter: '32', cls: 'bad' }]] },
+      { idx: 'Finding 3 · Case 3, failure modes', h: 'Search failures stem from excessively fine resolution and wasteful parent selection.',
+        finding: 'Uniform selection repeatedly samples low-scoring cells, wasting compute and capping k₀ = 32 performance at 0.400. Overly permissive rules in new modules incorrectly override the LLM fallback logic, causing severe performance drops (0.900 → 0.225).',
+        text: '<b>Allocation stalls</b> (arm k₀ = 32, capped at 0.400): candidates N44–N46 spend their iterations absorbing reflections without breeding elites. <b>Over-admitting predicates</b> (arm k₀ = 16): an unsound reflex predicate prematurely overrides the LLM fallback.',
+        cards: [['fail_k32_n44', { letter: '44', cls: 'bad', code: CASE_TEXT.stall.code }], ['fail_k32_n45', { letter: '45', cls: 'bad', code: CASE_TEXT.stall.code }], ['fail_k32_n46', { letter: '46', cls: 'bad', code: CASE_TEXT.stall.code }], ['fail_k16_n43', { letter: '43', cls: 'bad', name: 'N43 (k₀ = 16) · 0.900 → 0.225', code: CASE_TEXT.overadmit.code, note: 'The paper’s N43 regression; the archived k₀ = 16 ledger holds no child of the 0.900 harness that scored 0.225, so only the paper’s pseudocode is shown.' }]] },
+      { idx: 'Finding 4 · Case 4, map dynamics', h: 'Dynamic map partitioning focuses search on high-potential regions.',
+        finding: 'All major breakthroughs originate from newly subdivided cells (Cell 23 yielding the 0.900 champion). The system self-corrects by merging uninformative sub-trees while expanding resolution in high-variance regions.',
+        text: '<span class="cellnote"><span><b>Cell 3</b>depth-1 split in round 1 on a score spread of 0.05; the sub-elites failed to outperform the parent, merged back in round 2</span><span><b>Cell 21</b>partitioned in round 5, producing cand_r052 (0.600) and tools/quest.py</span><span><b>Cell 23</b>depth-2 high-variance partition in round 8; its children averaged 0.756 and yielded the champion</span></span>',
+        cards: [['cell21_r52', { letter: '21', code: CASE_TEXT.case1_n15.code, note: 'Cell 21 child; introduces <code>tools/quest.py</code>' }], ['cell23_r64', { letter: '23', cls: 'top', code: CASE_TEXT.champ_k16.code, note: 'Cell 23 child, cand_r064; the 0.900 champion cand_r068 reuses its stage table' }]] }];
+    host.innerHTML = blocks.map(b => `<div class="case-block"><div class="finding"><div><span class="idx">${esc(b.idx)}</span><h3>${esc(b.h)}</h3><p>${esc(b.finding)}</p></div><div class="case-text">${b.text}</div></div><div class="case-cards">${b.cards.map(([k, x]) => caseCard(k, x)).join('')}</div></div>`).join('');
+  }
+  if ($('#case-blocks')) caseBlocks($('#case-blocks'));
+
+  /* ======================================================= floating contents: scroll-spy */
+  (function () {
+    const links = $$('.sidetoc a'); if (!links.length) return;
+    const targets = links.map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+    let current = null;
+    const update = () => { const y = window.scrollY + 120; let best = null; targets.forEach(t => { if (t.offsetTop <= y) best = t; });
+      if (best !== current) { current = best; links.forEach(a => a.classList.toggle('on', best && a.getAttribute('href') === '#' + best.id)); } };
+    window.addEventListener('scroll', update, { passive: true }); update();
+  })();
+
+  /* ======================================================= equations (KaTeX, loaded before this script) */
+  if (window.renderMathInElement) renderMathInElement(document.body, { delimiters: [{ left: '\\[', right: '\\]', display: true }, { left: '\\(', right: '\\)', display: false }], throwOnError: false });
+
 
   /* ======================================================= Table 2: QD-score and coverage across k0 */
   const T2 = { k0: [2, 4, 8, 16, 32], series: [

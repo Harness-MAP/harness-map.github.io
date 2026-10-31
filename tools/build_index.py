@@ -7,11 +7,11 @@ S = Path(__file__).resolve().parent  # tools/
 SITE = S.parent  # repository root
 tpl = (S / "index.template.html").read_text()
 lin = json.load(open(SITE / "static/data/lineages.json")); vid = json.load(open(SITE / "static/data/videos.json"))
-cur = json.load(open(SITE / "static/data/curves.json")); ana = json.load(open(SITE / "static/data/anatomy.json"))
+cur = json.load(open(SITE / "static/data/curves.json")); ana = json.load(open(SITE / "static/data/anatomy.json")); cases = json.load(open(SITE / "static/data/cases.json"))
 def js(o): return json.dumps(o, separators=(",", ":")).replace("</", "<\\/")
 
 # ------------------------------------------------------------------ adaptive-resolution storyboard
-RAMP = ["#4da9c3", "#64bdba", "#8ccab1", "#cadaa4", "#f6e09b", "#fee099", "#fdc88f", "#fa9a6b", "#fa7b6b"]   # Figure 1 fitness scale, low -> high
+RAMP = ["#3c9bc9", "#65bdba", "#b0d6a9", "#fee199", "#fdcd94", "#faa26f", "#f97f5f", "#fc757b"]   # the eight-colour set, low -> high
 CENTS = [(0.22, 0.74), (0.56, 0.82), (0.84, 0.62), (0.28, 0.28), (0.63, 0.42), (0.80, 0.20)]
 SPLIT = 4                                                                        # the cell with the largest fitness range
 SUBC = [(0.60, 0.45), (0.67, 0.36)]                                              # its local 2-centroid CVT
@@ -100,11 +100,12 @@ STORY = (
 
 # the teaser as inline SVG so the page's theme can recolour its ink and outlines (fills/strokes stay as attributes)
 svg = (SITE / "static/img/fig1_teaser_method.svg").read_text()
-svg = re.sub(r'<svg[^>]*>', '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 576 540" class="teaser-svg" role="img" '
+vb = re.search(r'viewBox="([^"]+)"', svg).group(1)
+svg = re.sub(r'<svg[^>]*>', '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="' + vb + '" class="teaser-svg" role="img" '
              'aria-label="Figure 1. (a) Naive search in harness space, guided by a meta-agent: candidates drift along a few local lineages inside one undivided region. '
              '(b) Harness-MAP: the structure-token space is partitioned into cells; at step t+1 a high-variance cell is sub-split and children are bred from cell elites. '
              'Legend: candidate shapes, a fitness colour scale from low to high, and markers for parent, child and other candidates.">', svg, count=1)
-html = (tpl.replace("__TEASER_SVG__", svg).replace("__LINEAGES_JSON__", js(lin)).replace("__VIDEOS_JSON__", js(vid)).replace("__CURVES_JSON__", js(cur)).replace("__ANATOMY_JSON__", js(ana))
+html = (tpl.replace("__TEASER_SVG__", svg).replace("__LINEAGES_JSON__", js(lin)).replace("__VIDEOS_JSON__", js(vid)).replace("__CURVES_JSON__", js(cur)).replace("__ANATOMY_JSON__", js(ana)).replace("__CASES_JSON__", js(cases))
            .replace("__STORYBOARD_SVG__", STORY))
 # BALROG grid videos: render the four players statically
 grids = ""
