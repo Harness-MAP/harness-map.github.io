@@ -1023,11 +1023,8 @@
     </div>
 
     <div class="overview">
-      <p>Given a frozen foundation model \(M\) and a task distribution \(\mathcal X\), a harness \(H \in \mathcal H\) is the executable program that turns \(M\) into a functional agent. Executing \(H\) on \(x \sim \mathcal X\) yields a trajectory \(\tau \sim p_M(H, x)\) scored by reward \(r(\tau, x)\). Harness search seeks the optimal harness program:</p>
-      <div class="eq">\[ H^\star = \arg\max_{H \in \mathcal H}\ \mathbb E_{x \sim \mathcal X,\ \tau \sim p_M(H, x)}\big[\, r(\tau, x) \,\big] \tag{1} \]</div>
-      <p>Existing harness evolution paradigms conduct search directly over the raw, token-level space of possible harnesses, relying on an LLM proposer to iteratively edit low-level programs. Since this unstructured token space lacks coordinate metrics, these methods search blindly, without insight into unexplored regions or search coverage. Harness-MAP instead restructures \(\mathcal H\) into a map of cell partitions \(\mathcal C\). During search, the framework maintains an archive \(\mathcal A = \{H_c\}_{c \in \mathcal C}\) storing the elite candidate \(H_c\) with best-so-far performance for each cell \(c\):</p>
-      <div class="eq">\[ H_c = \arg\max_{H \in c}\ \mathbb E_{x \sim \mathcal X,\ \tau \sim p_M(H, x)}\big[\, r(\tau, x) \,\big] \tag{2} \]</div>
-      <p>Occupied cells provide an explicit view of search coverage and fitness distribution, and mapping candidates to this coordinate space makes search step sizes measurable along visible trajectories: intra-cell movement for minor edits, inter-cell movement for major structural shifts.</p>
+      <p>Given a frozen foundation model <i>M</i> and a task distribution, a harness <i>H</i> is the executable program that turns <i>M</i> into a functional agent: executing it on a task yields a trajectory scored by the task reward, and harness search seeks the harness with the highest expected reward. Existing harness evolution paradigms conduct this search directly over the raw, token-level space of possible harnesses, relying on an LLM proposer to iteratively edit low-level programs. Since that unstructured space lacks coordinate metrics, they search blindly, without insight into unexplored regions or search coverage.</p>
+      <p>Harness-MAP instead restructures the space into a map of cell partitions and maintains an archive that stores, for each cell, the elite candidate with best-so-far performance. Occupied cells provide an explicit view of search coverage and fitness distribution, and mapping candidates to this coordinate space makes search step sizes measurable along visible trajectories: intra-cell movement for minor edits, inter-cell movement for major structural shifts.</p>
     </div>
 
     <div class="steps3">
