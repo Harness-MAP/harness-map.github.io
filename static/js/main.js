@@ -1013,6 +1013,19 @@
       chart.setSelected(bi, true); an.show(bi);
     }
     const LE = DATA.lineages.nav_easy;
-    if (LE && $('#chart-nav-easy')) lineageChart($('#chart-nav-easy'), LE, { metric: 'SubtaskSR', ylabel: 'Subtask SR on the 50 search tasks', clickable: false });
+    if (LE && $('#chart-nav-easy')) {   // code and videos appear automatically once anatomy.nav_easy / videos.nav_easy exist
+      const hasAn = DATA.anatomy && DATA.anatomy.nav_easy && DATA.anatomy.nav_easy.length === LE.rows.length, VE = (DATA.videos.nav_easy || []).filter(e => e.i != null);
+      const ah = $('#anat-nav-easy'), ph = $('#pair-nav-easy'), bi = LE.rows.findIndex(r => r.best);
+      const an = hasAn ? anatomyPanel(ah, LE.rows, 'nav_easy', 'SubtaskSR') : (ah && ah.remove(), null);
+      let chart, pp = null;
+      if (ph && VE.length >= 2) pp = pairPlayer(ph, VE, {
+        caption: (e, i) => `<b>#${i}</b> ${esc(e.episode || '')}: subtask success ${e.subtask_sr != null ? e.subtask_sr.toFixed(2) : '–'}${e.steps != null ? `, ${e.steps} steps` : ''}${e.final_dist != null ? `, ${Math.round(e.final_dist / 100)} m from the target` : ''} · search Subtask SR ${fmt(e.score)} ${badge(e, LE.rows[i])}`,
+        onChange: i => { if (chart) chart.setSelected(i, true); if (an) an.show(i); }, start: bi });
+      else if (ph) ph.remove();
+      chart = lineageChart($('#chart-nav-easy'), LE, { metric: 'SubtaskSR', ylabel: 'Subtask SR on the 50 search tasks', clickable: !!(an || pp),
+        hint: an || pp ? 'Hover a harness for its score and diff; click it to see its structure' + (pp ? ' and watch it beside the initial harness.' : '.') : undefined,
+        onSelect: i => { if (an) an.show(i); if (pp) pp.set(i, true, true); } });
+      if (an || pp) { chart.setSelected(bi, true); if (an) an.show(bi); }
+    }
   }
 })();
