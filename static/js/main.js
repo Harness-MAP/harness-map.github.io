@@ -49,13 +49,9 @@
   }
   $$('[data-tabs]').forEach(initTabs);
 
-  /* ---------------- paper button: mark "soon" until the PDF is uploaded ---------------- */
+  /* ---------------- paper button: marked "soon" only while it still points at the local PDF path ---------------- */
   const paper = $('#btn-paper');
-  if (paper && location.protocol !== 'file:') {
-    fetch(paper.getAttribute('href'), { method: 'HEAD', cache: 'no-store' })
-      .then(r => { if (!r.ok) paper.classList.add('soon'); })
-      .catch(() => paper.classList.add('soon'));
-  }
+  if (paper && /^static\//.test(paper.getAttribute('href') || '')) fetch(paper.getAttribute('href'), { method: 'HEAD' }).then(r => { if (!r.ok) paper.classList.add('soon'); }).catch(() => paper.classList.add('soon'));
 
   /* ---------------- bibtex copy ---------------- */
   const copyBtn = $('#copy-bib');
