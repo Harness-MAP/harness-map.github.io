@@ -650,7 +650,7 @@
     const c = DATA.cases && DATA.cases[key]; const t = CASE_TEXT[key] || {}; extra = extra || {};
     if (!c) return `<div class="f2card ${extra.cls || ''}"><div class="f2head"><span class="badge-letter">${esc(extra.letter || '?')}</span>${esc(extra.name || key)}</div><div class="f2body"><div><div class="ph">Component graph</div><p class="small muted">Not resolvable from the archived ledger.</p></div><div><div class="ph">Pseudocode</div><pre class="code">${codeHtml(extra.code || t.code || '')}</pre></div></div>${extra.note ? `<p class="f2note">${extra.note}</p>` : ''}</div>`;
     return f2card({ letter: extra.letter || c.display.replace(/[^0-9k₀=]/g, '').slice(0, 3) || 'N', name: `${c.display} · ${c.label}`, cls: extra.cls || '', score: c.score, scoreLabel: 'success',
-      graph: caseGraph(c), code: c.pseudo || extra.code || t.code || '', codeLabel: c.pseudo ? 'Pseudocode · entry functions, real arguments' : 'Pseudocode', entry: c.entry,
+      graph: caseGraph(c), code: c.pseudo || extra.code || t.code || '', codeLabel: c.code_label || (c.pseudo ? 'Pseudocode · entry functions, real arguments' : 'Pseudocode'), entry: c.entry,
       note: (extra.note || t.mod || (t.para ? `<b>${esc(t.para)}</b>` : '')) + (c.parent ? ` · parent ${esc(c.parent.replace(/cand_r0*(\d+)_/, 'cand_r$1_'))}${c.parent_score != null ? ` (${c.parent_score.toFixed(3)})` : ''}` : '') });
   }
   function caseBlocks(host) {
@@ -661,8 +661,10 @@
         cards: [['case1_n03', { letter: '1' }], ['case1_n05', { letter: '2' }], ['case1_n15', { letter: '3' }], ['case1_n21', { letter: '4' }], ['case1_n39', { letter: '5' }], ['case1_n47', { letter: '6', cls: 'top' }]] },
       { idx: 'Finding 2 · Case 2, five champions', h: 'Discovered optimal harnesses exhibit high structural and algorithmic diversity.',
         finding: 'The champions show high design diversity (pairwise textual similarity below 0.093) and complementary task coverage, achieving 100% success via an oracle selector. Perception converges on shared parsers, while control paradigms diverge across BFS and heuristic search. Performance correlates inversely with token cost: the top-performing harness (k₀ = 16, 0.900) uses traditional algorithms without any LLM calls during evaluation, whereas the most token-expensive elite (k₀ = 32) yields the lowest score (0.400).',
-        text: 'The best harness of each initial resolution.',
-        cards: [['champ_k2', { letter: '2' }], ['champ_k4', { letter: '4' }], ['champ_k8', { letter: '8' }], ['champ_k16', { letter: '16', cls: 'top' }], ['champ_k32', { letter: '32', cls: 'bad' }]] },
+        text: 'BALROG-MiniHack: the best harness of each initial resolution.',
+        cards: [['champ_k2', { letter: '2' }], ['champ_k4', { letter: '4' }], ['champ_k8', { letter: '8' }], ['champ_k16', { letter: '16', cls: 'top' }], ['champ_k32', { letter: '32', cls: 'bad' }]],
+        text2: 'SpatialWorld-3DGames: the five harnesses that reach 100% on their game, 4 to 8 modules and 12 to 63 components each, from a four-module perception-and-policy wrapper (Maze, Snake) to a 28-component action planner that reads the cube off the screen and unwinds the scramble (Rubik). Pairwise token-set similarity of their sources is below 0.19.',
+        cards2: [['game_maze3d_pro', { letter: 'M3', cls: 'top' }], ['game_block3d', { letter: 'B3', cls: 'top' }], ['game_maze', { letter: 'Mz', cls: 'top' }], ['game_snake', { letter: 'Sn', cls: 'top' }], ['game_rubik', { letter: 'Rb', cls: 'top' }]] },
       { idx: 'Finding 3 · Case 3, failure modes', h: 'Search failures stem from excessively fine resolution and wasteful parent selection.',
         finding: 'Uniform selection repeatedly samples low-scoring cells, wasting compute and capping k₀ = 32 performance at 0.400. Overly permissive rules in new modules incorrectly override the LLM fallback logic, causing severe performance drops (0.900 → 0.225).',
         text: '<b>Allocation stalls</b> (arm k₀ = 32, capped at 0.400): candidates N44–N46 spend their iterations absorbing reflections without breeding elites. <b>Over-admitting predicates</b> (arm k₀ = 16): an unsound reflex predicate prematurely overrides the LLM fallback.',
@@ -671,7 +673,10 @@
         finding: 'All major breakthroughs originate from newly subdivided cells (Cell 23 yielding the 0.900 champion). The system self-corrects by merging uninformative sub-trees while expanding resolution in high-variance regions.',
         text: '<span class="cellnote"><span><b>Cell 3</b>depth-1 split in round 1 on a score spread of 0.05; the sub-elites failed to outperform the parent, merged back in round 2</span><span><b>Cell 21</b>partitioned in round 5, producing cand_r052 (0.600) and tools/quest.py</span><span><b>Cell 23</b>depth-2 high-variance partition in round 8; its children averaged 0.756 and yielded the champion</span></span>',
         cards: [['cell21_r52', { letter: '21', note: 'Cell 21 child; introduces <code>tools/quest.py</code>' }], ['cell23_r64', { letter: '23', cls: 'top', note: 'Cell 23 child, cand_r064; the 0.900 champion cand_r068 reuses its stage table' }]] }];
-    host.innerHTML = blocks.map(b => `<div class="case-block"><div class="finding"><div><span class="idx">${esc(b.idx)}</span><h3>${esc(b.h)}</h3><p>${esc(b.finding)}</p></div><div class="case-text">${b.text}</div></div><div class="case-cards">${b.cards.map(([k, x]) => caseCard(k, x)).join('')}</div></div>`).join('');
+    host.innerHTML = blocks.map(b => `<div class="case-block"><div class="finding"><span class="idx">${esc(b.idx)}</span><h3>${esc(b.h)}</h3></div>` +
+      `<details class="casewrap"><summary>Cases · ${b.cards.length + (b.cards2 ? b.cards2.length : 0)} harnesses <svg viewBox="0 0 24 24"><path d="M12 15.5 5.5 9l1.4-1.4 5.1 5.1 5.1-5.1L18.5 9z"/></svg></summary>` +
+      `<div class="case-text">${b.text}</div><div class="case-cards">${b.cards.map(([k, x]) => caseCard(k, x)).join('')}</div>` +
+      (b.cards2 ? `<div class="case-text" style="margin-top:16px">${b.text2}</div><div class="case-cards">${b.cards2.map(([k, x]) => caseCard(k, x)).join('')}</div>` : '') + `</details></div>`).join('');
   }
   if ($('#case-blocks')) caseBlocks($('#case-blocks'));
 

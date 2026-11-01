@@ -524,7 +524,8 @@ p.caption b{color:var(--ink-2)}
 
 /* case analysis: finding + its candidates */
 .case-block{margin:26px 0 0;padding:22px 0 0;border-top:1px solid var(--line)}
-.case-block .finding{display:grid;grid-template-columns:minmax(260px,1fr) 2.2fr;gap:14px 28px;align-items:start;margin-bottom:12px}
+.case-block .finding{display:block;margin-bottom:10px}
+.case-block .finding h3{font-size:clamp(18px,1.9vw,23px);line-height:1.3;margin:4px 0 0;text-wrap:balance}
 @media (max-width:900px){.case-block .finding{grid-template-columns:1fr}}
 .case-block .finding h3{font-size:21px;margin:4px 0 6px}
 .case-block .finding .idx{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--accent-ink)}
@@ -673,3 +674,9 @@ details.abstract summary:hover{border-color:var(--accent);color:var(--accent-ink
 .pp-nav button:disabled{opacity:.45;cursor:default}
 .pp-count{margin-left:auto;font-family:var(--mono);font-size:11.5px;color:var(--muted)}
 @media (max-width:700px){.pair-player{grid-template-columns:1fr}}
+.casewrap{margin-top:6px}
+.casewrap>summary{cursor:pointer;font-weight:600;color:var(--accent-ink);font-size:14px;display:flex;align-items:center;gap:6px;list-style:none;padding:4px 0}
+.casewrap>summary::-webkit-details-marker{display:none}
+.casewrap>summary svg{width:16px;height:16px;fill:currentColor;transition:transform .2s}
+.casewrap[open]>summary svg{transform:rotate(180deg)}
+.casewrap .case-text{margin:8px 0 10px}
