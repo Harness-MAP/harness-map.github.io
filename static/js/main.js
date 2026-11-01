@@ -409,113 +409,119 @@
   const rampCol = f => RAMP[Math.max(0, Math.min(RAMP.length - 1, Math.floor(f * RAMP.length)))];
   function trajPanel(root) {
     const D = DATA.traj; if (!D) return;
-    const N = D.nodes, T = D.T, path = D.path, pathSet = new Set(path);
-    const kids = {}; Object.entries(D.tree).forEach(([c, v]) => { if (v.parent != null) (kids[v.parent] = kids[v.parent] || []).push(+c); });
-    Object.values(kids).forEach(a => a.sort((x, y) => x - y));
-    const tileIdx = Object.fromEntries(D.order.map((c, k) => [c, k]));
-    const st = { t: 0, playing: null }; let uid = 0;
-    root.innerHTML = `<div class="reveal"><button type="button" class="step" data-prev aria-label="Previous step">‹</button><button type="button" class="play" data-play>Play the search</button><button type="button" class="step" data-next aria-label="Next step">›</button><input type="range" min="0" max="${T}" value="0" step="1" data-slider aria-label="Search step"><span class="readout" data-readout></span></div>
+    const N = D.nodes, T = D.steps.length - 1, path = D.path, pathSet = new Set(path), C = D.cells;
+    const st = { t: 0, playing: null, view: '2d' }; let uid = 0;
+    let bx0 = 1e9, by0 = 1e9, bx1 = -1e9, by1 = -1e9;
+    Object.values(C).forEach(c => c.poly.forEach(([x, y]) => { bx0 = Math.min(bx0, x); by0 = Math.min(by0, y); bx1 = Math.max(bx1, x); by1 = Math.max(by1, y); }));
+    const BW = bx1 - bx0 || 1, BH = by1 - by0 || 1;
+    root.innerHTML = `<div class="reveal"><button type="button" class="step" data-prev aria-label="Previous step">‹</button><button type="button" class="play" data-play>Play the search</button><button type="button" class="step" data-next aria-label="Next step">›</button><input type="range" min="0" max="${T}" value="0" step="1" data-slider aria-label="Search step"><span class="readout" data-readout>T = 0</span><span class="seg view" data-view><button type="button" class="on" data-v="2d">2D map</button><button type="button" data-v="3d">3D · success as height</button></span></div>
       <div class="traj-map"><div class="chart traj-chart" data-map></div>
-        <div class="traj-legend"><span class="ramp">success <i></i></span><span><span class="sw ring"></span>cell elite</span><span><span class="sw dashed"></span>this step's children</span><span><span class="sw path"></span>lineage of the best</span><span><span class="sw split"></span>cell sub-split this step</span></div></div>
+        <div class="traj-legend"><span class="ramp">success <i></i></span><span><span class="sw ring"></span>cell elite</span><span><span class="sw dashed"></span>this step's child</span><span><span class="sw path"></span>lineage of the best</span><span><span class="sw split"></span>cell born by a sub-split</span><span><span class="sw ghost"></span>split reverted</span></div></div>
       <div class="traj-side"><div class="traj-stats" data-stats></div><div class="traj-events" data-events></div><div class="traj-kids" data-kids></div></div>`;
     const mapHost = $('[data-map]', root), slider = $('[data-slider]', root), readout = $('[data-readout]', root), playBtn = $('[data-play]', root),
       statsEl = $('[data-stats]', root), eventsEl = $('[data-events]', root), kidsEl = $('[data-kids]', root);
     const lab = i => N[i].label;
-    function rectOf(cid, S, cols, gap, m) {
-      const chain = []; let c = cid;
-      while (D.tree[c] && D.tree[c].parent != null) { chain.unshift(c); c = D.tree[c].parent; }
-      const k = tileIdx[c]; let x = m + (k % cols) * (S + gap), y = m + Math.floor(k / cols) * (S + gap), w = S, h = S;
-      chain.forEach((cc, lvl) => {
-        const sib = kids[D.tree[cc].parent], r = sib.indexOf(cc), n = sib.length, g = 4;
-        if (lvl % 2 === 0) { const ww = (w - g * (n - 1)) / n; x += r * (ww + g); w = ww; } else { const hh = (h - g * (n - 1)) / n; y += r * (hh + g); h = hh; }
-      });
-      return { x, y, w, h };
-    }
-    function draw(host, W, cols) {
-      const gap = 8, m = 6, S = (W - 2 * m - gap * (cols - 1)) / cols, rows = Math.ceil(16 / cols), H = 2 * m + rows * S + gap * (rows - 1);
-      const step = D.steps[st.t], sc = S / 150, r = 5 * sc, fs = 9.5 * sc, id = 'tj' + (++uid);
+    function draw(host, W) {
+      const step = D.steps[st.t], three = st.view === '3d', id = 'tj' + (++uid), m = 8, sc = W / 620;
+      const cellOf = {}; Object.entries(step.members).forEach(([cid, ms]) => ms.forEach(i => { cellOf[i] = +cid; }));
+      // projection: 2D keeps the map's own aspect; 3D rotates the floor, foreshortens it and lifts every harness by its success
+      const th = 34 * Math.PI / 180, tilt = 0.46, HZ = 0.42, cs = Math.cos(th), sn = Math.sin(th);
+      const raw = ([x, y], h) => { const u = (x - bx0) / BW, v = (y - by0) / BW; return three ? [u * cs - v * sn, (u * sn + v * cs) * tilt - (h || 0) * HZ] : [u, v]; };
+      const corners = [[bx0, by0], [bx1, by0], [bx1, by1], [bx0, by1]], probe = corners.flatMap(p => [raw(p, 0), raw(p, 1)]);
+      const px0 = Math.min(...probe.map(p => p[0])), px1 = Math.max(...probe.map(p => p[0])), py0 = Math.min(...probe.map(p => p[1])), py1 = Math.max(...probe.map(p => p[1]));
+      const S = (W - 2 * m) / (px1 - px0), H = 2 * m + (py1 - py0) * S;
+      const P = (p, h) => { const q = raw(p, h); return { x: m + (q[0] - px0) * S, y: m + (q[1] - py0) * S }; };
+      const depthOf = p => { const u = (p[0] - bx0) / BW, v = (p[1] - by0) / BW; return u * sn + v * cs; };
+      const r = (three ? 4.6 : 5.2) * sc, fs = 9.5 * sc;
       host.innerHTML = '';
-      const svg = svgEl('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': `Archive at step ${st.t}: ${step.n_cells} cells, ${step.occupied} occupied, best success ${step.best}` }, host);
+      const svg = svgEl('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': `Archive at step ${st.t}: ${step.n_cells} cells, ${step.occupied} occupied, best success ${N[step.best].fit}` }, host);
       svg.style.fontFamily = 'inherit'; svg.style.overflow = 'visible';
       const defs = svgEl('defs', {}, svg);
       [['w', 'var(--warm)'], ['m', 'var(--muted)']].forEach(([k, col]) => {
         const mk = svgEl('marker', { id: `${id}-${k}`, viewBox: '0 0 10 10', refX: 8, refY: 5, markerWidth: 5, markerHeight: 5, orient: 'auto-start-reverse' }, defs);
         svgEl('path', { d: 'M0,0 L10,5 L0,10 z', fill: col }, mk);
       });
-      const born = new Set(step.events.filter(e => e.kind === 'split').flatMap(e => e.children));
-      const retreat = step.events.find(e => e.kind === 'retreat');
-      const pos = {};
-      step.cells.forEach(c => {
-        const R = rectOf(c.cid, S, cols, gap, m), occ = c.members.length > 0, isNew = born.has(c.cid);
-        svgEl('rect', { x: R.x, y: R.y, width: R.w, height: R.h, rx: 6 * sc, fill: occ ? 'var(--cell-occ)' : 'var(--surface)',
-          stroke: isNew ? 'var(--accent)' : occ ? 'var(--line-2)' : 'var(--line)', 'stroke-width': isNew ? 2 : 1, 'stroke-dasharray': isNew ? '5 3' : occ ? 'none' : '3 3' }, svg);
-        svgEl('text', { x: R.x + 6 * sc, y: R.y + 11.5 * sc, 'font-size': fs, fill: isNew ? 'var(--accent-ink)' : 'var(--muted)', 'font-weight': isNew ? 700 : 500 }, svg).textContent = (c.depth ? '↳ ' : '') + 'cell ' + c.cid;
-        if (retreat && retreat.parent === c.cid) {   // ghost of the merged-back children, on the same halves convention
-          const g = 4, mx = R.x + R.w / 2, my = R.y + R.h / 2;
-          svgEl('line', { x1: mx, x2: mx, y1: R.y + 4, y2: R.y + R.h - 4, stroke: 'var(--warm)', 'stroke-width': 1.2, 'stroke-dasharray': '4 3', opacity: .7 }, svg);
-          svgEl('line', { x1: mx + g, x2: R.x + R.w - 4, y1: my, y2: my, stroke: 'var(--warm)', 'stroke-width': 1.2, 'stroke-dasharray': '4 3', opacity: .7 }, svg);
-          svgEl('text', { x: R.x + R.w - 6 * sc, y: R.y + R.h - 6 * sc, 'text-anchor': 'end', 'font-size': fs, 'font-weight': 700, fill: 'var(--warm-ink)', 'paint-order': 'stroke', stroke: 'var(--surface)', 'stroke-width': 3 }, svg).textContent = '↺ split reverted';
-        }
-        const pad = 8 * sc, top = 16 * sc, sp = 14 * sc, colsN = Math.max(1, Math.floor((R.w - 2 * pad) / sp));
-        const mem = c.members.slice().sort((a, b) => a - b), rowsN = Math.ceil(mem.length / colsN), bw = Math.min(mem.length, colsN) * sp, bh = rowsN * sp;
-        const x0 = R.x + (R.w - bw) / 2 + sp / 2, y0 = R.y + top + (R.h - top - bh) / 2 + sp / 2;
-        mem.forEach((i, j) => { pos[i] = { x: x0 + (j % colsN) * sp, y: y0 + Math.floor(j / colsN) * sp, cell: c.cid, elite: c.elite === i }; });
+      const ev = step.event || {}, born = new Set(ev.kind === 'split' ? ev.children : (ev.also_split ? ev.also_split.children : [])), merged = ev.kind === 'retreat' ? ev.merged.flat() : [];
+      const cells = step.cells.map(cid => C[cid]).sort((a, b) => depthOf(a.c) - depthOf(b.c));
+      const poly = (c, h) => c.poly.map(p => { const q = P(p, h); return `${q.x.toFixed(1)},${q.y.toFixed(1)}`; }).join(' ');
+      cells.forEach(c => {
+        const occ = (step.members[c.cid] || []).length > 0, isNew = born.has(c.cid);
+        svgEl('polygon', { points: poly(c, 0), fill: occ ? 'var(--cell-occ)' : 'var(--surface)', stroke: isNew ? 'var(--accent)' : occ ? 'var(--line-2)' : 'var(--line)', 'stroke-width': isNew ? 2 : 1, 'stroke-dasharray': isNew ? '5 3' : occ ? 'none' : '3 3', 'stroke-linejoin': 'round' }, svg);
       });
+      merged.forEach(cid => { const c = C[cid]; if (c) svgEl('polygon', { points: poly(c, 0), fill: 'none', stroke: 'var(--warm)', 'stroke-width': 1.2, 'stroke-dasharray': '4 3', opacity: .75 }, svg); });
+      cells.forEach(c => {
+        const isNew = born.has(c.cid), ms = step.members[c.cid] || [];
+        const vt = c.poly.reduce((a, b) => (b[1] < a[1] ? b : a)), q = P([c.c[0] + 0.62 * (vt[0] - c.c[0]), c.c[1] + 0.62 * (vt[1] - c.c[1])], 0);   // label near the cell's top, off the dots
+        const t = svgEl('text', { x: q.x, y: q.y + 3 * sc, 'text-anchor': 'middle', 'font-size': fs, fill: isNew ? 'var(--accent-ink)' : 'var(--muted)', 'font-weight': isNew ? 700 : 500, 'paint-order': 'stroke', stroke: 'var(--surface)', 'stroke-width': 3, opacity: ms.length ? .95 : .7 }, svg);
+        t.textContent = (c.depth ? '↳ ' : '') + 'cell ' + c.cid;
+      });
+      if (ev.kind === 'retreat') ev.parents.forEach(pc => { const c = C[pc]; if (!c) return; const q = P(c.c, 0); svgEl('text', { x: q.x, y: q.y + 12 * sc, 'text-anchor': 'middle', 'font-size': fs, 'font-weight': 700, fill: 'var(--warm-ink)', 'paint-order': 'stroke', stroke: 'var(--surface)', 'stroke-width': 3 }, svg).textContent = '↺ split reverted'; });
+      if (three) {   // height axis at the front-left corner
+        const base = P([bx0, by1], 0), top = P([bx0, by1], 1);
+        svgEl('line', { x1: base.x, y1: base.y, x2: top.x, y2: top.y, stroke: 'var(--line-2)', 'stroke-width': 1 }, svg);
+        [0, .5, 1].forEach(h => { const q = P([bx0, by1], h); svgEl('line', { x1: q.x - 4, x2: q.x, y1: q.y, y2: q.y, stroke: 'var(--line-2)' }, svg); svgEl('text', { x: q.x - 6, y: q.y + 3, 'text-anchor': 'end', 'font-size': fs, fill: 'var(--muted)' }, svg).textContent = h.toFixed(1); });
+        svgEl('text', { x: top.x - 6, y: top.y - 8 * sc, 'text-anchor': 'end', 'font-size': fs, fill: 'var(--muted)' }, svg).textContent = 'success';
+      }
+      const pos = {}, floor = {};
+      Object.entries(step.pos).forEach(([i, p]) => { pos[i] = P(p, N[i].fit); floor[i] = P(p, 0); pos[i].d = depthOf(p); });
       function arrow(a, b, color, w, k, op) {
         const dx = b.x - a.x, dy = b.y - a.y, L = Math.hypot(dx, dy) || 1, o = r + 3, ux = dx / L, uy = dy / L; if (L < 2 * o + 4) return;
         svgEl('line', { x1: a.x + ux * o, y1: a.y + uy * o, x2: b.x - ux * (o + 3), y2: b.y - uy * (o + 3), stroke: color, 'stroke-width': w, 'marker-end': `url(#${id}-${k})`, opacity: op, 'stroke-linecap': 'round' }, svg);
       }
-      step.children.forEach(i => { const n = N[i]; if (n.parent != null && pos[n.parent] && pos[i] && !(pathSet.has(i) && pathSet.has(n.parent))) arrow(pos[n.parent], pos[i], 'var(--muted)', 1.1 * sc, 'm', .8); });
+      const ids = Object.keys(pos).map(Number).sort((a, b) => three ? pos[a].d - pos[b].d : (pathSet.has(b) - pathSet.has(a)) || a - b);
+      if (three) ids.forEach(i => { const p = pos[i], f = floor[i]; svgEl('line', { x1: f.x, y1: f.y, x2: p.x, y2: p.y, stroke: pathSet.has(i) ? 'var(--warm)' : 'var(--line-2)', 'stroke-width': pathSet.has(i) ? 1.6 : 1, opacity: .85 }, svg); svgEl('circle', { cx: f.x, cy: f.y, r: 1.8 * sc, fill: 'var(--line-2)' }, svg); });
+      step.kids.forEach(i => { const n = N[i]; if (n.parent != null && pos[n.parent] && pos[i] && !(pathSet.has(i) && pathSet.has(n.parent))) arrow(pos[n.parent], pos[i], 'var(--muted)', 1.1 * sc, 'm', .8); });
       for (let k = 1; k < path.length; k++) { const a = path[k - 1], b = path[k]; if (pos[a] && pos[b]) arrow(pos[a], pos[b], 'var(--warm)', 2.4 * sc, 'w', 1); }
       const tip = el('div', 'tip'); host.appendChild(tip); const boxes = [];
-      const label = (i, p, strong) => {   // path nodes always; a child's label only where it does not collide with one already placed
-        const txt = N[i].label, tw = txt.length * fs * 0.66 + 4, bx = { x: p.x - tw / 2, y: p.y + r + 2 * sc, w: tw, h: fs + 3 };
+      const label = (i, p, strong) => {
+        const txt = N[i].short, tw = txt.length * fs * 0.66 + 4, bx = { x: p.x - tw / 2, y: p.y + r + 2 * sc, w: tw, h: fs + 3 };
         if (!strong && boxes.some(b => bx.x < b.x + b.w && b.x < bx.x + bx.w && bx.y < b.y + b.h && b.y < bx.y + bx.h)) return;
         boxes.push(bx);
-        svgEl('text', { x: p.x, y: p.y + r + 9.5 * sc, 'text-anchor': 'middle', 'font-size': fs, 'font-weight': strong ? 700 : 500, fill: strong ? 'var(--warm-ink)' : 'var(--ink-2)', 'paint-order': 'stroke', stroke: 'var(--surface)', 'stroke-width': 3, 'stroke-linejoin': 'round' }, svg).textContent = txt;
+        svgEl('text', { x: p.x, y: p.y + r + 9.5 * sc, 'text-anchor': 'middle', 'font-size': fs, 'font-weight': strong ? 700 : 500, fill: strong ? 'var(--warm-ink)' : 'var(--ink-2)', 'paint-order': 'stroke', stroke: 'var(--surface)', 'stroke-width': 3 }, svg).textContent = txt;
       };
-      const ids = Object.keys(pos).map(Number).sort((a, b) => (pathSet.has(b) - pathSet.has(a)) || a - b);   // path nodes first, so their labels win
-      ids.forEach(i => {
-        const p = pos[i], n = N[i], isKid = step.children.includes(i), isBest = i === D.best.i;
-        if (p.elite) svgEl('circle', { cx: p.x, cy: p.y, r: r + 3 * sc, fill: 'none', stroke: isBest ? 'var(--warm)' : 'var(--ink)', 'stroke-width': isBest ? 2.2 : 1.4 }, svg);
+      const order = three ? ids : ids.slice().sort((a, b) => (pathSet.has(b) - pathSet.has(a)) || a - b);
+      order.forEach(i => {
+        const p = pos[i], n = N[i], isKid = step.kids.includes(i), isBest = i === D.best, elite = step.elites[cellOf[i]] === i;
+        if (elite) svgEl('circle', { cx: p.x, cy: p.y, r: r + 3 * sc, fill: 'none', stroke: isBest ? 'var(--warm)' : 'var(--ink)', 'stroke-width': isBest ? 2.2 : 1.4 }, svg);
         if (isKid) svgEl('circle', { cx: p.x, cy: p.y, r: r + 5.5 * sc, fill: 'none', stroke: 'var(--ink)', 'stroke-width': 1.1, 'stroke-dasharray': '3 2' }, svg);
         const dot = svgEl('circle', { cx: p.x, cy: p.y, r, fill: rampCol(n.fit), stroke: 'var(--surface)', 'stroke-width': 1.5, tabindex: 0, role: 'img', 'aria-label': `${n.label}, success ${n.fit}` }, svg);
         dot.style.cursor = 'default';
         if (pathSet.has(i) || isKid) label(i, p, pathSet.has(i));
-        const show = ev => {
+        const show = () => {
           const solved = Object.entries(n.vec).filter(([, v]) => v > 0);
-          tip.innerHTML = `<b>${esc(n.full)} · evaluation ${n.n}</b><div>success<span>${n.fit.toFixed(3)}</span></div><div>cell<span>${p.cell}${p.elite ? ' · elite' : ''}</span></div>` +
-            (n.parent != null ? `<div>parent<span>${esc(lab(n.parent))} · cell ${n.parent_cell}</span></div>` : '<div>the reference harness<span></span></div>') +
+          tip.innerHTML = `<b>${esc(n.label)} · evaluation ${n.n}</b><div>success<span>${n.fit.toFixed(3)}</span></div><div>cell<span>${cellOf[i]}${elite ? ' · elite' : ''}</span></div>` +
+            (n.parent != null ? `<div>parent<span>${esc(N[n.parent].short)} · cell ${N[n.parent].cell}</span></div>` : '<div>the reference harness<span></span></div>') +
             (n.steer != null ? `<div>directive aimed at<span>cell ${n.steer}</span></div>` : '') +
-            (solved.length ? solved.map(([k, v]) => `<div>${esc(k)}<span>${v.toFixed(1)}</span></div>`).join('') : '<div>no task solved<span></span></div>');
+            (solved.length ? solved.map(([k, v]) => `<div>${esc(k)}<span>${v.toFixed(2)}</span></div>`).join('') : '<div>no task solved<span></span></div>');
           const bb = svg.getBoundingClientRect(), hb = host.getBoundingClientRect(), sx = bb.left - hb.left + p.x * (bb.width / W), sy = bb.top - hb.top + p.y * (bb.height / H), left = sx > hb.width * 0.55;
           tip.style.left = (sx + (left ? -14 : 14)) + 'px'; tip.style.top = (sy + 10) + 'px'; tip.classList.toggle('left', left); tip.classList.add('on');
         };
         const hide = () => tip.classList.remove('on');
         dot.addEventListener('mouseenter', show); dot.addEventListener('mouseleave', hide); dot.addEventListener('focus', show); dot.addEventListener('blur', hide);
-        dot.addEventListener('touchstart', e => { show(e); setTimeout(hide, 2500); }, { passive: true });
+        dot.addEventListener('touchstart', () => { show(); setTimeout(hide, 2500); }, { passive: true });
       });
     }
     function side() {
-      const step = D.steps[st.t];
+      const step = D.steps[st.t], ev = step.event;
       readout.textContent = `T = ${st.t}`; slider.value = st.t;
-      statsEl.innerHTML = [['step', st.t], ['evaluations', step.n_evals], ['cells occupied', `${step.occupied} / ${step.n_cells}`], ['best so far', step.best.toFixed(3)]]
+      statsEl.innerHTML = [['step', st.t], ['evaluations', step.evals], ['cells occupied', `${step.occupied} / ${step.n_cells}`], ['best so far', N[step.best].fit.toFixed(3)]]
         .map(([k, v]) => `<div><span class="v">${v}</span><span class="k">${k}</span></div>`).join('');
-      let ev = '';
-      if (st.t === 0) ev = '<div class="ev"><b>Coverage-gated initialization.</b> The reference harness occupies 1 of 16 cells. The meta-agent proposed 35 harnesses, each steered to be structurally unlike the archive; 28 landed in occupied or already-claimed cells and were discarded unevaluated, and the 7 that reached new cells were evaluated. 8 evaluations, 8 of 16 cells occupied (the 50% target).</div>';
-      else {
-        step.events.forEach(e => {
-          if (e.kind === 'split') ev += `<div class="ev"><b>Sub-split.</b> Cell ${e.cell} has the largest fitness range among the occupied cells (${e.range.toFixed(3)}); a local two-centroid CVT over its members divides it into cells ${e.children.join(' and ')}. Zero evaluations.</div>`;
-          else ev += `<div class="ev retreat"><b>Reverted.</b> No child of cell ${e.parent} beat its pre-split elite (${e.best_desc.toFixed(3)} vs. ${e.pre_elite.toFixed(3)}), so cells ${e.merged.join(', ')} are merged back into cell ${e.parent}, which remembers its score shape and is not re-split until a new candidate changes it.</div>`;
-        });
-        if (!step.events.length) ev = `<div class="ev none">Four children bred from the cycling cell elites; no cell met the sub-split condition and no open split was reverted.</div>`;
+      let html = '';
+      if (st.t === 0) html = `<div class="ev"><b>Coverage-gated initialization.</b> The reference harness occupies 1 of ${D.k0} cells. The meta-agent proposes founders, each steered to a region unlike the archive, until ⌈<i>m</i>·k₀⌉ = ${D.M} cells hold an evaluated harness. ${step.evals} evaluations, ${step.occupied} of ${D.k0} cells occupied.</div>`;
+      else if (ev && ev.kind === 'split') html = `<div class="ev"><b>Sub-split.</b> Cell ${ev.cell} has the largest fitness range among the occupied cells (${(ev.range || 0).toFixed(3)}). A local two-centroid CVT over its members divides it into cells ${ev.children.join(' and ')}. Zero evaluations.</div>`;
+      else if (ev && ev.kind === 'retreat') {
+        html = ev.parents.map((p, k) => `<div class="ev retreat"><b>Reverted.</b> No child of cell ${p} beat its pre-split elite${ev.pre_elite[k] != null ? ` (${ev.pre_elite[k].toFixed(3)})` : ''}, so cells ${ev.merged[k].join(', ')} are merged back into cell ${p}, which remembers this fitness distribution and is not re-split until a new candidate changes it.</div>`).join('');
+        if (ev.also_split) html += `<div class="ev"><b>Sub-split.</b> Cell ${ev.also_split.cell} is divided into cells ${ev.also_split.children.join(' and ')}.</div>`;
       }
-      eventsEl.innerHTML = ev;
-      const rows = step.children.map(i => { const n = N[i];
-        return `<tr class="${pathSet.has(i) ? 'path' : ''}"><td><b>${esc(n.label)}</b></td><td>${n.parent != null ? `${esc(lab(n.parent))} <span class="aim">cell ${n.parent_cell}</span>` : '<span class="aim">reference harness</span>'}</td><td>cell ${n.cell}${n.steer != null && n.steer !== n.cell ? ` <span class="aim">(aimed at ${n.steer})</span>` : ''}</td><td class="num">${n.fit.toFixed(3)}${n.new_elite ? ' <span class="el">new elite</span>' : ''}</td></tr>`; }).join('');
+      else html = `<div class="ev none">One child bred from the next cell elite in the cycle. No cell met the sub-split condition and no open split was reverted.</div>`;
+      eventsEl.innerHTML = html;
+      const cellOf = {}; Object.entries(step.members).forEach(([cid, ms]) => ms.forEach(i => { cellOf[i] = +cid; }));
+      const rows = step.kids.map(i => { const n = N[i], el_ = step.elites[cellOf[i]] === i;
+        return `<tr class="${pathSet.has(i) ? 'path' : ''}"><td><b>${esc(n.short)}</b></td><td>${n.parent != null ? `${esc(N[n.parent].short)} <span class="aim">cell ${N[n.parent].cell}</span>` : '<span class="aim">reference harness</span>'}</td><td>cell ${cellOf[i]}${n.steer != null ? ` <span class="aim">aimed at ${n.steer}</span>` : ''}</td><td class="num">${n.fit.toFixed(3)}${el_ ? ' <span class="el">new elite</span>' : ''}</td></tr>`; }).join('');
       kidsEl.innerHTML = `<table><thead><tr><th>${st.t === 0 ? 'harness' : 'child'}</th><th>parent</th><th>placed in</th><th>success</th></tr></thead><tbody>${rows}</tbody></table>`;
     }
-    function render() { const w = mapHost.clientWidth || 600; draw(mapHost, Math.max(240, w - 20), w < 430 ? 2 : 4); side(); if (st.zoomReady) zoomable(mapHost, zoomTitle, (body, bw) => { const h = el('div', 'chart traj-big'); body.appendChild(h); draw(h, bw - 20, 4); }); }
+    const zoomTitle = `A real search trajectory · ${D.bench} · k₀ = ${D.k0}`;
+    function render() { const w = mapHost.clientWidth || 600; draw(mapHost, Math.max(240, w - 20)); side(); if (st.zoomReady) zoomable(mapHost, zoomTitle, (body, bw) => { const h = el('div', 'chart traj-big'); body.appendChild(h); draw(h, Math.min(bw - 20, window.innerHeight - 150)); }); }
     function go(t) { st.t = Math.max(0, Math.min(T, t)); render(); }
     function stop() { if (st.playing) { clearInterval(st.playing); st.playing = null; playBtn.classList.remove('playing'); playBtn.textContent = 'Play the search'; } }
     playBtn.addEventListener('click', () => {
@@ -523,12 +529,12 @@
       if (st.t >= T) st.t = -1;
       playBtn.classList.add('playing'); playBtn.textContent = 'Pause';
       const tick = () => { if (st.t >= T) { stop(); return; } go(st.t + 1); };
-      tick(); st.playing = setInterval(tick, 1600);
+      tick(); st.playing = setInterval(tick, 900);
     });
     slider.addEventListener('input', () => { stop(); go(+slider.value); });
     $('[data-prev]', root).addEventListener('click', () => { stop(); go(st.t - 1); });
     $('[data-next]', root).addEventListener('click', () => { stop(); go(st.t + 1); });
-    const zoomTitle = `A real search trajectory · ${D.bench} · k₀ = ${D.k0}`;
+    $$('[data-view] button', root).forEach(b => b.addEventListener('click', () => { st.view = b.dataset.v; $$('[data-view] button', root).forEach(x => x.classList.toggle('on', x === b)); render(); }));
     st.zoomReady = true; render();
     let lastW = mapHost.clientWidth;
     onResize(() => { if (mapHost.clientWidth && Math.abs(mapHost.clientWidth - lastW) > 30) { lastW = mapHost.clientWidth; render(); } });

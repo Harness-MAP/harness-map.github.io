@@ -616,6 +616,17 @@ details.abstract summary:hover{border-color:var(--accent);color:var(--accent-ink
 .traj-legend .sw.dashed{border:1.4px dashed var(--ink)}
 .traj-legend .sw.path{border-radius:2px;height:3px;width:18px;background:var(--warm);vertical-align:2px}
 .traj-legend .sw.split{border-radius:3px;border:1.6px dashed var(--accent)}
+.traj-legend .sw.ghost{border-radius:3px;border:1.4px dashed var(--warm)}
+.traj .reveal .seg.view{margin-left:auto}
+.fig2wrap{margin-top:14px}
+.fig2wrap>summary{cursor:pointer;font-weight:600;color:var(--accent-ink);font-size:14px;display:flex;align-items:center;gap:6px;list-style:none}
+.fig2wrap>summary::-webkit-details-marker{display:none}
+.fig2wrap>summary svg{width:16px;height:16px;fill:currentColor;transition:transform .2s}
+.fig2wrap[open]>summary svg{transform:rotate(180deg)}
+.defs .def .eq.small{margin:6px 0 4px;font-size:.9em}
+.defs .def mark{background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--ink);padding:0 .15em;border-radius:3px;font-weight:600;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.lab p mark{background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--ink);padding:0 .15em;border-radius:3px;font-weight:600;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.lead .formula{font-family:var(--mono);font-size:.95em;color:var(--ink);white-space:nowrap}
 .traj-side{display:flex;flex-direction:column;gap:12px}
 .traj-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 @media (max-width:420px){.traj-stats{grid-template-columns:1fr 1fr}}
@@ -634,3 +645,6 @@ details.abstract summary:hover{border-color:var(--accent);color:var(--accent-ink
 .traj-kids .aim{color:var(--muted);font-size:12px}
 .traj-kids .el{color:var(--warm-ink);font-weight:600;font-size:11.5px;font-family:var(--sans,inherit)}
 .traj-kids tr.path td{background:color-mix(in srgb,var(--warm) 10%,transparent)}
+.figcard.video{margin:18px 0 0}
+.figcard.video video{display:block;width:100%;height:auto;background:#000}
+.figcard.video .figbar .muted{letter-spacing:0;text-transform:none;font-family:var(--font)}
