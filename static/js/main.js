@@ -410,7 +410,7 @@
   function trajPanel(root) {
     const D = DATA.traj; if (!D) return;
     const N = D.nodes, T = D.steps.length - 1, path = D.path, pathSet = new Set(path), C = D.cells;
-    const st = { t: 0, playing: null, view: '2d' }; let uid = 0;
+    const st = { t: 0, playing: null, view: '2d', yaw: 34, tilt: 0.46, drag: null }; let uid = 0;
     let bx0 = 1e9, by0 = 1e9, bx1 = -1e9, by1 = -1e9;
     Object.values(C).forEach(c => c.poly.forEach(([x, y]) => { bx0 = Math.min(bx0, x); by0 = Math.min(by0, y); bx1 = Math.max(bx1, x); by1 = Math.max(by1, y); }));
     const BW = bx1 - bx0 || 1, BH = by1 - by0 || 1;
@@ -421,21 +421,23 @@
     const mapHost = $('[data-map]', root), slider = $('[data-slider]', root), readout = $('[data-readout]', root), playBtn = $('[data-play]', root),
       statsEl = $('[data-stats]', root), eventsEl = $('[data-events]', root), kidsEl = $('[data-kids]', root);
     const lab = i => N[i].label;
-    function draw(host, W) {
-      const step = D.steps[st.t], three = st.view === '3d', id = 'tj' + (++uid), m = 8, sc = W / 620;
+    function draw(host, W, Ht) {
+      const step = D.steps[st.t], three = st.view === '3d', id = 'tj' + (++uid), m = 8;
       const cellOf = {}; Object.entries(step.members).forEach(([cid, ms]) => ms.forEach(i => { cellOf[i] = +cid; }));
       // projection: 2D keeps the map's own aspect; 3D rotates the floor, foreshortens it and lifts every harness by its success
-      const th = 34 * Math.PI / 180, tilt = 0.46, HZ = 0.42, cs = Math.cos(th), sn = Math.sin(th);
+      const th = st.yaw * Math.PI / 180, tilt = st.tilt, HZ = 0.42, cs = Math.cos(th), sn = Math.sin(th);
       const raw = ([x, y], h) => { const u = (x - bx0) / BW, v = (y - by0) / BW; return three ? [u * cs - v * sn, (u * sn + v * cs) * tilt - (h || 0) * HZ] : [u, v]; };
       const corners = [[bx0, by0], [bx1, by0], [bx1, by1], [bx0, by1]], probe = corners.flatMap(p => [raw(p, 0), raw(p, 1)]);
       const px0 = Math.min(...probe.map(p => p[0])), px1 = Math.max(...probe.map(p => p[0])), py0 = Math.min(...probe.map(p => p[1])), py1 = Math.max(...probe.map(p => p[1]));
-      const S = (W - 2 * m) / (px1 - px0), H = 2 * m + (py1 - py0) * S;
+      const S = Math.min((W - 2 * m) / (px1 - px0), (Ht - 2 * m) / (py1 - py0)), VW = 2 * m + (px1 - px0) * S, H = 2 * m + (py1 - py0) * S, sc = Math.max(0.6, Math.min(1.1, Math.min(VW, H) / 520));
       const P = (p, h) => { const q = raw(p, h); return { x: m + (q[0] - px0) * S, y: m + (q[1] - py0) * S }; };
       const depthOf = p => { const u = (p[0] - bx0) / BW, v = (p[1] - by0) / BW; return u * sn + v * cs; };
       const r = (three ? 4.6 : 5.2) * sc, fs = 9.5 * sc;
       host.innerHTML = '';
-      const svg = svgEl('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': `Archive at step ${st.t}: ${step.n_cells} cells, ${step.occupied} occupied, best success ${N[step.best].fit}` }, host);
-      svg.style.fontFamily = 'inherit'; svg.style.overflow = 'visible';
+      const svg = svgEl('svg', { viewBox: `0 0 ${VW} ${H}`, width: VW, height: H, role: 'img', 'aria-label': `Archive at step ${st.t}: ${step.n_cells} cells, ${step.occupied} occupied, best success ${N[step.best].fit}` }, host);
+      svg.style.fontFamily = 'inherit'; svg.style.overflow = 'visible'; svg.style.width = VW + 'px'; svg.style.height = H + 'px'; svg.style.maxWidth = '100%';
+      host.classList.toggle('grab', three);
+      if (three) { const hint = el('div', 'traj-hint', 'drag to rotate'); host.appendChild(hint); }
       const defs = svgEl('defs', {}, svg);
       [['w', 'var(--warm)'], ['m', 'var(--muted)']].forEach(([k, col]) => {
         const mk = svgEl('marker', { id: `${id}-${k}`, viewBox: '0 0 10 10', refX: 8, refY: 5, markerWidth: 5, markerHeight: 5, orient: 'auto-start-reverse' }, defs);
@@ -493,7 +495,7 @@
             (n.parent != null ? `<div>parent<span>${esc(N[n.parent].short)} · cell ${N[n.parent].cell}</span></div>` : '<div>the reference harness<span></span></div>') +
             (n.steer != null ? `<div>directive aimed at<span>cell ${n.steer}</span></div>` : '') +
             (solved.length ? solved.map(([k, v]) => `<div>${esc(k)}<span>${v.toFixed(2)}</span></div>`).join('') : '<div>no task solved<span></span></div>');
-          const bb = svg.getBoundingClientRect(), hb = host.getBoundingClientRect(), sx = bb.left - hb.left + p.x * (bb.width / W), sy = bb.top - hb.top + p.y * (bb.height / H), left = sx > hb.width * 0.55;
+          const bb = svg.getBoundingClientRect(), hb = host.getBoundingClientRect(), sx = bb.left - hb.left + p.x * (bb.width / VW), sy = bb.top - hb.top + p.y * (bb.height / H), left = sx > hb.width * 0.55;
           tip.style.left = (sx + (left ? -14 : 14)) + 'px'; tip.style.top = (sy + 10) + 'px'; tip.classList.toggle('left', left); tip.classList.add('on');
         };
         const hide = () => tip.classList.remove('on');
@@ -534,9 +536,15 @@
       }
       root.classList.remove('video');
       if (st.videoEl && st.videoEl.parentNode === mapHost) { const vv = st.videoEl.querySelector('video'); if (vv) vv.pause(); mapHost.removeChild(st.videoEl); }
-      draw(mapHost, Math.max(240, w - 20)); side();
-      if (st.zoomReady) zoomable(mapHost, zoomTitle, (body, bw) => { const h = el('div', 'chart traj-big'); body.appendChild(h); draw(h, Math.min(bw - 20, window.innerHeight - 150)); });
+      const Ht = parseFloat(getComputedStyle(root).getPropertyValue('--traj-h')) || 400;
+      draw(mapHost, Math.max(240, w - 20), Ht); side();
+      if (st.zoomReady) zoomable(mapHost, zoomTitle, (body, bw) => { const h = el('div', 'chart traj-big'); body.appendChild(h); draw(h, bw - 20, window.innerHeight - 150); });
     }
+    // 3D view: drag to turn the floor and change its tilt; handlers live on the host so they survive redraws
+    mapHost.addEventListener('pointerdown', e => { if (st.view !== '3d' || e.target.closest('.zoom-btn')) return; st.drag = { x: e.clientX, y: e.clientY, yaw: st.yaw, tilt: st.tilt }; mapHost.setPointerCapture(e.pointerId); e.preventDefault(); });
+    mapHost.addEventListener('pointermove', e => { if (!st.drag) return; st.yaw = st.drag.yaw + (e.clientX - st.drag.x) * 0.5; st.tilt = Math.max(0.22, Math.min(0.95, st.drag.tilt - (e.clientY - st.drag.y) * 0.004)); if (!st.raf) st.raf = requestAnimationFrame(() => { st.raf = null; render(); }); });
+    const endDrag = () => { st.drag = null; };
+    mapHost.addEventListener('pointerup', endDrag); mapHost.addEventListener('pointercancel', endDrag);
     function go(t) { st.t = Math.max(0, Math.min(T, t)); render(); }
     function stop() { if (st.playing) { clearInterval(st.playing); st.playing = null; playBtn.classList.remove('playing'); playBtn.textContent = 'Play the search'; } }
     playBtn.addEventListener('click', () => {

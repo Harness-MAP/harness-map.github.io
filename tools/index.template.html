@@ -117,10 +117,11 @@
     <!-- ---- search loop (§3.3) -->
     <div class="lab" id="lab-loop">
       <div class="lab-head"><div><span class="micro">Searching over the Harness-MAP</span><h3>Searching over the map</h3></div><span class="lab-note">§3.3, Algorithm 1</span></div>
-      <p>Standard CVT-MAP-Elites mutates blindly, and a plain harness-evolution loop has no notion of coverage. Harness-MAP runs the LLM-guided loop across the archive. Before the loop, the meta-agent proposes root harnesses until ⌈<i>m</i>·k₀⌉ cells hold an evaluated founder. Steps marked <span class="tag agent">meta-agent</span> are headless tool-using sessions over a candidate directory. Steps marked <span class="tag map">map</span> read only the archive and cost no rollout.</p>
-      <ol class="pipeline six">
+      <p>Standard CVT-MAP-Elites mutates blindly, and a plain harness-evolution loop has no notion of coverage. Harness-MAP runs the LLM-guided loop across the archive. Steps marked <span class="tag agent">meta-agent</span> are headless tool-using sessions over a candidate directory. Steps marked <span class="tag map">map</span> read only the archive and cost no rollout.</p>
+      <ol class="pipeline seven">
+        <li class="agent"><span class="n">0</span><b>Coverage-gated initialization</b><p>Propose founders until ⌈<i>m</i>·k₀⌉ cells are occupied.</p></li>
         <li class="map"><span class="n">1</span><b>Select elites</b><p>Breed from P cell elites in turn.</p></li>
-        <li class="agent"><span class="n">2</span><b>Diagnose</b><p>Name the parent's binding constraint.</p></li>
+        <li class="agent"><span class="n">2</span><b>Diagnose</b><p>Read the parent's traces and find what holds it back.</p></li>
         <li class="agent"><span class="n">3</span><b>Directive-steered variation</b><p>Write a child toward a target cell.</p></li>
         <li class="judge"><span class="n">4</span><b>Validity filter</b><p>A child must pass the anti-cheat judge.</p></li>
         <li class="map"><span class="n">5</span><b>Evaluate and archive</b><p>Score the child and keep it if it is its cell's best.</p></li>
