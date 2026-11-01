@@ -535,6 +535,25 @@
   }
   { const tr = $('#traj'); if (tr) trajPanel(tr); }
 
+  /* ======================================================= Figure 1 beside the question → idea block: as tall as the text */
+  {
+    const story = $('.story'), tx = $('.story-text'), box = $('.story .teaser-box'), cap = $('.story .teaser-fig figcaption'), svg = $('.story .teaser-svg');
+    if (story && tx && box && cap && svg) {
+      const vb = svg.viewBox.baseVal, ratio = vb.width / vb.height;
+      const fit = () => {
+        const twoCol = getComputedStyle(story).gridTemplateColumns.trim().split(/\s+/).length > 1;
+        if (!twoCol) { box.style.width = box.style.maxWidth = cap.style.width = cap.style.maxWidth = ''; return; }
+        const h = tx.getBoundingClientRect().height, colW = box.parentElement.clientWidth;
+        const w = Math.max(160, Math.min(Math.round(h * ratio), colW));
+        box.style.maxWidth = cap.style.maxWidth = 'none'; box.style.width = cap.style.width = w + 'px';
+      };
+      fit(); onResize(fit); if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
+      zoomable(box, 'Figure 1 · Conceptual overview of Harness-MAP', body => {
+        const c = svg.cloneNode(true); c.style.width = '100%'; c.style.height = 'auto'; c.style.maxHeight = 'calc(100vh - 150px)'; body.appendChild(c);
+      });
+    }
+  }
+
   /* ======================================================= Figure-2 style cards: component graph + pseudocode */
   const F2ROLES = { orchestrator: 'var(--r-orch)', capture: 'var(--r-capture)', perception: 'var(--r-perc)', controller: 'var(--r-ctrl)', solver: 'var(--r-solver)' };
   const codeHtml = src => esc(src).replace(/«u»/g, '<u>').replace(/«\/u»/g, '</u>').replace(/«h»/g, '<mark>').replace(/«\/h»/g, '</mark>');

@@ -67,13 +67,13 @@
   <div class="wrap wide">
     <p class="eyebrow center">Overview</p>
     <div class="story">
-      <div class="story-item q"><span class="label">The question</span><p class="big">How can we efficiently search for a <b>diverse set of <span class="nb">high-quality</span> harnesses</b> under a <b>tight evaluation budget</b>?</p></div>
-      <div class="story-arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M11 4h2v12.2l4.6-4.6 1.4 1.4-7 7-7-7 1.4-1.4 4.6 4.6z"/></svg></div>
-      <div class="story-item a"><span class="label">The idea</span><p class="big">Structure the search space by <b>factorizing <span class="hi-s">graph-level program structures</span> from <span class="hi-t">token-level implementations</span></b>.</p></div>
+      <div class="story-text">
+        <div class="story-item q"><span class="label">The question</span><p class="big">How can we efficiently search for a <b>diverse set of <span class="nb">high-quality</span> harnesses</b> under a <b>tight evaluation budget</b>?</p></div>
+        <div class="story-arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M11 4h2v12.2l4.6-4.6 1.4 1.4-7 7-7-7 1.4-1.4 4.6 4.6z"/></svg></div>
+        <div class="story-item a"><span class="label">The idea</span><p class="big">Structure the search space by <b>factorizing <span class="hi-s">graph-level program structures</span> from <span class="hi-t">token-level implementations</span></b>.</p></div>
+      </div>
       <figure class="teaser-fig">
-      <div class="teaser-box">
-      <div class="figbar plain"><span>Figure 1</span><a class="textbtn" href="static/img/fig1_teaser_method.svg" target="_blank" rel="noopener">View full figure <svg viewBox="0 0 24 24"><path d="M14 4h6v6h-2V7.4l-5.3 5.3-1.4-1.4L16.6 6H14V4zM4 14h2v2.6l5.3-5.3 1.4 1.4L7.4 18H10v2H4v-6z"/></svg></a></div>
-      <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 564.64 517.518123" class="teaser-svg" role="img" aria-label="Figure 1. (a) Naive search in harness space, guided by a meta-agent: candidates drift along a few local lineages inside one undivided region. (b) Harness-MAP: the structure-token space is partitioned into cells; at step t+1 a high-variance cell is sub-split and children are bred from cell elites. Legend: candidate shapes, a fitness colour scale from low to high, and markers for parent, child and other candidates.">
+        <div class="teaser-box"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 564.64 517.518123" class="teaser-svg" role="img" aria-label="Figure 1. (a) Naive search in harness space, guided by a meta-agent: candidates drift along a few local lineages inside one undivided region. (b) Harness-MAP: the structure-token space is partitioned into cells; at step t+1 a high-variance cell is sub-split and children are bred from cell elites. Legend: candidate shapes, a fitness colour scale from low to high, and markers for parent, child and other candidates.">
 <defs>
 <g>
 <g id="glyph-0-0">
@@ -984,10 +984,9 @@
 <path fill-rule="evenodd" fill="#4da9c3" fill-opacity="1" stroke-width="1.3606" stroke-linecap="butt" stroke-linejoin="round" stroke="#ffffff" stroke-opacity="1" stroke-miterlimit="10" d="M 97.171763 446.770273 L 100.968264 454.363274 L 108.565175 454.363274 L 112.392954 446.770273 L 108.565175 439.173362 L 100.968264 439.173362 Z M 97.171763 446.770273 " transform="matrix(0.99907, 0, 0, -0.99907, -2.522774, 519.639815)"/>
 <path fill-rule="evenodd" fill="#4da9c3" fill-opacity="1" stroke-width="1.3606" stroke-linecap="butt" stroke-linejoin="round" stroke="#ffffff" stroke-opacity="1" stroke-miterlimit="10" d="M 320.625728 446.770273 L 324.426139 454.363274 L 332.02305 454.363274 L 335.850829 446.770273 L 332.02305 439.173362 L 324.426139 439.173362 Z M 320.625728 446.770273 " transform="matrix(0.99907, 0, 0, -0.99907, -2.522774, 519.639815)"/>
 </svg>
-
-      <figcaption><b>Figure 1.</b> Conceptual overview of Harness-MAP. <b>(a)</b> Naive search rapidly collapses into narrow local lineages over a metric-free search space. <b>(b)</b> Harness-MAP (Ours) factorizes candidates into a structure-token space and dynamically sub-splits high-variance cells (at t+1) with resolution-adaptive search.</figcaption>
-      </div>
-    </figure>
+</div>
+        <figcaption><b>Figure 1.</b> Conceptual overview of Harness-MAP. <b>(a)</b> Naive search rapidly collapses into narrow local lineages over a metric-free search space. <b>(b)</b> Harness-MAP (Ours) factorizes candidates into a structure-token space and dynamically sub-splits high-variance cells (at t+1) with resolution-adaptive search. <a class="figlink" href="static/img/fig1_teaser_method.svg" target="_blank" rel="noopener">View full figure<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6h-2V7.4l-5.3 5.3-1.4-1.4L16.6 6H14V4zM4 14h2v2.6l5.3-5.3 1.4 1.4L7.4 18H10v2H4v-6z"/></svg></a></figcaption>
+      </figure>
     </div>
 
     <details class="abstract">
