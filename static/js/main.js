@@ -936,47 +936,79 @@
   const badge = (e, r) => (r && r.best ? '<span class="badge best">best</span>' : r && r.path ? '<span class="badge path">on the path</span>' : '') +
     (e.episode_score === 1 ? ' <span class="badge ok">solved</span>' : e.episode_score === 0 ? ' <span class="badge">failed</span>' : '');
 
-  /* ---------------- wire the showcase ---------------- */
-  if (DATA.lineages && DATA.videos) {
-    const LB = DATA.lineages.balrog, VB = DATA.videos.balrog.mazewalk;
-    if ($('#chart-balrog') && VB.length === LB.rows.length) {
-      let chart;
-      const an = anatomyPanel($('#anat-balrog'), LB.rows, 'balrog', 'success');
-      const pl = player($('#player-balrog'), VB, {
-        caption: (e, i) => `<b>#${i} ${esc(e.label)}</b> · search success ${fmt(e.score)} · MazeWalk-15x15 episode 00: ${esc(e.outcome)} ${badge(e, LB.rows[i])}`,
-        onChange: i => { if (chart) chart.setSelected(i, true); an.show(i); } });
-      chart = lineageChart($('#chart-balrog'), LB, { metric: 'success', ylabel: 'success on the 40 search episodes', clickable: true,
-        hint: 'Hover a harness for its score and diff; click it to see its structure and watch the episode it played.', onSelect: i => pl.set(i, true) });
-      const bi = LB.rows.findIndex(r => r.best); chart.setSelected(bi, true); pl.set(bi, false);
+  /* ---------------- pair player: the initial harness on the left, the selected evolved harness on the right ---------------- */
+  function pairPlayer(host, entries, opts) {
+    const anchor = entries.find(e => e.i === 0) || entries[0], rights = entries.filter(e => e !== anchor);
+    host.innerHTML = `<div class="pair-player"><div class="pp-col"><div class="pp-head">initial harness · <b>${esc(anchor.label)}</b></div><video controls muted playsinline preload="none" poster="${anchor.poster}" src="${anchor.file}"></video><div class="pp-cap">${opts.caption(anchor, anchor.i || 0)}</div></div>` +
+      `<div class="pp-col"><div class="pp-head" data-head></div><video controls muted playsinline preload="none"></video><div class="pp-cap" data-cap></div></div>` +
+      `<div class="pp-nav"><button type="button" class="prev">‹ previous</button><button type="button" class="playboth">▶ play both</button><button type="button" class="next">next ›</button><span class="pp-count" data-count></span></div></div>`;
+    const vids = $$('video', host), vl = vids[0], vr = vids[1], head = $('[data-head]', host), cap = $('[data-cap]', host), prev = $('.prev', host), next = $('.next', host), both = $('.playboth', host), count = $('[data-count]', host);
+    let k = 0;
+    function setK(kk, play) {
+      kk = Math.max(0, Math.min(rights.length - 1, kk)); k = kk; const e = rights[k]; if (!e) return;
+      vr.pause(); vl.pause(); vr.setAttribute('poster', e.poster); vr.src = e.file; vr.load();
+      head.innerHTML = `evolved harness · <b>${esc(e.label)}</b>`; cap.innerHTML = opts.caption(e, e.i);
+      prev.disabled = k === 0; next.disabled = k === rights.length - 1; count.textContent = `${k + 1} / ${rights.length} evolved`;
+      if (play) { vl.currentTime = 0; vr.play().catch(() => {}); vl.play().catch(() => {}); }
+      if (opts.onChange) opts.onChange(e.i);
     }
-    const gameMeta = { maze3d_pro: ['Maze3D-Pro', 'level 7'], block3d: ['Block3D', 'level 12'], maze: ['Maze', 'level 1'], snake: ['Snake', 'seed 20'], rubik: ['Rubik', null] };
+    function set(i, play) {   // lineage index → that harness if it has a video, else the latest available one before it
+      let kk = rights.findIndex(e => e.i === i);
+      if (kk < 0) { rights.forEach((e, j) => { if (e.i <= i) kk = j; }); if (kk < 0) kk = 0; }
+      setK(kk, play);
+    }
+    prev.addEventListener('click', () => setK(k - 1, true)); next.addEventListener('click', () => setK(k + 1, true));
+    both.addEventListener('click', () => { if (!vr.paused) { vl.pause(); vr.pause(); } else { vl.currentTime = 0; vr.currentTime = 0; vl.play().catch(() => {}); vr.play().catch(() => {}); } });
+    vr.addEventListener('play', () => { both.textContent = '❚❚ pause both'; }); vr.addEventListener('pause', () => { both.textContent = '▶ play both'; });
+    const s0 = opts.start != null ? rights.findIndex(e => e.i === opts.start) : -1; setK(s0 >= 0 ? s0 : rights.length - 1, false);
+    return { set, has: i => rights.some(e => e.i === i) };
+  }
+
+  /* ---------------- wire the packs ---------------- */
+  if (DATA.lineages && DATA.videos) {
+    const LB = DATA.lineages.balrog, TB = DATA.videos.balrog.tasks;
+    if ($('#chart-balrog') && TB && TB.length) {
+      let chart, pp = null, sel = LB.rows.findIndex(r => r.best);
+      const an = anatomyPanel($('#anat-balrog'), LB.rows, 'balrog', 'success'), vh = $('#vids-balrog');
+      vh.innerHTML = `<div class="seg tasks" data-tasks>${TB.map((t, k) => `<button type="button" class="${k ? '' : 'on'}" data-k="${k}">${esc(t.task)}<small>${t.entries.length} harness${t.entries.length > 1 ? 'es' : ''}</small></button>`).join('')}</div><div class="pair" data-pair></div>`;
+      const mount = k => {
+        const t = TB[k]; $$('[data-tasks] button', vh).forEach(bt => bt.classList.toggle('on', +bt.dataset.k === k));
+        pp = pairPlayer($('[data-pair]', vh), t.entries, {
+          caption: (e, i) => `<b>#${i}</b> ${esc(t.episode)}: ${esc(e.outcome || (e.episode_score === 1 ? 'solved' : 'failed'))} · search success ${fmt(e.score)} ${badge(e, LB.rows[i])}`,
+          onChange: i => { sel = i; if (chart) chart.setSelected(i, true); an.show(i); }, start: sel });
+      };
+      $$('[data-tasks] button', vh).forEach(bt => bt.addEventListener('click', () => mount(+bt.dataset.k)));
+      mount(0);
+      chart = lineageChart($('#chart-balrog'), LB, { metric: 'success', ylabel: 'success on the 40 search episodes', clickable: true,
+        hint: 'Hover a harness for its score and diff; click it to see its structure and watch it beside the initial harness.', onSelect: i => pp.set(i, true) });
+      chart.setSelected(sel, true); an.show(sel);
+    }
+    const gameMeta = { maze3d_pro: ['Maze3D-Pro', 'level 7'], block3d: ['Block3D', 'level 12'], maze: ['Maze', 'level 1'], snake: ['Snake', 'seed 20'], rubik: ['Rubik', 'level 6'] };
     Object.keys(gameMeta).forEach(g => {
       const L = DATA.lineages['games_' + g]; const host = $('#chart-' + g); if (!L || !host) return;
-      const entries = (DATA.videos.games[g] || []).filter(e => e.i != null);
-      const ph = $('#player-' + g);
-      const an = anatomyPanel($('#anat-' + g), L.rows, 'games_' + g, 'score');
-      const bi = L.rows.findIndex(r => r.best);
-      if (ph && entries.length === L.rows.length) {
-        let chart;
-        const pl = player(ph, entries, {
-          caption: (e, i) => `<b>#${i} ${esc(e.label)}</b> · search score ${fmt(e.score)} · ${gameMeta[g][0]} ${gameMeta[g][1]}: ` +
-            (e.episode_score === 1 ? `solved in ${e.steps} steps` : `not solved in ${e.steps} steps`) + ' ' + badge(e, L.rows[i]),
-          onChange: i => { if (chart) chart.setSelected(i, true); an.show(i); } });
-        chart = lineageChart(host, L, { metric: 'score', ylabel: 'score on the search levels', clickable: true,
-          hint: 'Hover a harness for its score and diff; click it to see its structure and watch the level it played.', onSelect: i => pl.set(i, true) });
-        chart.setSelected(bi, true); pl.set(bi, false);
-      } else {
-        const chart = lineageChart(host, L, { metric: 'score', ylabel: 'score on the search levels', clickable: true,
-          hint: 'Hover a harness for its score and diff; click it to see its structure.', onSelect: i => an.show(i) });
-        chart.setSelected(bi, true); an.show(bi);
-      }
+      const entries = (DATA.videos.games[g] || []).filter(e => e.i != null), ph = $('#pair-' + g);
+      const an = anatomyPanel($('#anat-' + g), L.rows, 'games_' + g, 'score'), bi = L.rows.findIndex(r => r.best);
+      let chart, pp = null;
+      if (ph && entries.length >= 2) pp = pairPlayer(ph, entries, {
+        caption: (e, i) => `<b>#${i}</b> ${gameMeta[g][0]} ${gameMeta[g][1]}: ${e.episode_score === 1 ? `solved in ${e.steps} steps` : `not solved in ${e.steps} steps`} · search score ${fmt(e.score)} ${badge(e, L.rows[i])}`,
+        onChange: i => { if (chart) chart.setSelected(i, true); an.show(i); }, start: bi });
+      else if (ph) ph.remove();
+      chart = lineageChart(host, L, { metric: 'score', ylabel: 'score on the search levels', clickable: true,
+        hint: pp ? 'Hover a harness for its score and diff; click it to see its structure and watch it beside the initial harness.' : 'Hover a harness for its score and diff; click it to see its structure.',
+        onSelect: i => { if (pp) pp.set(i, true); else an.show(i); } });
+      chart.setSelected(bi, true); an.show(bi);
     });
-    const LN = DATA.lineages.nav_hard;
+    const LN = DATA.lineages.nav_hard, VN = (DATA.videos.nav || []).filter(e => e.i != null);
     if (LN && $('#chart-nav')) {
-      const an = anatomyPanel($('#anat-nav'), LN.rows, 'nav_hard', 'SubtaskSR');
-      const chart = lineageChart($('#chart-nav'), LN, { metric: 'SubtaskSR', ylabel: 'Subtask SR on the 50 search tasks', clickable: true,
-        hint: 'Hover a harness for its score and diff; click it to see its structure.', onSelect: i => an.show(i) });
-      const bi = LN.rows.findIndex(r => r.best); chart.setSelected(bi, true); an.show(bi);
+      const an = anatomyPanel($('#anat-nav'), LN.rows, 'nav_hard', 'SubtaskSR'), bi = LN.rows.findIndex(r => r.best), ph = $('#pair-nav');
+      let chart, pp = null;
+      if (ph && VN.length >= 2) pp = pairPlayer(ph, VN, {
+        caption: (e, i) => `<b>#${i}</b> map 20_10, task dist_21: subtask success ${e.subtask_sr != null ? e.subtask_sr.toFixed(2) : '–'}, ${e.steps} steps, ${e.final_dist != null ? Math.round(e.final_dist / 100) + ' m' : '?'} from the target · search Subtask SR ${fmt(e.score)} ${badge(e, LN.rows[i])}`,
+        onChange: i => { if (chart) chart.setSelected(i, true); an.show(i); }, start: bi });
+      else if (ph) ph.remove();
+      chart = lineageChart($('#chart-nav'), LN, { metric: 'SubtaskSR', ylabel: 'Subtask SR on the 50 search tasks', clickable: true,
+        hint: 'Hover a harness for its score and diff; click it to see its structure' + (pp ? ' and watch it beside the initial harness.' : '.'), onSelect: i => { if (pp) pp.set(i, true); else an.show(i); } });
+      chart.setSelected(bi, true); an.show(bi);
     }
     const LE = DATA.lineages.nav_easy;
     if (LE && $('#chart-nav-easy')) lineageChart($('#chart-nav-easy'), LE, { metric: 'SubtaskSR', ylabel: 'Subtask SR on the 50 search tasks', clickable: false });

@@ -19,12 +19,6 @@ svg = re.sub(r'<svg[^>]*>', '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink
              '(b) Harness-MAP: the structure-token space is partitioned into cells; at step t+1 a high-variance cell is sub-split and children are bred from cell elites. '
              'Legend: candidate shapes, a fitness colour scale from low to high, and markers for parent, child and other candidates.">', svg, count=1)
 html = (tpl.replace("__TEASER_SVG__", svg).replace("__LINEAGES_JSON__", js(lin)).replace("__VIDEOS_JSON__", js(vid)).replace("__CURVES_JSON__", js(cur)).replace("__ANATOMY_JSON__", js(ana)).replace("__CASES_JSON__", js(cases)).replace("__TRAJ_JSON__", js(traj)))
-# BALROG grid videos: render the four players statically
-grids = ""
-for g in vid["balrog"]["grids"]:
-    grids += (f'<div class="player"><video controls muted playsinline preload="none" poster="{g["poster"]}" src="{g["file"]}" width="{g["w"]}" height="{g["h"]}"></video>'
-              f'<div class="cap"><span class="text"><b>{g["task"]}</b>, episode {g["episode"].split()[-1][-2:]}: anchor, cand_r35_0, cand_r41_0, cand_r68_0</span></div></div>')
-html = html.replace('<div class="vgrid two" id="grids-balrog"></div>', f'<div class="vgrid two" id="grids-balrog">{grids}</div>')
 # cache-busting: GitHub Pages serves assets with max-age=600 and browsers reuse cached CSS/JS on a normal navigation, so
 # every build stamps the stylesheet and script references with a content hash
 import hashlib
@@ -36,7 +30,7 @@ assert html.count("style.css?v=") == 1 and html.count("main.js?v=") == 1
 missing = []
 for ref in set(re.findall(r'(?:src|href|poster)="(static/[^"]+)"', html)):
     if not (SITE / ref.split('?')[0]).exists(): missing.append(ref)
-for section in [vid["balrog"]["mazewalk"], vid["balrog"]["grids"], vid["nav"]] + list(vid["games"].values()):
+for section in [vid["balrog"]["mazewalk"], vid["nav"]] + [t["entries"] for t in vid["balrog"]["tasks"]] + list(vid["games"].values()):
     for e in section:
         for k in ("file", "poster"):
             if e.get(k) and not (SITE / e[k]).exists(): missing.append(e[k])

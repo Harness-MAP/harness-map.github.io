@@ -150,7 +150,7 @@
 <section id="results" class="section">
   <div class="wrap wide">
     <div class="section-heading"><p class="eyebrow">Results</p></div>
-    <p class="lead wide">Every method starts from the same reference harness and the same frozen policy model and receives the same candidate-evaluation budget <span class="formula">N = ⌈<i>m</i>·k₀⌉ + G · P · C</span> (N = 50 on SpatialWorld-3DGames and BALROG-MiniHack, N = 16 on SimWorld-MMNav).</p>
+    <p class="lead wide">Every method starts from the same reference harness and the same frozen backbone model and receives the same candidate-evaluation budget <span class="formula">N = ⌈<i>m</i>·k₀⌉ + G · P · C</span> (N = 50 on SpatialWorld-3DGames and BALROG-MiniHack, N = 16 on SimWorld-MMNav).</p>
     <div class="lab" id="res-table1">
       <div class="lab-head"><div><span class="micro">Table 1 · success rate (%) ↑</span><h3>Harness-MAP establishes a new state-of-the-art across all three benchmarks under budget-matched evaluation.</h3></div><span class="lab-note">darker = higher within each column · Harness-MAP in bold</span></div>
     <div class="barcards" id="barcards"></div>
@@ -231,35 +231,25 @@
 <!-- ============================================================ EVOLUTION PACKS -->
 <section id="evolution" class="section">
   <div class="wrap wide">
-    <div class="section-heading split">
-      <div><p class="eyebrow">Evolution packs</p><h2>Watch the harnesses evolve.</h2></div>
-      <p class="lead">Every harness the best run evaluated, in order, with the ancestry of the best highlighted. Click a harness to see its structure and code, and the episode it played.</p>
-    </div>
+    <div class="section-heading"><p class="eyebrow">Evolution packs</p><h2>Watch the harnesses evolve.</h2></div>
     <div data-tabs>
       <div class="tabs" role="tablist" aria-label="Benchmark">
         <button class="tab" role="tab" aria-selected="true" aria-controls="evo-balrog" id="tab-evo-balrog">BALROG-MiniHack</button>
         <button class="tab" role="tab" aria-selected="false" aria-controls="evo-games" id="tab-evo-games">SpatialWorld-3DGames</button>
-        <button class="tab" role="tab" aria-selected="false" aria-controls="evo-nav-hard" id="tab-evo-nav-hard">SimWorld-MMNav</button>
+        <button class="tab" role="tab" aria-selected="false" aria-controls="evo-nav" id="tab-evo-nav">SimWorld-MMNav</button>
       </div>
 
       <div id="evo-balrog" role="tabpanel" aria-labelledby="tab-evo-balrog">
-        <ul class="settings"><li><b>mode</b>adaptive</li><li><b>k₀</b>16</li><li><b>P</b>4</li><li><b>C</b>1</li><li><b>budget</b>N = 50 · 48 evaluated</li><li><b>search split</b>8 tasks × 5 seeds</li><li><b>meta-agent</b>claude-opus-5 · Claude Code CLI</li><li><b>policy</b>Qwen3-VL-30B-A3B-Instruct</li><li><b>best</b>cand_r68_0 · success 0.900 · eval 41</li><li><b>path to best</b>anchor → r35_0 → r41_0 → r68_0</li></ul>
+        <ul class="settings"><li><b>mode</b>adaptive</li><li><b>k₀</b>16</li><li><b>P</b>4</li><li><b>C</b>1</li><li><b>budget</b>N = 50</li><li><b>search split</b>8 tasks × 5 seeds</li><li><b>meta-agent</b>claude-opus-5 · Claude Code CLI</li><li><b>backbone</b>Qwen3-VL-30B-A3B-Instruct</li><li><b>shown</b>41 harnesses</li><li><b>best</b>cand_r68_0 · success 0.900 · evaluation 41</li></ul>
         <div class="showcase">
           <div class="chart" id="chart-balrog"></div>
           <div class="anatomy" id="anat-balrog"></div>
-          <div class="player" id="player-balrog">
-            <video controls muted playsinline preload="none" width="866" height="380"></video>
-            <div class="cap"><span class="text"></span><span class="nav"><button type="button" class="prev">‹ previous</button><button type="button" class="next">next ›</button></span></div>
-          </div>
+          <div class="taskvids" id="vids-balrog"></div>
         </div>
-        <p class="small muted" style="margin-top:12px">Every harness above on MazeWalk-15x15 episode 00, the episode that separates the anchor from most of its descendants. Episodes are replayed in the MiniHack engine from the logged seed and action sequence, with the action, the agent's reasoning tag and the game message beside the map.</p>
-        <h4>The four harnesses on the path to the best, side by side</h4>
-        <p class="small">Anchor top left, cand_r35_0 top right, cand_r41_0 bottom left, cand_r68_0 bottom right, on the episode each task family was first unlocked by: MazeWalk-15x15, Corridor-R3 (first solved by cand_r35_0), Boxoban-Medium and Quest-Easy (first solved by cand_r68_0).</p>
-        <div class="vgrid two" id="grids-balrog"></div>
       </div>
 
       <div id="evo-games" role="tabpanel" aria-labelledby="tab-evo-games" hidden>
-        <ul class="settings"><li><b>mode</b>adaptive</li><li><b>budget</b>N = 50</li><li><b>games</b>pure-visual variant · 110 levels</li><li><b>meta-agent</b>claude-opus-5 · Claude Code CLI</li><li><b>policy</b>Qwen3-VL-30B-A3B-Instruct</li><li><b>shown</b>the run per game that reached score 1.0 after at least four evaluations</li></ul>
+        <ul class="settings"><li><b>mode</b>adaptive</li><li><b>budget</b>N = 50</li><li><b>games</b>pure-visual variant · 110 levels</li><li><b>meta-agent</b>claude-opus-5 · Claude Code CLI</li><li><b>backbone</b>Qwen3-VL-30B-A3B-Instruct</li></ul>
         <div data-tabs>
           <div class="tabs" role="tablist" aria-label="Game">
             <button class="tab" role="tab" aria-selected="true" aria-controls="game-maze3d_pro" id="tab-game-maze3d_pro">Maze3D-Pro</button>
@@ -269,54 +259,43 @@
             <button class="tab" role="tab" aria-selected="false" aria-controls="game-rubik" id="tab-game-rubik">Rubik</button>
           </div>
           <div id="game-maze3d_pro" role="tabpanel" aria-labelledby="tab-game-maze3d_pro">
-            <ul class="settings sub"><li><b>k₀</b>2</li><li><b>P</b>1</li><li><b>C</b>2</li><li><b>evaluated</b>13 harnesses</li><li><b>best</b>cand_r6_1 · score 1.0 · eval 13</li><li><b>anchor</b>solves 2 of 25 levels</li><li><b>video</b>level 7 · horizon 100 steps</li></ul>
-            <div class="showcase">
-              <div class="chart" id="chart-maze3d_pro"></div>
-              <div class="anatomy" id="anat-maze3d_pro"></div>
-              <div class="player" id="player-maze3d_pro"><video controls muted playsinline preload="none" width="800" height="600"></video><div class="cap"><span class="text"></span><span class="nav"><button type="button" class="prev">‹ previous</button><button type="button" class="next">next ›</button></span></div></div>
-              <div class="player"><video controls muted playsinline preload="none" poster="static/posters/games/maze3d_pro_anchor_vs_best.jpg" src="static/videos/games/maze3d_pro_anchor_vs_best.mp4" width="1606" height="600"></video><div class="cap"><span class="text"><b>Anchor vs. best</b> on level 7: the anchor (left) fails in 100 steps; cand_r6_1 (right) solves it in 37.</span></div></div>
-            </div>
+            <ul class="settings sub"><li><b>k₀</b>2</li><li><b>P</b>1</li><li><b>C</b>2</li><li><b>shown</b>13 harnesses</li><li><b>best</b>cand_r6_1 · score 1.0 · evaluation 13</li><li><b>video</b>level 7</li></ul>
+            <div class="showcase"><div class="chart" id="chart-maze3d_pro"></div><div class="anatomy" id="anat-maze3d_pro"></div><div class="pair" id="pair-maze3d_pro"></div></div>
           </div>
           <div id="game-block3d" role="tabpanel" aria-labelledby="tab-game-block3d" hidden>
-            <ul class="settings sub"><li><b>k₀</b>32</li><li><b>P</b>5</li><li><b>C</b>1</li><li><b>evaluated</b>16 harnesses · saturated during coverage initialization</li><li><b>best</b>cand_r4_0 · score 1.0 · eval 4</li><li><b>video</b>level 12</li></ul>
-            <div class="showcase">
-              <div class="chart" id="chart-block3d"></div>
-              <div class="anatomy" id="anat-block3d"></div>
-              <div class="player" id="player-block3d"><video controls muted playsinline preload="none" width="800" height="600"></video><div class="cap"><span class="text"></span><span class="nav"><button type="button" class="prev">‹ previous</button><button type="button" class="next">next ›</button></span></div></div>
-              <div class="player"><video controls muted playsinline preload="none" poster="static/posters/games/block3d_anchor_vs_best.jpg" src="static/videos/games/block3d_anchor_vs_best.mp4" width="2206" height="600"></video><div class="cap"><span class="text"><b>Anchor vs. best</b> on level 12: the anchor fails in 50 steps; cand_r4_0 rebuilds the structure in 15.</span></div></div>
-            </div>
+            <ul class="settings sub"><li><b>k₀</b>32</li><li><b>P</b>5</li><li><b>C</b>1</li><li><b>shown</b>4 harnesses · saturated during coverage initialization</li><li><b>best</b>cand_r4_0 · score 1.0 · evaluation 4</li><li><b>video</b>level 12</li></ul>
+            <div class="showcase"><div class="chart" id="chart-block3d"></div><div class="anatomy" id="anat-block3d"></div><div class="pair" id="pair-block3d"></div></div>
           </div>
           <div id="game-maze" role="tabpanel" aria-labelledby="tab-game-maze" hidden>
-            <ul class="settings sub"><li><b>k₀</b>32</li><li><b>P</b>5</li><li><b>C</b>1</li><li><b>evaluated</b>16 harnesses · saturated during coverage initialization</li><li><b>best</b>cand_r4_0 · score 1.0 · eval 4</li><li><b>video</b>level 1</li></ul>
-            <div class="showcase">
-              <div class="chart" id="chart-maze"></div>
-              <div class="anatomy" id="anat-maze"></div>
-              <div class="player" id="player-maze"><video controls muted playsinline preload="none" width="800" height="600"></video><div class="cap"><span class="text"></span><span class="nav"><button type="button" class="prev">‹ previous</button><button type="button" class="next">next ›</button></span></div></div>
-              <div class="player"><video controls muted playsinline preload="none" poster="static/posters/games/maze_anchor_vs_best.jpg" src="static/videos/games/maze_anchor_vs_best.mp4" width="1606" height="600"></video><div class="cap"><span class="text"><b>Anchor vs. best</b> on level 1: the anchor wanders for 100 steps; cand_r1_0 exits in 5.</span></div></div>
-            </div>
+            <ul class="settings sub"><li><b>k₀</b>32</li><li><b>P</b>5</li><li><b>C</b>1</li><li><b>shown</b>2 harnesses · saturated during coverage initialization</li><li><b>best</b>cand_r1_0 · score 1.0 · evaluation 2</li><li><b>video</b>level 1</li></ul>
+            <div class="showcase"><div class="chart" id="chart-maze"></div><div class="anatomy" id="anat-maze"></div><div class="pair" id="pair-maze"></div></div>
           </div>
           <div id="game-snake" role="tabpanel" aria-labelledby="tab-game-snake" hidden>
-            <ul class="settings sub"><li><b>k₀</b>32</li><li><b>P</b>5</li><li><b>C</b>1</li><li><b>evaluated</b>16 harnesses · saturated during coverage initialization</li><li><b>best</b>cand_r3_0 · score 1.0 · eval 4</li><li><b>held-out</b>the five unseen seeds are also solved</li><li><b>video</b>seed 20</li></ul>
-            <div class="showcase">
-              <div class="chart" id="chart-snake"></div>
-              <div class="anatomy" id="anat-snake"></div>
-              <div class="player" id="player-snake"><video controls muted playsinline preload="none" width="800" height="600"></video><div class="cap"><span class="text"></span><span class="nav"><button type="button" class="prev">‹ previous</button><button type="button" class="next">next ›</button></span></div></div>
-              <div class="player"><video controls muted playsinline preload="none" poster="static/posters/games/snake_anchor_vs_best.jpg" src="static/videos/games/snake_anchor_vs_best.mp4" width="1606" height="600"></video><div class="cap"><span class="text"><b>Anchor vs. best</b> on seed 20: the anchor dies after 3 steps; cand_r1_0 collects the food in 16.</span></div></div>
-            </div>
+            <ul class="settings sub"><li><b>k₀</b>32</li><li><b>P</b>5</li><li><b>C</b>1</li><li><b>shown</b>2 harnesses · saturated during coverage initialization</li><li><b>best</b>cand_r1_0 · score 1.0 · evaluation 2</li><li><b>video</b>seed 20</li></ul>
+            <div class="showcase"><div class="chart" id="chart-snake"></div><div class="anatomy" id="anat-snake"></div><div class="pair" id="pair-snake"></div></div>
           </div>
           <div id="game-rubik" role="tabpanel" aria-labelledby="tab-game-rubik" hidden>
-            <ul class="settings sub"><li><b>k₀</b>4</li><li><b>P</b>2</li><li><b>C</b>2</li><li><b>evaluated</b>6 harnesses</li><li><b>best</b>cand_r2_1 · score 1.0 · eval 4</li><li><b>video</b>none: no engine recordings survive for this run</li></ul>
-            <div class="showcase"><div class="chart" id="chart-rubik"></div><div class="anatomy" id="anat-rubik"></div></div>
+            <ul class="settings sub"><li><b>k₀</b>4</li><li><b>P</b>2</li><li><b>C</b>2</li><li><b>shown</b>4 harnesses</li><li><b>best</b>cand_r2_1 · score 1.0 · evaluation 4</li><li><b>video</b>level 6</li></ul>
+            <div class="showcase"><div class="chart" id="chart-rubik"></div><div class="anatomy" id="anat-rubik"></div><div class="pair" id="pair-rubik"></div></div>
           </div>
         </div>
       </div>
 
-      <div id="evo-nav-hard" role="tabpanel" aria-labelledby="tab-evo-nav-hard" hidden>
-        <ul class="settings"><li><b>setting</b>hard</li><li><b>mode</b>adaptive</li><li><b>k₀</b>4</li><li><b>P</b>2</li><li><b>C</b>1</li><li><b>budget</b>N = 16 · 16 evaluated</li><li><b>search split</b>50 tasks · maps 20_0 to 20_24 · 10 held-out maps</li><li><b>meta-agent</b>Claude Code CLI</li><li><b>policy</b>Qwen3-VL-30B-A3B-Instruct</li><li><b>best</b>cand_r15_0 · SubtaskSR 0.555 · eval 16</li><li><b>held-out</b>0.567 over three replicates vs. 0.430 ± 0.033 for the anchor</li><li><b>path to best</b>anchor → r6_0 → r9_0 → r13_0 → r15_0</li></ul>
-        <div class="showcase">
-          <div class="chart" id="chart-nav"></div>
-          <div class="anatomy" id="anat-nav"></div>
-          <div class="player"><video controls muted playsinline preload="none" poster="static/posters/nav/nav_anchor_vs_best.jpg" src="static/videos/nav/nav_anchor_vs_best.mp4" width="2346" height="690"></video><div class="cap"><span class="text"><b>Anchor vs. best</b>, re-run in the simulator on map 20_10, task dist_21_0_1, the one search task the best harness completed end to end during the search. The anchor gives up after 11 steps about 590 m from the destination; cand_r15_0 keeps navigating for 135 steps and ends about 35 m from it.</span></div></div>
+      <div id="evo-nav" role="tabpanel" aria-labelledby="tab-evo-nav" hidden>
+        <div data-tabs>
+          <div class="tabs" role="tablist" aria-label="Setting">
+            <button class="tab" role="tab" aria-selected="true" aria-controls="nav-easy" id="tab-nav-easy">easy</button>
+            <button class="tab" role="tab" aria-selected="false" aria-controls="nav-hard" id="tab-nav-hard">hard</button>
+          </div>
+          <div id="nav-easy" role="tabpanel" aria-labelledby="tab-nav-easy">
+            <ul class="settings"><li><b>setting</b>easy</li><li><b>mode</b>adaptive</li><li><b>k₀</b>2</li><li><b>P</b>1</li><li><b>C</b>2</li><li><b>budget</b>N = 16</li><li><b>search split</b>50 tasks</li><li><b>meta-agent</b>claude-opus-5 · Claude Code CLI</li><li><b>backbone</b>Qwen3-VL-30B-A3B-Instruct</li><li><b>best</b>cand_r8_1 · subtask success 0.465</li></ul>
+            <div class="showcase"><div class="chart" id="chart-nav-easy"></div></div>
+            <p class="small muted" style="margin-top:10px">The code and the episode recordings of the easy run were not preserved; only its evaluation ledger survives.</p>
+          </div>
+          <div id="nav-hard" role="tabpanel" aria-labelledby="tab-nav-hard" hidden>
+            <ul class="settings"><li><b>setting</b>hard</li><li><b>mode</b>adaptive</li><li><b>k₀</b>4</li><li><b>P</b>2</li><li><b>C</b>1</li><li><b>budget</b>N = 16</li><li><b>search split</b>50 tasks · maps 20_0 to 20_24 · 10 held-out maps</li><li><b>meta-agent</b>claude-opus-5 · Claude Code CLI</li><li><b>backbone</b>Qwen3-VL-30B-A3B-Instruct</li><li><b>best</b>cand_r15_0 · subtask success 0.555 · evaluation 16</li><li><b>video</b>map 20_10 · task dist_21</li></ul>
+            <div class="showcase"><div class="chart" id="chart-nav"></div><div class="anatomy" id="anat-nav"></div><div class="pair" id="pair-nav"></div></div>
+          </div>
         </div>
       </div>
     </div>
