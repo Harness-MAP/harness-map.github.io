@@ -74,7 +74,7 @@ p{margin:0 0 1em}
 .center{justify-content:center;text-align:center}
 
 /* eyebrows + section headings (mono micro labels) */
-.eyebrow{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent-ink);margin:0 0 6px}
+.eyebrow{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:clamp(18px,2vw,24px);font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent-ink);margin:0 0 10px}
 .eyebrow .num{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border:1px solid color-mix(in srgb,var(--accent) 40%,var(--line));border-radius:4px;font-size:10px;letter-spacing:0}
 .micro{font-family:var(--mono);font-size:10.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--accent-ink)}
 .section-heading{margin-bottom:34px}
@@ -155,7 +155,7 @@ p{margin:0 0 1em}
 .abstract-full p{font-size:15.5px;line-height:1.8;color:var(--ink-2)}
 .abstract-full mark{background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--ink);font-weight:600;padding:0 .15em;border-radius:3px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
 /* the idea */
-.idea .eyebrow{margin-bottom:18px}
+.idea .eyebrow{margin-bottom:22px}
 /* overview: question → idea → 2×2 results on the left; Figure 1 + caption on the right, stretched to the same height */
 .story{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px 48px;align-items:stretch;margin:26px 0 8px}
 .story-main{display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px}
