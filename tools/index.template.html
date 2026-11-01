@@ -67,15 +67,25 @@
   <div class="wrap wide">
     <p class="eyebrow center">Overview</p>
     <div class="story">
-      <div class="story-text">
-        <div class="story-item q"><span class="label">The question</span><p class="big">How can we efficiently search for a <b>diverse set of <span class="nb">high-quality</span> harnesses</b> under a <b>tight evaluation budget</b>?</p></div>
-        <div class="story-arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M11 4h2v12.2l4.6-4.6 1.4 1.4-7 7-7-7 1.4-1.4 4.6 4.6z"/></svg></div>
-        <div class="story-item a"><span class="label">The idea</span><p class="big">Structure the search space by <b>factorizing <span class="hi-s">graph-level program structures</span> from <span class="hi-t">token-level implementations</span></b>.</p></div>
-      </div>
+      <div class="story-item q"><span class="label">The question</span><p class="big">How can we efficiently search for a <b>diverse set of <span class="nb">high-quality</span> harnesses</b> under a <b>tight evaluation budget</b>?</p></div>
+      <div class="story-arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M11 4h2v12.2l4.6-4.6 1.4 1.4-7 7-7-7 1.4-1.4 4.6 4.6z"/></svg></div>
+      <div class="story-item a"><span class="label">The idea</span><p class="big">Structure the search space by <b>factorizing <span class="hi-s">graph-level program structures</span> from <span class="hi-t">token-level implementations</span></b>.</p></div>
+    </div>
+
+    <div class="story-row">
       <figure class="teaser-fig">
-        <div class="teaser-box">__TEASER_SVG__</div>
-        <figcaption><b>Figure 1.</b> Conceptual overview of Harness-MAP. <b>(a)</b> Naive search rapidly collapses into narrow local lineages over a metric-free search space. <b>(b)</b> Harness-MAP (Ours) factorizes candidates into a structure-token space and dynamically sub-splits high-variance cells (at t+1) with resolution-adaptive search. <a class="figlink" href="static/img/fig1_teaser_method.svg" target="_blank" rel="noopener">View full figure<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6h-2V7.4l-5.3 5.3-1.4-1.4L16.6 6H14V4zM4 14h2v2.6l5.3-5.3 1.4 1.4L7.4 18H10v2H4v-6z"/></svg></a></figcaption>
+        <div class="teaser-box">
+          <div class="figbar plain"><span>Figure 1</span><a class="textbtn" href="static/img/fig1_teaser_method.svg" target="_blank" rel="noopener">View full figure <svg viewBox="0 0 24 24"><path d="M14 4h6v6h-2V7.4l-5.3 5.3-1.4-1.4L16.6 6H14V4zM4 14h2v2.6l5.3-5.3 1.4 1.4L7.4 18H10v2H4v-6z"/></svg></a></div>
+          __TEASER_SVG__
+        </div>
+        <figcaption><b>Figure 1.</b> Conceptual overview of Harness-MAP. <b>(a)</b> Naive search rapidly collapses into narrow local lineages over a metric-free search space. <b>(b)</b> Harness-MAP (Ours) factorizes candidates into a structure-token space and dynamically sub-splits high-variance cells (at t+1) with resolution-adaptive search.</figcaption>
       </figure>
+    <div class="metrics" aria-label="Headline results from Table 1">
+      <div><span class="value"><span class="from">10.7%</span><span class="arrow">→</span>100.0<span>%</span></span><span class="label">SpatialWorld-3DGames</span><span class="detail">task success · 39 harness evaluations</span></div>
+      <div><span class="value"><span class="from">10.0%</span><span class="arrow">→</span>90.0<span>%</span></span><span class="label">BALROG-MiniHack</span><span class="detail">task success · 41 harness evaluations</span></div>
+      <div><span class="value"><span class="from">32.0%</span><span class="arrow">→</span>46.5<span>%</span></span><span class="label">SimWorld-MMNav (easy)</span><span class="detail">subtask success · 16 harness evaluations</span></div>
+      <div><span class="value"><span class="from">29.0%</span><span class="arrow">→</span>55.5<span>%</span></span><span class="label">SimWorld-MMNav (hard)</span><span class="detail">subtask success · 16 harness evaluations</span></div>
+    </div>
     </div>
 
     <details class="abstract">
@@ -83,12 +93,6 @@
       <div class="abstract-copy"><p>Automating harness evolution via naive meta-agent search is <mark>prohibitively expensive</mark>, requiring hundreds of meta-agent calls and minutes-to-hours per evaluation. How can we efficiently search for a diverse set of high-quality harnesses under a tight evaluation budget? To address this, we introduce Harness-MAP to structure the search space, <mark>factorizing graph-level program structures from token-level implementations</mark>. Bilevel search over this structure-token representation space illuminates an archive of diverse, high-quality harnesses. The map also enables a <mark>resolution-adaptive search strategy</mark> that navigates this space efficiently, <mark>sub-splitting partitions with high fitness variance while retracting ineffective refinements</mark>. Across three interactive spatial navigation benchmarks with the frozen Qwen3-VL-30B-A3B-Instruct backbone model, our search approach rapidly achieves performance leaps under minimal evaluation budgets: <mark>10.7% → 100.0% on SpatialWorld-3dgames (39 evals)</mark>, <mark>10.0% → 90.0% on BALROG-MiniHack (41 evals)</mark>, and <mark>32.5% → 46.5% on SimWorld-Robotics (6 evals)</mark>. Harness-MAP <mark>outperforms prior harness evolution methods across both search and held-out tasks</mark>, establishing factorized representations as an effective Quality-Diversity paradigm for budget-aware agent harness search.</p></div>
     </details>
 
-    <div class="metrics" aria-label="Headline results from Table 1">
-      <div><span class="value"><span class="from">10.7%</span><span class="arrow">→</span>100.0<span>%</span></span><span class="label">SpatialWorld-3DGames</span><span class="detail">task success · 39 harness evaluations</span></div>
-      <div><span class="value"><span class="from">10.0%</span><span class="arrow">→</span>90.0<span>%</span></span><span class="label">BALROG-MiniHack</span><span class="detail">task success · 41 harness evaluations</span></div>
-      <div><span class="value"><span class="from">32.0%</span><span class="arrow">→</span>46.5<span>%</span></span><span class="label">SimWorld-MMNav (easy)</span><span class="detail">subtask success · 16 harness evaluations</span></div>
-      <div><span class="value"><span class="from">29.0%</span><span class="arrow">→</span>55.5<span>%</span></span><span class="label">SimWorld-MMNav (hard)</span><span class="detail">subtask success · 16 harness evaluations</span></div>
-    </div>
   </div>
 </section>
 
