@@ -663,8 +663,8 @@
         finding: 'The champions show high design diversity (pairwise textual similarity below 0.093) and complementary task coverage, achieving 100% success via an oracle selector. Perception converges on shared parsers, while control paradigms diverge across BFS and heuristic search. Performance correlates inversely with token cost: the top-performing harness (k₀ = 16, 0.900) uses traditional algorithms without any LLM calls during evaluation, whereas the most token-expensive elite (k₀ = 32) yields the lowest score (0.400).',
         text: 'BALROG-MiniHack: the best harness of each initial resolution.',
         cards: [['champ_k2', { letter: '2' }], ['champ_k4', { letter: '4' }], ['champ_k8', { letter: '8' }], ['champ_k16', { letter: '16', cls: 'top' }], ['champ_k32', { letter: '32', cls: 'bad' }]],
-        text2: 'SpatialWorld-3DGames: the five harnesses that reach 100% on their game, 4 to 8 modules and 12 to 63 components each, from a four-module perception-and-policy wrapper (Maze, Snake) to a 28-component action planner that reads the cube off the screen and unwinds the scramble (Rubik). Pairwise token-set similarity of their sources is below 0.19.',
-        cards2: [['game_maze3d_pro', { letter: 'M3', cls: 'top' }], ['game_block3d', { letter: 'B3', cls: 'top' }], ['game_maze', { letter: 'Mz', cls: 'top' }], ['game_snake', { letter: 'Sn', cls: 'top' }], ['game_rubik', { letter: 'Rb', cls: 'top' }]] },
+        text2: (DATA.cases && DATA.cases._same_game ? 'SpatialWorld-3DGames · ' + esc(DATA.cases._same_game.text) : ''),
+        cards2: [['maze3d_pro', 'M3'], ['block3d', 'B3'], ['maze', 'Mz'], ['snake', 'Sn'], ['rubik', 'Rb']].flatMap(([g, L]) => [0, 1, 2].filter(k => DATA.cases && DATA.cases[`same_${g}_${k}`]).map(k => [`same_${g}_${k}`, { letter: `${L}${k + 1}`, cls: 'top' }])) },
       { idx: 'Finding 3 · Case 3, failure modes', h: 'Search failures stem from excessively fine resolution and wasteful parent selection.',
         finding: 'Uniform selection repeatedly samples low-scoring cells, wasting compute and capping k₀ = 32 performance at 0.400. Overly permissive rules in new modules incorrectly override the LLM fallback logic, causing severe performance drops (0.900 → 0.225).',
         text: '<b>Allocation stalls</b> (arm k₀ = 32, capped at 0.400): candidates N44–N46 spend their iterations absorbing reflections without breeding elites. <b>Over-admitting predicates</b> (arm k₀ = 16): an unsound reflex predicate prematurely overrides the LLM fallback.',
@@ -896,7 +896,7 @@
     function hide() { rows.forEach((r, i) => dots[i].setAttribute('r', rOf(r))); tip.classList.remove('on'); }
     rows.forEach((r, i) => {
       const h = svgEl('rect', { x: xs(i) - hitW / 2, y: m.t - 12, width: hitW, height: H - m.t - m.b + 24, fill: 'transparent', tabindex: 0, role: opts.clickable ? 'button' : 'img', 'aria-label': `#${i} ${r.label}: ${fmt(r.score)}` }, svg);
-      h.style.cursor = opts.clickable ? 'pointer' : 'default';
+      h.style.cursor = opts.clickable ? 'pointer' : 'default'; h.style.outline = 'none';
       h.addEventListener('mouseenter', () => show(i)); h.addEventListener('mouseleave', hide);
       h.addEventListener('focus', () => show(i)); h.addEventListener('blur', hide);
       if (opts.clickable) {
@@ -949,18 +949,18 @@
       `<div class="pp-nav"><button type="button" class="prev">‹ previous</button><button type="button" class="playboth">▶ play both</button><button type="button" class="next">next ›</button><span class="pp-count" data-count></span></div></div>`;
     const vids = $$('video', host), vl = vids[0], vr = vids[1], head = $('[data-head]', host), cap = $('[data-cap]', host), prev = $('.prev', host), next = $('.next', host), both = $('.playboth', host), count = $('[data-count]', host);
     let k = 0;
-    function setK(kk, play) {
+    function setK(kk, play, silent) {
       kk = Math.max(0, Math.min(rights.length - 1, kk)); k = kk; const e = rights[k]; if (!e) return;
       vr.pause(); vl.pause(); vr.setAttribute('poster', e.poster); vr.src = e.file; vr.load();
       head.innerHTML = `evolved harness · <b>${esc(e.label)}</b>`; cap.innerHTML = opts.caption(e, e.i);
       prev.disabled = k === 0; next.disabled = k === rights.length - 1; count.textContent = `${k + 1} / ${rights.length} evolved`;
       if (play) { vl.currentTime = 0; vr.play().catch(() => {}); vl.play().catch(() => {}); }
-      if (opts.onChange) opts.onChange(e.i);
+      if (!silent && opts.onChange) opts.onChange(e.i);
     }
-    function set(i, play) {   // lineage index → that harness if it has a video, else the latest available one before it
+    function set(i, play, silent) {   // lineage index → that harness if it has a video, else the latest available one before it
       let kk = rights.findIndex(e => e.i === i);
       if (kk < 0) { rights.forEach((e, j) => { if (e.i <= i) kk = j; }); if (kk < 0) kk = 0; }
-      setK(kk, play);
+      setK(kk, play, silent);
     }
     prev.addEventListener('click', () => setK(k - 1, true)); next.addEventListener('click', () => setK(k + 1, true));
     both.addEventListener('click', () => { if (!vr.paused) { vl.pause(); vr.pause(); } else { vl.currentTime = 0; vr.currentTime = 0; vl.play().catch(() => {}); vr.play().catch(() => {}); } });
@@ -981,11 +981,12 @@
         pp = pairPlayer($('[data-pair]', vh), t.entries, {
           caption: (e, i) => `<b>#${i}</b> ${esc(t.episode)}: ${esc(e.outcome || (e.episode_score === 1 ? 'solved' : 'failed'))} · search success ${fmt(e.score)} ${badge(e, LB.rows[i])}`,
           onChange: i => { sel = i; if (chart) chart.setSelected(i, true); an.show(i); }, start: sel });
+        if (!pp.has(sel)) pp.set(sel, false, true);
       };
       $$('[data-tasks] button', vh).forEach(bt => bt.addEventListener('click', () => mount(+bt.dataset.k)));
       mount(0);
       chart = lineageChart($('#chart-balrog'), LB, { metric: 'success', ylabel: 'success on the 40 search episodes', clickable: true,
-        hint: 'Hover a harness for its score and diff; click it to see its structure and watch it beside the initial harness.', onSelect: i => pp.set(i, true) });
+        hint: 'Hover a harness for its score and diff; click it to see its structure and watch it beside the initial harness.', onSelect: i => { sel = i; an.show(i); pp.set(i, true, true); } });
       chart.setSelected(sel, true); an.show(sel);
     }
     const gameMeta = { maze3d_pro: ['Maze3D-Pro', 'level 7'], block3d: ['Block3D', 'level 12'], maze: ['Maze', 'level 1'], snake: ['Snake', 'seed 20'], rubik: ['Rubik', 'level 6'] };
@@ -1000,7 +1001,7 @@
       else if (ph) ph.remove();
       chart = lineageChart(host, L, { metric: 'score', ylabel: 'score on the search levels', clickable: true,
         hint: pp ? 'Hover a harness for its score and diff; click it to see its structure and watch it beside the initial harness.' : 'Hover a harness for its score and diff; click it to see its structure.',
-        onSelect: i => { if (pp) pp.set(i, true); else an.show(i); } });
+        onSelect: i => { an.show(i); if (pp) pp.set(i, true, true); } });
       chart.setSelected(bi, true); an.show(bi);
     });
     const LN = DATA.lineages.nav_hard, VN = (DATA.videos.nav || []).filter(e => e.i != null);
@@ -1012,7 +1013,7 @@
         onChange: i => { if (chart) chart.setSelected(i, true); an.show(i); }, start: bi });
       else if (ph) ph.remove();
       chart = lineageChart($('#chart-nav'), LN, { metric: 'SubtaskSR', ylabel: 'Subtask SR on the 50 search tasks', clickable: true,
-        hint: 'Hover a harness for its score and diff; click it to see its structure' + (pp ? ' and watch it beside the initial harness.' : '.'), onSelect: i => { if (pp) pp.set(i, true); else an.show(i); } });
+        hint: 'Hover a harness for its score and diff; click it to see its structure' + (pp ? ' and watch it beside the initial harness.' : '.'), onSelect: i => { an.show(i); if (pp) pp.set(i, true, true); } });
       chart.setSelected(bi, true); an.show(bi);
     }
     const LE = DATA.lineages.nav_easy;

@@ -2930,30 +2930,26 @@
    "lines": 17
   }
  },
- "game_maze3d_pro": {
-  "arm": "maze3d_pro__k2_claude_pv",
-  "N": 12,
-  "label": "cand_r6_1_action-planning",
+ "same_maze_0": {
+  "arm": "maze__k32_claude_pv",
+  "N": 3,
+  "label": "cand_r4_0_spatial-grounding",
   "score": 1.0,
-  "parent": "anchor_maze3d_pro",
-  "parent_score": 0.08,
-  "display": "Maze3D-Pro 100%",
-  "pseudo": "def edges(chart, cell, bearing):\n    \"\"\"Every single-decision move out of one pose, as `((action, granularity), pose)`.\n\n    FOUR FAMILIES, EACH EXACTLY ONE PRESS, and the order they are yielded in is the tie-break the\n    search inherits: translations before turns and the LONGEST stride first, so a route that can\n    travel does. A stride costs one decision whether it carries one cell or three, and spending it\n    on three is free.\n\n      * `move_forward` of 3, 2 or 1 cells, out of a pose no translation has already been refused in.\n        A stride may LAND on ground a flank band merely glimpsed, but it may not continue THROUGH\n        it: striding over cells nothing has looked along is the most expensive habit this search can\n        have, worth more than the reversal it rations.\n      * `move_backward`, same lengths, over RAY-PROVEN ground only. Admitting the reversal makes the\n        cell behind cost one decision where turning around and walking costs three; restricting it\n        to proven ground is what stops the planner backing blind into a cell it has only glimpsed.\n      * the two turns, always available, one quarter-turn each.\n    \"\"\"\n    for back in (False, True):\n        if chart.refuted(cell, (bearing + 2) % 4 if back else bearing):\n            continue\n        name = \"move_backward\" if back else \"move_forward\"\n        run = []\n        for cells in (1, 2, 3):\n            step = A.advance(cell, bearing, cells, back)\n            if not (chart.verified(step) if back else chart.enterable(step)):\n                break\n            run.append((cells, step))\n            if not chart.verified(step):\n                break\n        for cells, step in reversed(run):\n            yield (name, A.granularity_for(cells)), (step, bearing)\n    for turn in (\"turn_right\", \"turn_left\"):\n        yield (turn, \"small\"), (cell, A.heading_after(bearing, turn))",
-  "pseudo_src": "tools/plan.py \u00b7 edges",
-  "code_label": "Core function \u00b7 tools/plan.py \u00b7 edges (33 lines)",
+  "parent": "anchor_maze",
+  "parent_score": 0.25,
+  "display": "Maze \u00b7 k\u2080 = 32",
+  "pseudo": "async def decide(evaluator, frame_data, grid=(25, 25), rounds=40, hold=30, tail=4, worn=1):\n    \"\"\"One decision step -> engine Action. Measure the heading and the three visible sides off the\n    frame, settle what the last action proved, show the agent its own map, take the frozen model's\n    proposal, and correct it only where the measurement says it cannot help.\"\"\"\n    book = getattr(evaluator, \"sg_book\", None)\n    if book is None:\n        book = FRESH()\n        evaluator.sg_book = book\n    look = _look(getattr(frame_data, \"image\", None))\n    book[\"tick\"] = book[\"tick\"] + 1\n    _settle(book, look, grid)\n    book[\"seen\"][book[\"at\"]] = book[\"seen\"].get(book[\"at\"], 0) + 1\n    _mark(book, look)\n    _mirror(book)\n    _target(book, look, rounds)\n    _speak(evaluator, book, look, tail, worn)\n    step = getattr(evaluator, \"baseline_step\", None) or evaluator.openai_ai_model\n    evaluator.sg_calls = getattr(evaluator, \"sg_calls\", 0) + 1\n    act = await step(frame_data)\n    meta = getattr(act, \"metadata\", None) or {}\n    name = meta.get(\"function_called\") or \"\"\n    if look is None:\n        book[\"blind\"] = book[\"blind\"] + 1\n        return act\n    plan = _plan(book, look, rounds)\n    move = plan if _futile(book, look, name, plan) else _keep(name)\n    _apply(act, move, move != name)\n    if move != name:\n        _echo(evaluator, move)\n        book[\"swap\"] = book[\"swap\"] + 1\n    _note(book, look, move, name, hold)\n    _carry(book, look, move)\n    return act",
+  "pseudo_src": "tools/vlm.py \u00b7 decide",
+  "code_label": "Core function \u00b7 tools/vlm.py \u00b7 decide (33 lines)",
   "modules": [
    {
     "name": "harness",
     "file": "harness.py",
-    "lines": 72,
+    "lines": 53,
     "components": [
      [
       "_read",
       "parse"
-     ],
-     [
-      "_budget",
-      "logic"
      ],
      [
       "compose_system_prompt",
@@ -2970,71 +2966,18 @@
    {
     "name": "action",
     "file": "tools/action.py",
-    "lines": 167,
+    "lines": 27,
     "components": [
      [
       "key_for",
       "policy"
      ],
      [
-      "name_for",
-      "logic"
-     ],
-     [
       "granularity_steps",
-      "logic"
-     ],
-     [
-      "granularity_for",
-      "logic"
-     ],
-     [
-      "heading_after",
-      "perception"
-     ],
-     [
-      "advance",
-      "logic"
-     ],
-     [
-      "bearing_between",
-      "logic"
-     ],
-     [
-      "turn_toward",
-      "spatial"
-     ],
-     [
-      "inverse_climb",
-      "logic"
-     ],
-     [
-      "is_undo",
-      "logic"
-     ],
-     [
-      "retarget",
-      "logic"
-     ],
-     [
-      "read_proposal",
       "logic"
      ]
     ],
     "role": "policy",
-    "main": false
-   },
-   {
-    "name": "chart",
-    "file": "tools/chart.py",
-    "lines": 300,
-    "components": [
-     [
-      "Chart",
-      "logic"
-     ]
-    ],
-    "role": "tool",
     "main": false
    },
    {
@@ -3051,134 +2994,214 @@
     "main": false
    },
    {
-    "name": "plan",
-    "file": "tools/plan.py",
-    "lines": 468,
-    "components": [
-     [
-      "clean_template",
-      "prompt"
-     ],
-     [
-      "Commitment",
-      "logic"
-     ],
-     [
-      "edges",
-      "logic"
-     ],
-     [
-      "search",
-      "logic"
-     ],
-     [
-      "cheapest",
-      "logic"
-     ],
-     [
-      "frontier_poses",
-      "logic"
-     ],
-     [
-      "candidates",
-      "logic"
-     ],
-     [
-      "elect",
-      "logic"
-     ],
-     [
-      "sweep",
-      "logic"
-     ],
-     [
-      "Pilot",
-      "logic"
-     ]
-    ],
-    "role": "prompt",
-    "main": false
-   },
-   {
-    "name": "sight",
-    "file": "tools/sight.py",
-    "lines": 241,
-    "components": [
-     [
-      "Sight",
-      "logic"
-     ],
-     [
-      "look",
-      "logic"
-     ]
-    ],
-    "role": "tool",
-    "main": false
-   },
-   {
     "name": "vlm",
     "file": "tools/vlm.py",
-    "lines": 65,
+    "lines": 228,
     "components": [
-     [
-      "inject_memory",
-      "memory"
-     ],
      [
       "decide",
       "policy"
      ]
     ],
-    "role": "memory",
+    "role": "policy",
     "main": false
    }
   ],
   "edges": [
    [
-    "chart",
-    "action",
-    4
-   ],
-   [
     "harness",
-    "plan",
+    "vlm",
     2
-   ],
+   ]
+  ],
+  "n_components": 12,
+  "n_edges": 4,
+  "heading": "`decide` was a one-line delegation to `evaluator.baseline_step`; it is now a measured state"
+ },
+ "same_maze_1": {
+  "arm": "maze__k32_claude_pv",
+  "N": 8,
+  "label": "cand_r9_0_spatial-grounding",
+  "score": 1.0,
+  "parent": "anchor_maze",
+  "parent_score": 0.25,
+  "display": "Maze \u00b7 k\u2080 = 32",
+  "pseudo": "async def decide(evaluator, frame_data):\n    \"\"\"One step: read the frame, settle the previous reply against the room book, plan over the\n    proven-open doorways, publish all of it in `conversation_history[0]`, then make the single\n    frozen-model call and return its engine `Action` unchanged.\"\"\"\n    book = getattr(evaluator, _BOOK, None)\n    if book is None:\n        book = {\"side\": {}, \"to\": {}, \"rooms\": [], \"dirs\": [], \"cycle\": {},\n                \"room\": None, \"here\": None, \"goal\": None}\n        setattr(evaluator, _BOOK, book)\n        evaluator.history_window = 1              # one prior turn: the block sits beside its frame\n    img = getattr(frame_data, \"image\", None)\n    if _np is None or img is None or getattr(img, \"ndim\", 0) != _PLANES \\\n            or img.shape[1] < _MIN_WIDTH:\n        return await evaluator.baseline_step(frame_data)\n    read = _SENSE(img, img.shape[1])\n\n    was_room, was_here = book[\"room\"], book[\"here\"]\n    said = _ACTION_OF(_REPLY(evaluator))\n    room = _FILE(book[\"rooms\"], read[\"pos\"], 16)\n    label = _FILE(book[\"dirs\"], read[\"dir\"], 16)\n    here = book[\"cycle\"].get(label)\n    if here is None and not book[\"cycle\"]:\n        here = _ORIGIN\n        book[\"cycle\"][label] = here\n    if here is None and was_here is not None and said in _SPIN:\n        here = _SPUN(was_here, said)\n        book[\"cycle\"][label] = here\n    book[\"room\"], book[\"here\"] = room, here\n\n    moved = None\n    if said == _FORWARD and was_room is not None and was_here is not None:\n        moved = room != was_room\n        book[\"goal\"] = None\n        if moved:\n\u2026",
+  "pseudo_src": "tools/vlm.py \u00b7 decide",
+  "code_label": "Core function \u00b7 tools/vlm.py \u00b7 decide (66 lines)",
+  "modules": [
+   {
+    "name": "harness",
+    "file": "harness.py",
+    "lines": 51,
+    "components": [
+     [
+      "_read",
+      "parse"
+     ],
+     [
+      "compose_system_prompt",
+      "prompt"
+     ],
+     [
+      "build_agent",
+      "logic"
+     ]
+    ],
+    "role": "controller",
+    "main": true
+   },
+   {
+    "name": "action",
+    "file": "tools/action.py",
+    "lines": 23,
+    "components": [
+     [
+      "key_for",
+      "policy"
+     ],
+     [
+      "granularity_steps",
+      "logic"
+     ]
+    ],
+    "role": "policy",
+    "main": false
+   },
+   {
+    "name": "frame",
+    "file": "tools/frame.py",
+    "lines": 6,
+    "components": [
+     [
+      "capture",
+      "perception"
+     ]
+    ],
+    "role": "perception",
+    "main": false
+   },
+   {
+    "name": "vlm",
+    "file": "tools/vlm.py",
+    "lines": 294,
+    "components": [
+     [
+      "decide",
+      "policy"
+     ]
+    ],
+    "role": "policy",
+    "main": false
+   }
+  ],
+  "edges": [
    [
     "harness",
     "vlm",
     2
-   ],
-   [
-    "plan",
-    "action",
-    16
-   ],
-   [
-    "plan",
-    "chart",
-    2
-   ],
-   [
-    "plan",
-    "sight",
-    1
    ]
   ],
-  "n_components": 40,
-  "n_edges": 46,
-  "heading": "maze3d_pro rich harness \u2014 module map & levers",
-  "n_lines": 1319
+  "n_components": 12,
+  "n_edges": 4,
+  "heading": "maze rich harness \u2014 the room is recognised, not hashed"
  },
- "game_block3d": {
+ "same_maze_2": {
+  "arm": "maze__k32_claude_pv",
+  "N": 14,
+  "label": "cand_r15_0_spatial-grounding",
+  "score": 1.0,
+  "parent": "anchor_maze",
+  "parent_score": 0.25,
+  "display": "Maze \u00b7 k\u2080 = 32",
+  "pseudo": "async def decide(evaluator, frame_data):\n    \"\"\"One decision step -> engine Action, with one VLM call via the pristine baseline step.\"\"\"\n    led = getattr(evaluator, _SLOT, None)\n    if led is None or frame_data.frame_number < led[\"frame\"]:\n        led = _FRESH()\n        setattr(evaluator, _SLOT, led)\n    led[\"frame\"] = frame_data.frame_number\n    proposal = await _STEP(evaluator)(frame_data)\n    image = getattr(frame_data, \"image\", None)\n    if not _usable(image):\n        return proposal\n    seen = _sight(image)\n    stage, aim = led[\"press\"] or (None, None)\n    if stage == \"turn\":\n        led[\"face\"] = aim\n    if stage == \"walk\":\n        _SEAL(led, aim) if _REFUSED(led, seen) else _SETTLE(led, aim)\n    _FOLD(led, seen)\n    legal = _PUBLISH(led)\n    if not legal:\n        _AMNESIA(led)\n        legal = _PUBLISH(led)\n    verb = _VERB(proposal)\n    aim = _CHOOSE(led, legal, seen[\"gold\"], verb)\n    name, shape = _PRESS_FOR(led, aim)\n    _BOOK(led, aim, seen[\"ink\"])\n    if not _HONOURED(led, aim, verb):\n        _MIRROR(evaluator, name)\n    return type(proposal)(type=\"key_press\", key=_press(name),\n                          metadata=dict(_STAMP, function_called=name,\n                                        frame_number=frame_data.frame_number, **shape))",
+  "pseudo_src": "tools/vlm.py \u00b7 decide",
+  "code_label": "Core function \u00b7 tools/vlm.py \u00b7 decide (31 lines)",
+  "modules": [
+   {
+    "name": "harness",
+    "file": "harness.py",
+    "lines": 52,
+    "components": [
+     [
+      "_read",
+      "parse"
+     ],
+     [
+      "compose_system_prompt",
+      "prompt"
+     ],
+     [
+      "build_agent",
+      "logic"
+     ]
+    ],
+    "role": "controller",
+    "main": true
+   },
+   {
+    "name": "action",
+    "file": "tools/action.py",
+    "lines": 19,
+    "components": [
+     [
+      "key_for",
+      "policy"
+     ],
+     [
+      "granularity_steps",
+      "logic"
+     ]
+    ],
+    "role": "policy",
+    "main": false
+   },
+   {
+    "name": "frame",
+    "file": "tools/frame.py",
+    "lines": 44,
+    "components": [
+     [
+      "capture",
+      "perception"
+     ]
+    ],
+    "role": "perception",
+    "main": false
+   },
+   {
+    "name": "vlm",
+    "file": "tools/vlm.py",
+    "lines": 100,
+    "components": [
+     [
+      "decide",
+      "policy"
+     ]
+    ],
+    "role": "policy",
+    "main": false
+   }
+  ],
+  "edges": [
+   [
+    "harness",
+    "vlm",
+    2
+   ]
+  ],
+  "n_components": 12,
+  "n_edges": 4,
+  "heading": "`tools/vlm.py`"
+ },
+ "same_block3d_0": {
   "arm": "block3d__k32_claude_pv",
   "N": 3,
   "label": "cand_r4_0_spatial-grounding",
   "score": 1.0,
   "parent": "anchor_block3d",
   "parent_score": 0.05,
-  "display": "Block3D 100%",
+  "display": "Block3D \u00b7 k\u2080 = 32",
   "pseudo": "async def decide(evaluator, frame_data):\n    \"\"\"One decision -> engine Action. Asks the frozen model, measures the board, then prices.\"\"\"\n    pilot = getattr(evaluator, \"_gauge_pilot\", None)\n    if pilot is None:\n        pilot = Pilot(evaluator)\n        evaluator._gauge_pilot = pilot\n    st = pilot.st\n    st.turn += 1\n    step = getattr(evaluator, \"baseline_step\", None) or evaluator.openai_ai_model\n\n    if st.turn == 1 and not pilot.ready:\n        try:\n            st.down = not pilot.measure(frame_data)\n        except Exception as exc:                       # noqa: BLE001 \u2014 a bad read is a stand-down\n            st.down = True\n            st.notes.append((st.turn, repr(exc)))\n\n    proposal = await step(frame_data)\n    if st.down:\n        pilot.log(dict(st.summary(), mode=\"stood-down\"))\n        return proposal\n\n    now = _DIGEST(F.raster(frame_data))\n    st.grade(now == pilot.fence)\n    pilot.fence = now\n    st.correct(pilot.sight(frame_data))\n\n    goal, phase = pilot.goal()\n    if goal is None:\n        st.down = True\n        pilot.log(dict(st.summary(), mode=\"dry\"))\n        return proposal\n\n    asked = _proposed_name(proposal)\n\u2026",
   "pseudo_src": "tools/vlm.py \u00b7 decide",
   "code_label": "Core function \u00b7 tools/vlm.py \u00b7 decide (54 lines)",
@@ -3438,25 +3461,24 @@
   ],
   "n_components": 41,
   "n_edges": 42,
-  "heading": "block3d rich harness \u2014 the frame's own ruler, and a camera calibrated from the agent's own moves",
-  "n_lines": 959
+  "heading": "block3d rich harness \u2014 the frame's own ruler, and a camera calibrated from the agent's own moves"
  },
- "game_maze": {
-  "arm": "maze__k8_claude_pv",
-  "N": 1,
-  "label": "cand_r1_0_spatial-grounding",
+ "same_block3d_1": {
+  "arm": "block3d__k32_claude_pv",
+  "N": 5,
+  "label": "cand_r6_0_spatial-grounding",
   "score": 1.0,
-  "parent": "anchor_maze",
-  "parent_score": 0.3,
-  "display": "Maze 100%",
-  "pseudo": "async def decide(evaluator, frame_data):\n    \"\"\"One grounded decision per frame: measure -> settle -> ask the VLM once -> arbitrate.\"\"\"\n    lattice = getattr(evaluator, \"_maze_grounded_lattice\", None)\n    if lattice is None:\n        lattice = _GroundedLatticeRecovery()\n        evaluator._maze_grounded_lattice = lattice\n    census = _band_statistics(frame_data)\n    lattice.settle(census)\n    step = getattr(evaluator, \"baseline_step\", None) or evaluator.openai_ai_model\n    proposal = await step(frame_data)\n    action, overridden = lattice.arbitrate(proposal, census, frame_data.frame_number)\n    if overridden:\n        _overwrite_last_action(evaluator, action)\n    lattice.commit(action, census)\n    return action",
+  "parent": "anchor_block3d",
+  "parent_score": 0.05,
+  "display": "Block3D \u00b7 k\u2080 = 32",
+  "pseudo": "async def decide(evaluator, frame_data):\n    \"\"\"One decision step -> engine Action. The pristine per-step VLM fn is awaited FIRST and on\n    EVERY decision -- it is the agent, and this harness only prices what it says -- and the reply\n    is returned untouched unless playing it would provably cost the episode.\n\n    The body is the harness's whole control flow and it reads top to bottom as the mechanism's\n    shape: witness the last move, ground the target once, name the errand, census what is owed,\n    price the reply, roll the reckoning, stamp the trace. Every judgement it makes is a lookup\n    into the module table above, so nothing is hidden inside a helper object and the branches here\n    are the complete list of things this harness can decide.\"\"\"\n    seat = SEAT(evaluator)\n    pick = await PRISTINE(evaluator)(frame_data)\n    img = frame_data.image if hasattr(frame_data, \"image\") else None\n    seat[\"used\"] += 1\n    if pick is None or img is None:\n        return pick\n    try:\n        pane = numpy.array(numpy.asarray(img)[:, VIEWPORT:, :3])\n        if HELD(pane, seat[\"pane\"]):\n            seat[\"at\"] = PINNED(seat[\"at\"], seat[\"last\"])\n            seat[\"healed\"] += 1\n        seat[\"pane\"] = pane\n        if not seat[\"tape\"]:\n            read = READ(img)\n            seat[\"note\"] = WHY(read)\n            if not seat[\"note\"]:\n                hull = HULL(read[\"lit\"])\n                cores = CORES(hull)\n                seat[\"forced\"] = FORCED(read[\"lit\"], hull)\n                rungs = {}\n                for cell in hull:\n                    rungs.setdefault(RUNG(cell, seat[\"forced\"], cores), []).append(cell)\n                tape, here = (), seat[\"at\"]\n                for rank in sorted(rungs):\n\u2026",
   "pseudo_src": "tools/vlm.py \u00b7 decide",
-  "code_label": "Core function \u00b7 tools/vlm.py \u00b7 decide (15 lines)",
+  "code_label": "Core function \u00b7 tools/vlm.py \u00b7 decide (70 lines)",
   "modules": [
    {
     "name": "harness",
     "file": "harness.py",
-    "lines": 51,
+    "lines": 82,
     "components": [
      [
       "_read",
@@ -3477,15 +3499,11 @@
    {
     "name": "action",
     "file": "tools/action.py",
-    "lines": 23,
+    "lines": 52,
     "components": [
      [
       "key_for",
       "policy"
-     ],
-     [
-      "granularity_steps",
-      "logic"
      ]
     ],
     "role": "policy",
@@ -3494,7 +3512,7 @@
    {
     "name": "frame",
     "file": "tools/frame.py",
-    "lines": 6,
+    "lines": 21,
     "components": [
      [
       "capture",
@@ -3507,24 +3525,8 @@
    {
     "name": "vlm",
     "file": "tools/vlm.py",
-    "lines": 274,
+    "lines": 323,
     "components": [
-     [
-      "_band_statistics",
-      "logic"
-     ],
-     [
-      "_probe_action",
-      "policy"
-     ],
-     [
-      "_overwrite_last_action",
-      "policy"
-     ],
-     [
-      "_GroundedLatticeRecovery",
-      "recovery"
-     ],
      [
       "decide",
       "policy"
@@ -3541,22 +3543,325 @@
     2
    ]
   ],
-  "n_components": 16,
-  "n_edges": 8,
-  "heading": "maze rich harness \u2014 spatial grounding",
-  "n_lines": 354
+  "n_components": 11,
+  "n_edges": 4,
+  "heading": "block3d rich harness \u2014 module map & levers (r006_0 \u00b7 spatial-grounding)"
  },
- "game_snake": {
-  "arm": "snake__k2_claude_pv",
-  "N": 1,
-  "label": "cand_r1_0_spatial-grounding",
+ "same_block3d_2": {
+  "arm": "block3d__k32_claude_pv",
+  "N": 8,
+  "label": "cand_r9_0_spatial-grounding",
+  "score": 1.0,
+  "parent": "anchor_block3d",
+  "parent_score": 0.05,
+  "display": "Block3D \u00b7 k\u2080 = 32",
+  "pseudo": "async def decide(self, frame_data):\n        \"\"\"Predict, diff, ask, price, emit. Exactly one model call per turn, every turn.\"\"\"\n        self.turns += 1\n        img = F.pixels(frame_data)\n        if img is None:\n            return await self.ev.baseline_step(frame_data)\n        try:\n            self._ground(img)\n        except Exception as exc:\n            self.down = \"grounding raised %r\" % (exc,)\n        if self.down or self.plan is None:\n            return await self.ev.baseline_step(frame_data)\n        try:\n            self._sight(img)\n            goal, rung = self.plan.objective(self.led.built, self.dome)\n            legs = []\n            if goal is not None:\n                legs = R.runs(self.led.cursor, goal)\n            dead = R.walled(self.led.cursor)\n            spare = self._afford(goal)\n            if spare is None and goal is not None:\n                self.starved += 1\n            self.ev.current_prompt = \"%s\\n%s\\n\" % (self.base, self._turn(goal, rung, legs, dead))\n        except Exception as exc:\n            self.down = \"building the brief raised %r\" % (exc,)\n            return await self.ev.baseline_step(frame_data)\n        reply = await self.ev.baseline_step(frame_data)\n        picked = A.name_of(reply)\n        try:\n            name, honoured = self._price(picked, goal, legs, dead)\n        except Exception:\n            name, honoured = R.TOGGLE, False\n        if honoured:\n            self.honoured += 1\n\u2026",
+  "pseudo_src": "tools/vlm.py \u00b7 decide",
+  "code_label": "Core function \u00b7 tools/vlm.py \u00b7 decide (49 lines)",
+  "modules": [
+   {
+    "name": "harness",
+    "file": "harness.py",
+    "lines": 83,
+    "components": [
+     [
+      "_read",
+      "parse"
+     ],
+     [
+      "compose_system_prompt",
+      "prompt"
+     ],
+     [
+      "scratch_template",
+      "prompt"
+     ],
+     [
+      "build_agent",
+      "logic"
+     ]
+    ],
+    "role": "controller",
+    "main": true
+   },
+   {
+    "name": "action",
+    "file": "tools/action.py",
+    "lines": 59,
+    "components": [
+     [
+      "key_for",
+      "policy"
+     ],
+     [
+      "name_for",
+      "logic"
+     ],
+     [
+      "name_of",
+      "logic"
+     ]
+    ],
+    "role": "policy",
+    "main": false
+   },
+   {
+    "name": "belief",
+    "file": "tools/belief.py",
+    "lines": 161,
+    "components": [
+     [
+      "admitted",
+      "logic"
+     ],
+     [
+      "witnesses",
+      "logic"
+     ],
+     [
+      "forced",
+      "logic"
+     ],
+     [
+      "anchorage",
+      "logic"
+     ],
+     [
+      "strata",
+      "logic"
+     ],
+     [
+      "fence",
+      "logic"
+     ],
+     [
+      "residue",
+      "logic"
+     ],
+     [
+      "placard",
+      "logic"
+     ]
+    ],
+    "role": "tool",
+    "main": false
+   },
+   {
+    "name": "fence",
+    "file": "tools/fence.py",
+    "lines": 81,
+    "components": [
+     [
+      "Fence",
+      "logic"
+     ]
+    ],
+    "role": "tool",
+    "main": false
+   },
+   {
+    "name": "frame",
+    "file": "tools/frame.py",
+    "lines": 27,
+    "components": [
+     [
+      "pixels",
+      "logic"
+     ],
+     [
+      "capture",
+      "perception"
+     ]
+    ],
+    "role": "perception",
+    "main": false
+   },
+   {
+    "name": "ledger",
+    "file": "tools/ledger.py",
+    "lines": 65,
+    "components": [
+     [
+      "Ledger",
+      "logic"
+     ]
+    ],
+    "role": "tool",
+    "main": false
+   },
+   {
+    "name": "panels",
+    "file": "tools/panels.py",
+    "lines": 193,
+    "components": [
+     [
+      "_ink",
+      "logic"
+     ],
+     [
+      "top_cell",
+      "logic"
+     ],
+     [
+      "front_cell",
+      "logic"
+     ],
+     [
+      "side_cell",
+      "logic"
+     ],
+     [
+      "shadows",
+      "logic"
+     ],
+     [
+      "Silhouettes",
+      "logic"
+     ],
+     [
+      "decode",
+      "parse"
+     ]
+    ],
+    "role": "parse",
+    "main": false
+   },
+   {
+    "name": "route",
+    "file": "tools/route.py",
+    "lines": 92,
+    "components": [
+     [
+      "gap",
+      "logic"
+     ],
+     [
+      "shift",
+      "logic"
+     ],
+     [
+      "runs",
+      "logic"
+     ],
+     [
+      "walled",
+      "logic"
+     ],
+     [
+      "sweep",
+      "logic"
+     ],
+     [
+      "fare",
+      "logic"
+     ]
+    ],
+    "role": "tool",
+    "main": false
+   },
+   {
+    "name": "vlm",
+    "file": "tools/vlm.py",
+    "lines": 348,
+    "components": [
+     [
+      "_engine_action",
+      "policy"
+     ],
+     [
+      "_render",
+      "perception"
+     ],
+     [
+      "Wright",
+      "logic"
+     ],
+     [
+      "build",
+      "logic"
+     ]
+    ],
+    "role": "policy",
+    "main": false
+   }
+  ],
+  "edges": [
+   [
+    "belief",
+    "panels",
+    4
+   ],
+   [
+    "belief",
+    "route",
+    2
+   ],
+   [
+    "fence",
+    "belief",
+    1
+   ],
+   [
+    "harness",
+    "vlm",
+    2
+   ],
+   [
+    "ledger",
+    "route",
+    2
+   ],
+   [
+    "vlm",
+    "action",
+    3
+   ],
+   [
+    "vlm",
+    "belief",
+    7
+   ],
+   [
+    "vlm",
+    "fence",
+    1
+   ],
+   [
+    "vlm",
+    "frame",
+    2
+   ],
+   [
+    "vlm",
+    "ledger",
+    2
+   ],
+   [
+    "vlm",
+    "panels",
+    2
+   ],
+   [
+    "vlm",
+    "route",
+    4
+   ]
+  ],
+  "n_components": 45,
+  "n_edges": 49,
+  "heading": "cand_r009_0_spatial-grounding \u2014 the predicted picture"
+ },
+ "same_snake_0": {
+  "arm": "snake__k32_claude_pv",
+  "N": 3,
+  "label": "cand_r3_0_spatial-grounding",
   "score": 1.0,
   "parent": "anchor_snake",
   "parent_score": 0.0,
-  "display": "Snake 100%",
-  "pseudo": "async def decide(evaluator, frame_data):\n    \"\"\"One decision step -> engine Action: delegate to the frozen model, then audit its geometry.\n\n    The decision still comes from the evaluator's pristine VLM step + JSON parser, so the model sees\n    exactly the baseline conversation and `baseline_step` is called once per step. The returned\n    `Action` is a mutable dataclass whose `key` is the entire override surface \u2014 the engine presses\n    only that \u2014 so a vetoed pick is rewritten in place while the metadata keeps both the action the\n    model named and the reason it was replaced.\n    \"\"\"\n    step = getattr(evaluator, \"baseline_step\", None) or evaluator.openai_ai_model\n    act = await step(frame_data)\n    if not _LEDGER:\n        _LEDGER.update(_FRESH_LEDGER())\n    head, heading, body = _LEDGER[\"head\"], _LEDGER[\"heading\"], _BODY(_LEDGER)\n    ahead = {name: _ONWARD(head, v) for name, v in _STEP.items()}\n    inbox = [n for n, c in ahead.items() if _INSIDE(c) and not _FLIPS(_STEP[n], heading)]\n    legal = [n for n in inbox if ahead[n] not in body]\n    roomy = []\n    for name in legal:\n        onward = [m for m, w in _STEP.items()\n                  if not _FLIPS(w, _STEP[name]) and _INSIDE(_ONWARD(ahead[name], w))\n                  and _ONWARD(ahead[name], w) not in body]\n        if onward:\n            roomy.append(name)\n    options = roomy or legal or inbox\n    wanted = _WANTED(act)\n    shipped = wanted if wanted in options else _FRESHEST(_LEDGER, options, ahead)\n    if shipped != wanted:\n        act.key = _PRESS[shipped]\n        act.metadata = _AUDITED(act, shipped, wanted, head)\n        _VETOED(_LEDGER)\n    _ADVANCE(_LEDGER, shipped, ahead)\n    return act",
+  "display": "Snake \u00b7 k\u2080 = 32",
+  "pseudo": "async def decide(evaluator, frame_data):\n    \"\"\"One engine step: the frozen model answers, the warrant judges, and it may answer again.\"\"\"\n    step = getattr(evaluator, \"baseline_step\", None) or evaluator.openai_ai_model\n    led = _recall_trail(evaluator)\n    talk = getattr(evaluator, \"conversation_history\", None)\n    keep = _TURNS(talk)\n    act = await step(frame_data)                   # the frozen model decides first, every turn\n    img = getattr(frame_data, \"image\", None)\n    read = _pellet_cell(img)\n    led[\"pellet\"] = _LATEST(read, led[\"pellet\"])\n    names = _moves_open(img, led)\n    best = _pick_press(img, names, led[\"pellet\"], led)\n    led[\"asked\"] = _ASKED(act)\n    refused = is_reversal(led[\"asked\"], led[\"last\"])\n    if not _SATISFIES(led, names, led[\"pellet\"], led[\"asked\"], best) and keep and best:\n        led[\"appeals\"] += 1\n        again = await _retry_once(\n            evaluator, frame_data, _correction_card(img, names, led[\"pellet\"], led, refused))\n        if again is not None:\n            act = again\n            led[\"asked\"] = _ASKED(act)\n            led[\"won_back\"] += int(_SATISFIES(led, names, led[\"pellet\"], led[\"asked\"], best))\n    satisfied = _SATISFIES(led, names, led[\"pellet\"], led[\"asked\"], best)\n    press = led[\"asked\"] if satisfied else best\n    _AUDIT(act, {\"harness_open_moves\": list(names), \"harness_reckoned_head\": led[\"head\"],\n                 \"harness_hud_eaten\": led[\"eaten\"], \"harness_pellet_cell\": led[\"pellet\"],\n                 \"harness_model_satisfied_warrant\": satisfied, \"harness_pressed\": press})\n    led[\"turns\"] += 1\n    if press in KEY_MAPPING:\n        act.key = KEY_MAPPING[press]\n        led[\"last\"] = DIRECTION_VECTORS[press]\n        led[\"head\"] = _STEP(led[\"head\"], press)\n        _PUSH(led[\"trail\"], led[\"head\"])\n        led[\"seen\"][led[\"head\"]] = led[\"seen\"].get(led[\"head\"], ZERO) + 1\n\u2026",
   "pseudo_src": "tools/vlm.py \u00b7 decide",
-  "code_label": "Core function \u00b7 tools/vlm.py \u00b7 decide (33 lines)",
+  "code_label": "Core function \u00b7 tools/vlm.py \u00b7 decide (38 lines)",
   "modules": [
    {
     "name": "harness",
@@ -3612,7 +3917,128 @@
    {
     "name": "vlm",
     "file": "tools/vlm.py",
-    "lines": 118,
+    "lines": 311,
+    "components": [
+     [
+      "_recall_trail",
+      "memory"
+     ],
+     [
+      "_tally_glyph",
+      "logic"
+     ],
+     [
+      "_pellet_cell",
+      "logic"
+     ],
+     [
+      "_moves_open",
+      "policy"
+     ],
+     [
+      "_pick_press",
+      "policy"
+     ],
+     [
+      "_correction_card",
+      "recovery"
+     ],
+     [
+      "_retry_once",
+      "recovery"
+     ],
+     [
+      "decide",
+      "policy"
+     ]
+    ],
+    "role": "policy",
+    "main": false
+   }
+  ],
+  "edges": [
+   [
+    "harness",
+    "vlm",
+    2
+   ],
+   [
+    "vlm",
+    "action",
+    1
+   ]
+  ],
+  "n_components": 19,
+  "n_edges": 14,
+  "heading": "Snake candidate \u2014 the pellet warrant, and a second chance to satisfy it"
+ },
+ "same_snake_1": {
+  "arm": "snake__k32_claude_pv",
+  "N": 11,
+  "label": "cand_r11_0_spatial-grounding",
+  "score": 1.0,
+  "parent": "anchor_snake",
+  "parent_score": 0.0,
+  "display": "Snake \u00b7 k\u2080 = 32",
+  "pseudo": "async def decide(evaluator, frame_data):\n    \"\"\"One decision -> one engine Action: census the frame, fuse it into the ledger, then aim.\"\"\"\n    reach = 6                      # the scoring contract's body bound: 2 opening cells + 4 pellets\n    fresh = 2                      # a census BODY vote holds the seat for this frame and the last\n    depth = 5                      # how far the reachable-volume tie-break grows behind a move\n    led = getattr(evaluator, \"_fused_ledger\", None)\n    if led is None:\n        led = FRESH_LEDGER()\n        led.update({\"head\": OPEN_HEAD, \"neck\": OPEN_NECK, \"n\": 0, \"food\": None,\n                    \"trail\": [OPEN_NECK, OPEN_HEAD], \"seen\": {},\n                    \"asks\": [0, 0, 0, 0, 0, 0]})\n        setattr(evaluator, \"_fused_ledger\", led)\n    stepper = getattr(evaluator, \"baseline_step\", None) or evaluator.openai_ai_model\n    act = await stepper(frame_data)\n    if act is None:\n        return act\n    ask = NAME_OF_KEY.get(getattr(act, \"key\", None))\n    seats = None\n    try:\n        seats = READ(frame_data.image, 32, 12, 80)\n    except Exception:\n        led[\"blind\"] = led[\"blind\"] + 1\n    last = led[\"food\"]\n    led[\"food\"] = None\n    if seats is not None:\n        led[\"food\"] = KEEP(seats[0], led[\"head\"], last)\n        led[\"reads\"] = led[\"reads\"] + 1\n        led[\"bodies\"] = len(seats[2])\n        spot = seats[1]\n        if spot is not None and INSIDE(spot):\n            if L1(spot, led[\"head\"]) <= 1:\n                led[\"head\"] = spot\n                led[\"synced\"] = led[\"synced\"] + 1\n            else:\n\u2026",
+  "pseudo_src": "tools/vlm.py \u00b7 decide",
+  "code_label": "Core function \u00b7 tools/vlm.py \u00b7 decide (82 lines)",
+  "modules": [
+   {
+    "name": "harness",
+    "file": "harness.py",
+    "lines": 67,
+    "components": [
+     [
+      "_read",
+      "parse"
+     ],
+     [
+      "compose_system_prompt",
+      "prompt"
+     ],
+     [
+      "build_agent",
+      "logic"
+     ]
+    ],
+    "role": "controller",
+    "main": true
+   },
+   {
+    "name": "action",
+    "file": "tools/action.py",
+    "lines": 58,
+    "components": [
+     [
+      "key_for",
+      "policy"
+     ],
+     [
+      "is_reversal",
+      "logic"
+     ]
+    ],
+    "role": "policy",
+    "main": false
+   },
+   {
+    "name": "frame",
+    "file": "tools/frame.py",
+    "lines": 17,
+    "components": [
+     [
+      "capture",
+      "perception"
+     ]
+    ],
+    "role": "perception",
+    "main": false
+   },
+   {
+    "name": "vlm",
+    "file": "tools/vlm.py",
+    "lines": 327,
     "components": [
      [
       "decide",
@@ -3632,17 +4058,210 @@
   ],
   "n_components": 12,
   "n_edges": 4,
-  "heading": "Snake candidate \u2014 dead-reckoned legality audit over the frozen model's pick",
-  "n_lines": 221
+  "heading": "cand_r011_0_spatial-grounding \u2014 the census votes, the reckoner remembers"
  },
- "game_rubik": {
+ "same_snake_2": {
+  "arm": "snake__k32_claude_pv",
+  "N": 12,
+  "label": "cand_r12_0_spatial-grounding",
+  "score": 1.0,
+  "parent": "anchor_snake",
+  "parent_score": 0.0,
+  "display": "Snake \u00b7 k\u2080 = 32",
+  "pseudo": "def arraign(self, sworn):\n        \"\"\"Settle the reckoning against THIS frame before anything is asked of the model.\n\n        Returns the corroboration verdict as a string, published per decision so a trace reader can\n        separate a drifting reckoning from a blind census -- two failures the score cannot tell\n        apart. Three things happen here and the order is load-bearing: the HUD bank is counted (it\n        is legible even when every ball is occluded), the reckoned head is RE-SEATED on the census\n        when they disagree, and only then is the census's completeness judged against the HUD.\"\"\"\n        if sworn.tagged():\n            if self.bank is not None and sworn.bank != self.bank:\n                self.tally[\"meals\"] += 1\n                self.length = OPENING + self.tally[\"meals\"]\n                # THE LATCH IS CLEARED BY THE MEAL, NOT BY THE NEXT SIGHTING. A pellet held across\n                # the frame it was eaten on is a phantom the aim chases into its own body; the HUD\n                # is the only witness that knows the pellet is gone before the new one is drawn.\n                if self.food is not None:\n                    self.tally[\"unlatched\"] += 1\n                    self.food = None\n            self.bank = sworn.bank\n        if not sworn.sighted:\n            self.tally[\"blind\"] += 1\n            self.standing = RECKONING\n            if sworn.ambiguous():\n                self.tally[\"ambiguous\"] += 1\n                return \"ambiguous:\" + \",\".join(sworn.ambiguous())\n            return \"unsighted\"\n        self.tally[\"sighted\"] += 1\n        verdict = \"agreed\"\n        if sworn.head != self.head:\n            self.tally[\"realigned\"] += 1\n            # a non-adjacent re-seat means the reckoning was more than one cell out, which is a\n            # different fault from a one-cell lag (a refused key) and is worth telling apart.\n            if (board.manhattan(sworn.head, self.head) or 0) > ELBOW:\n                self.tally[\"jumped\"] += 1\n\u2026",
+  "pseudo_src": "tools/docket.py \u00b7 arraign",
+  "code_label": "Core function \u00b7 tools/docket.py \u00b7 arraign (60 lines)",
+  "modules": [
+   {
+    "name": "harness",
+    "file": "harness.py",
+    "lines": 74,
+    "components": [
+     [
+      "_read",
+      "parse"
+     ],
+     [
+      "compose_system_prompt",
+      "prompt"
+     ],
+     [
+      "build_agent",
+      "logic"
+     ]
+    ],
+    "role": "controller",
+    "main": true
+   },
+   {
+    "name": "action",
+    "file": "tools/action.py",
+    "lines": 55,
+    "components": [
+     [
+      "key_for",
+      "policy"
+     ],
+     [
+      "is_reversal",
+      "logic"
+     ],
+     [
+      "name_for",
+      "logic"
+     ]
+    ],
+    "role": "policy",
+    "main": false
+   },
+   {
+    "name": "census",
+    "file": "tools/census.py",
+    "lines": 227,
+    "components": [
+     [
+      "_project",
+      "logic"
+     ],
+     [
+      "_world",
+      "logic"
+     ],
+     [
+      "_shade",
+      "logic"
+     ],
+     [
+      "_pane_rgb",
+      "perception"
+     ],
+     [
+      "_tally",
+      "logic"
+     ],
+     [
+      "in_box",
+      "perception"
+     ],
+     [
+      "step_from",
+      "logic"
+     ],
+     [
+      "reverses",
+      "validity"
+     ],
+     [
+      "manhattan",
+      "logic"
+     ],
+     [
+      "Census",
+      "logic"
+     ],
+     [
+      "read",
+      "logic"
+     ]
+    ],
+    "role": "perception",
+    "main": false
+   },
+   {
+    "name": "docket",
+    "file": "tools/docket.py",
+    "lines": 433,
+    "components": [
+     [
+      "_delta",
+      "logic"
+     ],
+     [
+      "_neg",
+      "logic"
+     ],
+     [
+      "Docket",
+      "logic"
+     ]
+    ],
+    "role": "tool",
+    "main": false
+   },
+   {
+    "name": "frame",
+    "file": "tools/frame.py",
+    "lines": 12,
+    "components": [
+     [
+      "capture",
+      "perception"
+     ]
+    ],
+    "role": "perception",
+    "main": false
+   },
+   {
+    "name": "vlm",
+    "file": "tools/vlm.py",
+    "lines": 82,
+    "components": [
+     [
+      "_stamp",
+      "logic"
+     ],
+     [
+      "decide",
+      "policy"
+     ],
+     [
+      "new_docket",
+      "logic"
+     ]
+    ],
+    "role": "policy",
+    "main": false
+   }
+  ],
+  "edges": [
+   [
+    "docket",
+    "census",
+    5
+   ],
+   [
+    "harness",
+    "vlm",
+    3
+   ],
+   [
+    "vlm",
+    "action",
+    3
+   ],
+   [
+    "vlm",
+    "census",
+    3
+   ],
+   [
+    "vlm",
+    "docket",
+    2
+   ]
+  ],
+  "n_components": 31,
+  "n_edges": 25,
+  "heading": "cand_r012_0 \u2014 the corroboration docket"
+ },
+ "same_rubik_0": {
   "arm": "rubik__k4_claude_pv",
   "N": 3,
   "label": "cand_r2_1_action-planning",
   "score": 1.0,
   "parent": "cand_r1_0_spatial-grounding",
   "parent_score": 0.05,
-  "display": "Rubik 100%",
+  "display": "Rubik \u00b7 k\u2080 = 4",
   "pseudo": "def think(book):\n    \"\"\"Choose this turn's request and the choice set the agent is shown.\n\n    Three phases in strict order. SOLVE once a configuration is proved \u2014 the request is the first\n    move of the shortest word home and the menu is every move that shortens it. SURVEY while the\n    configuration is still ambiguous \u2014 the request is the next closing camera turn. SWEEP only if\n    perception never resolves, so the harness still spends its steps on the configurations nearest\n    the start rather than standing still.\n    \"\"\"\n    if book[\"state\"] is None:\n        if len(book[\"live\"]) == 1:\n            adopt(book, book[\"live\"][0])\n        else:\n            whole = assemble(book[\"readings\"])\n            if whole is not None:\n                adopt(book, whole)\n    if book[\"state\"] is not None:\n        word = solve_word(book[\"state\"])\n        if word:\n            book[\"phase\"] = \"solve\"\n            book[\"plan\"] = word\n            book[\"menu\"] = menu_of(book[\"state\"]) or [MOVE_NAMES[word[0]]]\n            book[\"want\"] = MOVE_NAMES[word[0]]\n            return book\n        restart_survey(book)\n    if book[\"route\"] and TRUSTED:\n        book[\"phase\"] = \"survey\"\n        book[\"plan\"] = ()\n        book[\"want\"] = book[\"route\"][0]\n        book[\"menu\"] = [book[\"want\"]]\n        return book\n    book[\"phase\"] = \"sweep\"\n    book[\"plan\"] = ()\n    book[\"want\"] = SWEEP_CYCLE[book[\"sweeps\"] % len(SWEEP_CYCLE)]\n\u2026",
   "pseudo_src": "tools/action.py \u00b7 think",
   "code_label": "Core function \u00b7 tools/action.py \u00b7 think (36 lines)",
@@ -3935,7 +4554,963 @@
   ],
   "n_components": 63,
   "n_edges": 70,
-  "heading": "Rubik candidate \u2014 read the cube off the screen, then unwind the scramble",
-  "n_lines": 1012
+  "heading": "Rubik candidate \u2014 read the cube off the screen, then unwind the scramble"
+ },
+ "same_rubik_1": {
+  "arm": "rubik__k4_claude_pv",
+  "N": 4,
+  "label": "cand_r3_0_spatial-grounding",
+  "score": 1.0,
+  "parent": "anchor_rubik",
+  "parent_score": 0.05,
+  "display": "Rubik \u00b7 k\u2080 = 4",
+  "pseudo": "def look(evaluator, book):\n    \"\"\"Settle the renderer, decode the face at the camera, and fold the reading into the belief.\n\n    Two guards stand in front of the fold, and they close different holes. `frame.decode` refuses an\n    oblique camera, which is the one that would return a plausible PERMUTATION of the truth. The\n    centre sticker is then checked against the camera LEDGER - the count of 45-degree turns this\n    harness itself emitted - because the obliqueness gate pins the camera to a multiple of 90\n    degrees and not to a particular face, and a 90-degree roll renders a perfectly square frame.\n    Only a reading that both gates accept is allowed to narrow the belief.\"\"\"\n    square = book[\"views\"] % alg.QUARTER == 0\n    nine = film.decode(film.settle(evaluator)) if square else None\n    book[\"reading\"] = nine\n    if nine is None:\n        book[\"refused_reads\"] += 1\n        book[\"note\"] = \"no reading this turn (the camera is between faces)\"\n        return\n    expect = alg.face_in_view(book[\"views\"])\n    if nine[4] != expect:\n        book[\"refused_reads\"] += 1\n        book[\"contradictions\"] += 1\n        book[\"note\"] = \"the frame shows %s where the camera ledger says %s\" % (nine[4], expect)\n        return\n    narrowed = (alg.consistent({expect: nine}) if book[\"pool\"] is None\n                else alg.refine(book[\"pool\"], expect, nine))\n    if not narrowed:                                   # the frame contradicts the belief: start over\n        book[\"pool\"] = alg.consistent({expect: nine})\n        book[\"allowance\"] = SURVEY_ALLOWANCE\n        book[\"resets\"] += 1\n        book[\"note\"] = \"the %s face disagreed with the belief, so it was rebuilt from this frame\" % expect\n        return\n    book[\"pool\"] = narrowed\n    book[\"note\"] = \"the %s face agrees with the belief\" % expect\n    if len(narrowed) == 1:\n        book[\"allowance\"] = SURVEY_ALLOWANCE",
+  "pseudo_src": "tools/vlm.py \u00b7 look",
+  "code_label": "Core function \u00b7 tools/vlm.py \u00b7 look (34 lines)",
+  "modules": [
+   {
+    "name": "harness",
+    "file": "harness.py",
+    "lines": 59,
+    "components": [
+     [
+      "_read",
+      "parse"
+     ],
+     [
+      "compose_system_prompt",
+      "prompt"
+     ],
+     [
+      "build_agent",
+      "logic"
+     ]
+    ],
+    "role": "controller",
+    "main": true
+   },
+   {
+    "name": "action",
+    "file": "tools/action.py",
+    "lines": 264,
+    "components": [
+     [
+      "is_legal",
+      "validity"
+     ],
+     [
+      "is_view_rotation",
+      "perception"
+     ],
+     [
+      "direction_const",
+      "spatial"
+     ],
+     [
+      "face_in_view",
+      "perception"
+     ],
+     [
+      "_cross",
+      "logic"
+     ],
+     [
+      "_dot",
+      "logic"
+     ],
+     [
+      "_turn",
+      "logic"
+     ],
+     [
+      "_permutation",
+      "logic"
+     ],
+     [
+      "turn",
+      "logic"
+     ],
+     [
+      "face_of",
+      "logic"
+     ],
+     [
+      "_ball",
+      "logic"
+     ],
+     [
+      "consistent",
+      "logic"
+     ],
+     [
+      "refine",
+      "logic"
+     ],
+     [
+      "certificate",
+      "logic"
+     ],
+     [
+      "line_home",
+      "logic"
+     ],
+     [
+      "spell",
+      "logic"
+     ]
+    ],
+    "role": "perception",
+    "main": false
+   },
+   {
+    "name": "frame",
+    "file": "tools/frame.py",
+    "lines": 139,
+    "components": [
+     [
+      "capture",
+      "perception"
+     ],
+     [
+      "digest",
+      "logic"
+     ],
+     [
+      "settle",
+      "logic"
+     ],
+     [
+      "pixels",
+      "logic"
+     ],
+     [
+      "square_on",
+      "logic"
+     ],
+     [
+      "_cell",
+      "logic"
+     ],
+     [
+      "decode",
+      "parse"
+     ]
+    ],
+    "role": "perception",
+    "main": false
+   },
+   {
+    "name": "vlm",
+    "file": "tools/vlm.py",
+    "lines": 290,
+    "components": [
+     [
+      "book_of",
+      "logic"
+     ],
+     [
+      "look",
+      "logic"
+     ],
+     [
+      "survey_due",
+      "logic"
+     ],
+     [
+      "plan",
+      "logic"
+     ],
+     [
+      "fields",
+      "logic"
+     ],
+     [
+      "render",
+      "perception"
+     ],
+     [
+      "inform",
+      "logic"
+     ],
+     [
+      "meta_of",
+      "logic"
+     ],
+     [
+      "name_of",
+      "logic"
+     ],
+     [
+      "ensure",
+      "logic"
+     ],
+     [
+      "mute",
+      "logic"
+     ],
+     [
+      "unmute",
+      "logic"
+     ],
+     [
+      "dress",
+      "logic"
+     ],
+     [
+      "play",
+      "logic"
+     ],
+     [
+      "advance",
+      "logic"
+     ],
+     [
+      "decide",
+      "policy"
+     ]
+    ],
+    "role": "perception",
+    "main": false
+   }
+  ],
+  "edges": [
+   [
+    "harness",
+    "vlm",
+    2
+   ],
+   [
+    "vlm",
+    "action",
+    9
+   ],
+   [
+    "vlm",
+    "frame",
+    4
+   ]
+  ],
+  "n_components": 47,
+  "n_edges": 49,
+  "heading": "Rubik candidate \u2014 read the face off the frame, then prove the finish"
+ },
+ "same_rubik_2": {
+  "arm": "rubik__k4_claude_pv",
+  "N": 5,
+  "label": "cand_r3_1_action-planning",
+  "score": 1.0,
+  "parent": "anchor_rubik",
+  "parent_score": 0.05,
+  "display": "Rubik \u00b7 k\u2080 = 4",
+  "pseudo": "async def decide(evaluator, frame_data):\n    \"\"\"One decision step -> the engine Action that was played.\"\"\"\n    pl = getattr(evaluator, \"_planner\", None)\n    if pl is None:\n        pl = Planner()\n        evaluator._planner = pl                 # one planner per episode (one episode per process)\n    reading, captures = FR.settle(evaluator, SETTLE_TRIES)\n    pose = pl.observe(reading)\n    menu = pl.menu()\n    _inject(evaluator, brief(_state(pl, reading if pose is not None else None)))\n    pick = await _ask(evaluator, frame_data)\n    name, why = pl.commit(menu, pick)\n    pl.source = why\n    act = build(name, frame_data.frame_number,\n                {\"model_pick\": pick, \"harness_override\": bool(pick and pick != name),\n                 \"rule\": why, \"belief\": pl.size(), \"finish_depth\": pl.depth(),\n                 \"camera_pose\": pl.pose})\n    done = bool(evaluator.execute_action(act))\n    _journal(evaluator, {\"step\": pl.steps, \"pose\": pl.pose, \"reading\": reading,\n                         \"captures\": captures, \"belief\": pl.size(), \"depth\": pl.depth(),\n                         \"menu\": menu[:MENU_CAP], \"model_pick\": pick, \"committed\": name,\n                         \"rule\": why, \"executed\": done, \"rebuilds\": pl.rebuilds,\n                         \"desyncs\": pl.desyncs, \"refusals\": pl.refusals})\n    pl.record(name, done)\n    return act",
+  "pseudo_src": "tools/vlm.py \u00b7 decide",
+  "code_label": "Core function \u00b7 tools/vlm.py \u00b7 decide (25 lines)",
+  "modules": [
+   {
+    "name": "harness",
+    "file": "harness.py",
+    "lines": 56,
+    "components": [
+     [
+      "_read",
+      "parse"
+     ],
+     [
+      "compose_system_prompt",
+      "prompt"
+     ],
+     [
+      "build_agent",
+      "logic"
+     ]
+    ],
+    "role": "controller",
+    "main": true
+   },
+   {
+    "name": "action",
+    "file": "tools/action.py",
+    "lines": 154,
+    "components": [
+     [
+      "_perm",
+      "logic"
+     ],
+     [
+      "_ball",
+      "logic"
+     ],
+     [
+      "_index",
+      "logic"
+     ]
+    ],
+    "role": "tool",
+    "main": false
+   },
+   {
+    "name": "frame",
+    "file": "tools/frame.py",
+    "lines": 92,
+    "components": [
+     [
+      "_runs",
+      "logic"
+     ],
+     [
+      "pixels",
+      "logic"
+     ],
+     [
+      "square_on",
+      "logic"
+     ],
+     [
+      "read_face",
+      "logic"
+     ],
+     [
+      "settle",
+      "logic"
+     ]
+    ],
+    "role": "tool",
+    "main": false
+   },
+   {
+    "name": "vlm",
+    "file": "tools/vlm.py",
+    "lines": 200,
+    "components": [
+     [
+      "splice",
+      "logic"
+     ],
+     [
+      "build",
+      "logic"
+     ],
+     [
+      "Planner",
+      "logic"
+     ],
+     [
+      "_inject",
+      "logic"
+     ],
+     [
+      "_ask",
+      "toolcall"
+     ],
+     [
+      "_journal",
+      "logic"
+     ],
+     [
+      "decide",
+      "policy"
+     ]
+    ],
+    "role": "toolcall",
+    "main": false
+   }
+  ],
+  "edges": [
+   [
+    "harness",
+    "vlm",
+    2
+   ],
+   [
+    "vlm",
+    "action",
+    1
+   ],
+   [
+    "vlm",
+    "frame",
+    2
+   ]
+  ],
+  "n_components": 23,
+  "n_edges": 17,
+  "heading": "Rubik candidate \u2014 buy the information with moves you were going to make anyway"
+ },
+ "same_maze3d_pro_0": {
+  "arm": "maze3d_pro__k2_claude_pv",
+  "N": 12,
+  "label": "cand_r6_1_action-planning",
+  "score": 1.0,
+  "parent": "anchor_maze3d_pro",
+  "parent_score": 0.08,
+  "display": "Maze3D-Pro \u00b7 k\u2080 = 2",
+  "pseudo": "def edges(chart, cell, bearing):\n    \"\"\"Every single-decision move out of one pose, as `((action, granularity), pose)`.\n\n    FOUR FAMILIES, EACH EXACTLY ONE PRESS, and the order they are yielded in is the tie-break the\n    search inherits: translations before turns and the LONGEST stride first, so a route that can\n    travel does. A stride costs one decision whether it carries one cell or three, and spending it\n    on three is free.\n\n      * `move_forward` of 3, 2 or 1 cells, out of a pose no translation has already been refused in.\n        A stride may LAND on ground a flank band merely glimpsed, but it may not continue THROUGH\n        it: striding over cells nothing has looked along is the most expensive habit this search can\n        have, worth more than the reversal it rations.\n      * `move_backward`, same lengths, over RAY-PROVEN ground only. Admitting the reversal makes the\n        cell behind cost one decision where turning around and walking costs three; restricting it\n        to proven ground is what stops the planner backing blind into a cell it has only glimpsed.\n      * the two turns, always available, one quarter-turn each.\n    \"\"\"\n    for back in (False, True):\n        if chart.refuted(cell, (bearing + 2) % 4 if back else bearing):\n            continue\n        name = \"move_backward\" if back else \"move_forward\"\n        run = []\n        for cells in (1, 2, 3):\n            step = A.advance(cell, bearing, cells, back)\n            if not (chart.verified(step) if back else chart.enterable(step)):\n                break\n            run.append((cells, step))\n            if not chart.verified(step):\n                break\n        for cells, step in reversed(run):\n            yield (name, A.granularity_for(cells)), (step, bearing)\n    for turn in (\"turn_right\", \"turn_left\"):\n        yield (turn, \"small\"), (cell, A.heading_after(bearing, turn))",
+  "pseudo_src": "tools/plan.py \u00b7 edges",
+  "code_label": "Core function \u00b7 tools/plan.py \u00b7 edges (33 lines)",
+  "modules": [
+   {
+    "name": "harness",
+    "file": "harness.py",
+    "lines": 72,
+    "components": [
+     [
+      "_read",
+      "parse"
+     ],
+     [
+      "_budget",
+      "logic"
+     ],
+     [
+      "compose_system_prompt",
+      "prompt"
+     ],
+     [
+      "build_agent",
+      "logic"
+     ]
+    ],
+    "role": "controller",
+    "main": true
+   },
+   {
+    "name": "action",
+    "file": "tools/action.py",
+    "lines": 167,
+    "components": [
+     [
+      "key_for",
+      "policy"
+     ],
+     [
+      "name_for",
+      "logic"
+     ],
+     [
+      "granularity_steps",
+      "logic"
+     ],
+     [
+      "granularity_for",
+      "logic"
+     ],
+     [
+      "heading_after",
+      "perception"
+     ],
+     [
+      "advance",
+      "logic"
+     ],
+     [
+      "bearing_between",
+      "logic"
+     ],
+     [
+      "turn_toward",
+      "spatial"
+     ],
+     [
+      "inverse_climb",
+      "logic"
+     ],
+     [
+      "is_undo",
+      "logic"
+     ],
+     [
+      "retarget",
+      "logic"
+     ],
+     [
+      "read_proposal",
+      "logic"
+     ]
+    ],
+    "role": "policy",
+    "main": false
+   },
+   {
+    "name": "chart",
+    "file": "tools/chart.py",
+    "lines": 300,
+    "components": [
+     [
+      "Chart",
+      "logic"
+     ]
+    ],
+    "role": "tool",
+    "main": false
+   },
+   {
+    "name": "frame",
+    "file": "tools/frame.py",
+    "lines": 6,
+    "components": [
+     [
+      "capture",
+      "perception"
+     ]
+    ],
+    "role": "perception",
+    "main": false
+   },
+   {
+    "name": "plan",
+    "file": "tools/plan.py",
+    "lines": 468,
+    "components": [
+     [
+      "clean_template",
+      "prompt"
+     ],
+     [
+      "Commitment",
+      "logic"
+     ],
+     [
+      "edges",
+      "logic"
+     ],
+     [
+      "search",
+      "logic"
+     ],
+     [
+      "cheapest",
+      "logic"
+     ],
+     [
+      "frontier_poses",
+      "logic"
+     ],
+     [
+      "candidates",
+      "logic"
+     ],
+     [
+      "elect",
+      "logic"
+     ],
+     [
+      "sweep",
+      "logic"
+     ],
+     [
+      "Pilot",
+      "logic"
+     ]
+    ],
+    "role": "prompt",
+    "main": false
+   },
+   {
+    "name": "sight",
+    "file": "tools/sight.py",
+    "lines": 241,
+    "components": [
+     [
+      "Sight",
+      "logic"
+     ],
+     [
+      "look",
+      "logic"
+     ]
+    ],
+    "role": "tool",
+    "main": false
+   },
+   {
+    "name": "vlm",
+    "file": "tools/vlm.py",
+    "lines": 65,
+    "components": [
+     [
+      "inject_memory",
+      "memory"
+     ],
+     [
+      "decide",
+      "policy"
+     ]
+    ],
+    "role": "memory",
+    "main": false
+   }
+  ],
+  "edges": [
+   [
+    "chart",
+    "action",
+    4
+   ],
+   [
+    "harness",
+    "plan",
+    2
+   ],
+   [
+    "harness",
+    "vlm",
+    2
+   ],
+   [
+    "plan",
+    "action",
+    16
+   ],
+   [
+    "plan",
+    "chart",
+    2
+   ],
+   [
+    "plan",
+    "sight",
+    1
+   ]
+  ],
+  "n_components": 40,
+  "n_edges": 46,
+  "heading": "maze3d_pro rich harness \u2014 module map & levers"
+ },
+ "same_maze3d_pro_1": {
+  "arm": "maze3d_pro__k16_claude_pv",
+  "N": 34,
+  "label": "cand_r34_0_spatial-grounding",
+  "score": 1.0,
+  "parent": "cand_r26_0_spatial-grounding",
+  "parent_score": 0.88,
+  "display": "Maze3D-Pro \u00b7 k\u2080 = 16",
+  "pseudo": "def reckon(st, dig):\n    \"\"\"Advance the pose belief by the key the harness COMMITTED last step.\n\n    The digest is consulted for exactly one bit -- did the view change at all -- and only for a\n    translation, where that bit is a proof: over 5624 poses an identical consecutive frame and a\n    body that moved never once co-occur. A turn needs no bit; it cannot fail.\n\n    A CLIMB is the one press the frame cannot grade, and the measurement is blunt about it: over\n    480 presses taken from every stair cell x every bearing of all 25 levels, 240 worked, and 46 of\n    those 240 -- 19.2% -- left the frame BYTE-IDENTICAL, because the two floors can look the same\n    from the paired tile. A changed view still PROVES a crossing (194 of 194 with no false\n    positives), so it is believed; a held view is left disbelieved even though one in five of them\n    is a real crossing, and the harness carries a pose belief it knows may be a floor out.\n\n    The alternative was tried and is worse. All 60 stair tiles in the level set are vertically\n    PAIRED with a stair (0 land in a wall), so a climb from a charted stair succeeds whenever the\n    destination floor exists -- 240 of 240 -- which makes \"assume a charted-stair climb worked\" look\n    sound. It is not: the same assumption fires again on the top floor, where no floor exists above,\n    and the harness then believes a depth that is not there, charts the same floor twice under two\n    labels and climbs a phantom ladder. Measured, that trade is -2 levels (20/19/19/16 against\n    22/20/20/19 across four answer streams). The cure for the mis-graded crossing is not a better\n    guess at the moment of the press; it is `settle`'s relearn, which lets the resulting dead end be\n    the evidence and forgets the floor.\n\n    THE CEILING. There is one held climb that is not ambiguous, and the parent threw the inference\n    away. `_climbable` prefers a direction onto a depth never stood at, and on the far side of the\n    tower no such depth exists -- so every stair up there offered a climb into nothing, the press\n    was a no-op, and it still burned that stair's direction. Measured on the parent's own run: 6 of\n    26 climb presses were impossible, and they are the whole of one lost level. The inference that\n    fixes it is cheap, and it is drawn from the harness's own press record rather than from the\n    frame. The route only ever issues a climb while standing on a charted stair, so a held view\n    there is either an invisible crossing or a refusal -- and if the body REACHED this depth from\n    the other side (`deep - way` is a depth it has stood on) then the direction just pressed points\n    away from the tower, the press was a refusal, and that depth does not exist. It is recorded in\n\u2026",
+  "pseudo_src": "tools/vlm.py \u00b7 reckon",
+  "code_label": "Core function \u00b7 tools/vlm.py \u00b7 reckon (73 lines)",
+  "modules": [
+   {
+    "name": "harness",
+    "file": "harness.py",
+    "lines": 51,
+    "components": [
+     [
+      "_read",
+      "parse"
+     ],
+     [
+      "compose_system_prompt",
+      "prompt"
+     ],
+     [
+      "build_agent",
+      "logic"
+     ]
+    ],
+    "role": "controller",
+    "main": true
+   },
+   {
+    "name": "action",
+    "file": "tools/action.py",
+    "lines": 35,
+    "components": [
+     [
+      "key_for",
+      "policy"
+     ],
+     [
+      "granularity_steps",
+      "logic"
+     ]
+    ],
+    "role": "policy",
+    "main": false
+   },
+   {
+    "name": "frame",
+    "file": "tools/frame.py",
+    "lines": 6,
+    "components": [
+     [
+      "capture",
+      "perception"
+     ]
+    ],
+    "role": "perception",
+    "main": false
+   },
+   {
+    "name": "vlm",
+    "file": "tools/vlm.py",
+    "lines": 992,
+    "components": [
+     [
+      "_usable",
+      "logic"
+     ],
+     [
+      "_pixel",
+      "logic"
+     ],
+     [
+      "_is_gold",
+      "perception"
+     ],
+     [
+      "_gold_reach",
+      "perception"
+     ],
+     [
+      "_ray",
+      "logic"
+     ],
+     [
+      "_flank",
+      "logic"
+     ],
+     [
+      "read",
+      "logic"
+     ],
+     [
+      "_ahead",
+      "perception"
+     ],
+     [
+      "_turned",
+      "logic"
+     ],
+     [
+      "_write",
+      "logic"
+     ],
+     [
+      "ingest",
+      "logic"
+     ],
+     [
+      "wipe",
+      "logic"
+     ],
+     [
+      "_passable",
+      "logic"
+     ],
+     [
+      "_climbable",
+      "logic"
+     ],
+     [
+      "_edges",
+      "logic"
+     ],
+     [
+      "_goal",
+      "logic"
+     ],
+     [
+      "route",
+      "logic"
+     ],
+     [
+      "_order",
+      "logic"
+     ],
+     [
+      "elect",
+      "logic"
+     ],
+     [
+      "_blank",
+      "logic"
+     ],
+     [
+      "_state",
+      "data"
+     ],
+     [
+      "_digest",
+      "logic"
+     ],
+     [
+      "reckon",
+      "logic"
+     ],
+     [
+      "observe",
+      "logic"
+     ],
+     [
+      "_ray_line",
+      "logic"
+     ],
+     [
+      "_offer",
+      "logic"
+     ],
+     [
+      "_plan_line",
+      "logic"
+     ],
+     [
+      "card",
+      "logic"
+     ],
+     [
+      "_splice",
+      "logic"
+     ],
+     [
+      "publish",
+      "logic"
+     ],
+     [
+      "_meta",
+      "logic"
+     ],
+     [
+      "_commit",
+      "logic"
+     ],
+     [
+      "_issue",
+      "logic"
+     ],
+     [
+      "_spare",
+      "logic"
+     ],
+     [
+      "settle",
+      "logic"
+     ],
+     [
+      "log",
+      "logic"
+     ],
+     [
+      "decide",
+      "policy"
+     ]
+    ],
+    "role": "perception",
+    "main": false
+   }
+  ],
+  "edges": [
+   [
+    "harness",
+    "vlm",
+    2
+   ]
+  ],
+  "n_components": 48,
+  "n_edges": 64,
+  "heading": "NOTES \u2014 iter 34 (`cand_r034_0_spatial-grounding`)"
+ },
+ "same_maze3d_pro_2": {
+  "arm": "maze3d_pro__k32_claude_pv",
+  "N": 16,
+  "label": "cand_r28_0_spatial-grounding",
+  "score": 1.0,
+  "parent": "cand_r15_0_spatial-grounding",
+  "parent_score": 0.96,
+  "display": "Maze3D-Pro \u00b7 k\u2080 = 32",
+  "pseudo": "def capture(image):\n    \"\"\"The frame the model was shown -> one percept dict, or `_DECLINED` if it cannot be read.\n\n    Keys: `dface` (cells to the nearest drawn face), `walk` (cells of floor the ray PROVES\n    walkable), `kind` (wall / stair / exit at that face), `left` / `right` (is the cell beside me\n    steppable), `ladder` (k -> the two flank verdicts for the cell k ahead) and `digest` (the\n    whole-frame receipt). A declined read carries `dface = walk = None` and the caller must then\n    ship the model's own press \u2014 never a guess.\n\n    The decode is written out here as a GUARD CHAIN rather than hidden behind one lambda, because\n    every line of it is a reason to decline rather than a step of arithmetic: a frame of the wrong\n    shape, a panel height no legal corridor can draw, a ray reading that violates the LUT's own two\n    forms, a rung past the reach the flank bands can resolve, and a rung both of whose columns\n    split their vote. The arithmetic each guard calls still lives in the module-scope lambdas\n    above. The two magnitudes written INTO the chain are the ones the chain is about: the reach of\n    7 cells past which the x-bands are narrower than a pixel, and the one-cell difference between\n    the LUT's `(d, d - 1)` wall reading and its `(d, d)` steppable-tile reading.\"\"\"\n    try:\n        if not _FITS(image):\n            return dict(_DECLINED)\n        dface, walk = _RAY_LUT.get(_PANEL_HEIGHT(image), _UNREAD)\n        if dface is None or walk is None:\n            return dict(_DECLINED)\n        if walk > dface or walk < dface - 1:\n            return dict(_DECLINED)\n        ladder = {}\n        for cell in range(1, dface):\n            if cell > 7:\n                break\n            near = _VERDICT(_VOTES(image, _LADDER_COL(cell)))\n            far = _VERDICT(_VOTES(image, _MIRROR(_LADDER_COL(cell))))\n            if near or far:\n                ladder[cell] = (near, far)\n        return _PERCEPT(image, dface, walk, ladder)\n\u2026",
+  "pseudo_src": "tools/frame.py \u00b7 capture",
+  "code_label": "Core function \u00b7 tools/frame.py \u00b7 capture (36 lines)",
+  "modules": [
+   {
+    "name": "harness",
+    "file": "harness.py",
+    "lines": 118,
+    "components": [
+     [
+      "_read",
+      "parse"
+     ],
+     [
+      "compose_system_prompt",
+      "prompt"
+     ],
+     [
+      "build_agent",
+      "logic"
+     ]
+    ],
+    "role": "controller",
+    "main": true
+   },
+   {
+    "name": "action",
+    "file": "tools/action.py",
+    "lines": 85,
+    "components": [
+     [
+      "key_for",
+      "policy"
+     ],
+     [
+      "granularity_steps",
+      "logic"
+     ]
+    ],
+    "role": "policy",
+    "main": false
+   },
+   {
+    "name": "frame",
+    "file": "tools/frame.py",
+    "lines": 139,
+    "components": [
+     [
+      "capture",
+      "perception"
+     ]
+    ],
+    "role": "perception",
+    "main": false
+   },
+   {
+    "name": "vlm",
+    "file": "tools/vlm.py",
+    "lines": 353,
+    "components": [
+     [
+      "decide",
+      "policy"
+     ]
+    ],
+    "role": "policy",
+    "main": false
+   }
+  ],
+  "edges": [
+   [
+    "harness",
+    "vlm",
+    2
+   ]
+  ],
+  "n_components": 12,
+  "n_edges": 4,
+  "heading": "cand_r028_0_spatial-grounding \u2014 iter 28, parent `cand_r15_0_spatial-grounding`"
+ },
+ "_same_game": {
+  "text": "Within one game, different evolved harnesses reach 100%: three per game, chosen as the most mutually different of one run (Maze3D-Pro's three come from three runs). Pairwise source similarity inside each trio is at most 0.20 (Maze3D-Pro), 0.21 (Block3D), 0.20 (Maze), 0.22 (Snake), 0.25 (Rubik).",
+  "counts": {
+   "maze3d_pro": 3,
+   "block3d": 5,
+   "maze": 6,
+   "snake": 5,
+   "rubik": 3
+  },
+  "maxsim": {
+   "maze3d_pro": 0.197,
+   "block3d": 0.207,
+   "maze": 0.195,
+   "snake": 0.216,
+   "rubik": 0.252
+  }
  }
 }
