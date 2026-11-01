@@ -414,7 +414,7 @@
     let bx0 = 1e9, by0 = 1e9, bx1 = -1e9, by1 = -1e9;
     Object.values(C).forEach(c => c.poly.forEach(([x, y]) => { bx0 = Math.min(bx0, x); by0 = Math.min(by0, y); bx1 = Math.max(bx1, x); by1 = Math.max(by1, y); }));
     const BW = bx1 - bx0 || 1, BH = by1 - by0 || 1;
-    root.innerHTML = `<div class="reveal"><button type="button" class="step" data-prev aria-label="Previous step">‹</button><button type="button" class="play" data-play>Play the search</button><button type="button" class="step" data-next aria-label="Next step">›</button><input type="range" min="0" max="${T}" value="0" step="1" data-slider aria-label="Search step"><span class="readout" data-readout>T = 0</span><span class="seg view" data-view><button type="button" class="on" data-v="2d">2D map</button><button type="button" data-v="3d">3D · success as height</button></span></div>
+    root.innerHTML = `<div class="reveal"><button type="button" class="step" data-prev aria-label="Previous step">‹</button><button type="button" class="play" data-play>Play the search</button><button type="button" class="step" data-next aria-label="Next step">›</button><input type="range" min="0" max="${T}" value="0" step="1" data-slider aria-label="Search step"><span class="readout" data-readout>T = 0</span><span class="seg view" data-view><button type="button" class="on" data-v="2d">2D map</button><button type="button" data-v="3d">3D · success as height</button><button type="button" data-v="video">Video · the whole process</button></span></div>
       <div class="traj-map"><div class="chart traj-chart" data-map></div>
         <div class="traj-legend"><span class="ramp">success <i></i></span><span><span class="sw ring"></span>cell elite</span><span><span class="sw dashed"></span>this step's child</span><span><span class="sw path"></span>lineage of the best</span><span><span class="sw split"></span>cell born by a sub-split</span><span><span class="sw ghost"></span>split reverted</span></div></div>
       <div class="traj-side"><div class="traj-stats" data-stats></div><div class="traj-events" data-events></div><div class="traj-kids" data-kids></div></div>`;
@@ -521,7 +521,22 @@
       kidsEl.innerHTML = `<table><thead><tr><th>${st.t === 0 ? 'harness' : 'child'}</th><th>parent</th><th>placed in</th><th>success</th></tr></thead><tbody>${rows}</tbody></table>`;
     }
     const zoomTitle = `A real search trajectory · ${D.bench} · k₀ = ${D.k0}`;
-    function render() { const w = mapHost.clientWidth || 600; draw(mapHost, Math.max(240, w - 20)); side(); if (st.zoomReady) zoomable(mapHost, zoomTitle, (body, bw) => { const h = el('div', 'chart traj-big'); body.appendChild(h); draw(h, Math.min(bw - 20, window.innerHeight - 150)); }); }
+    function render() {
+      const w = mapHost.clientWidth || 600;
+      if (st.view === 'video') {   // the rendered process video takes the whole panel
+        root.classList.add('video');
+        if (!st.videoEl) {
+          st.videoEl = el('div', 'traj-video-wrap');
+          st.videoEl.innerHTML = '<video class="traj-video" controls playsinline preload="metadata" poster="static/video/harness_map_process.jpg" src="static/video/harness_map_process.mp4" width="1280" height="720"></video><p class="traj-video-note">Rendered from the same run, about a minute. A harness is factorized into its module graph and token blocks, placed in its cell, and the archive evolves step by step with sub-splits, reversions and new elites, until every harness is lifted to its success and the reference and best harnesses are compared.</p>';
+        }
+        if (st.videoEl.parentNode !== mapHost) { mapHost.innerHTML = ''; mapHost.appendChild(st.videoEl); }
+        return;
+      }
+      root.classList.remove('video');
+      if (st.videoEl && st.videoEl.parentNode === mapHost) { const vv = st.videoEl.querySelector('video'); if (vv) vv.pause(); mapHost.removeChild(st.videoEl); }
+      draw(mapHost, Math.max(240, w - 20)); side();
+      if (st.zoomReady) zoomable(mapHost, zoomTitle, (body, bw) => { const h = el('div', 'chart traj-big'); body.appendChild(h); draw(h, Math.min(bw - 20, window.innerHeight - 150)); });
+    }
     function go(t) { st.t = Math.max(0, Math.min(T, t)); render(); }
     function stop() { if (st.playing) { clearInterval(st.playing); st.playing = null; playBtn.classList.remove('playing'); playBtn.textContent = 'Play the search'; } }
     playBtn.addEventListener('click', () => {

@@ -246,10 +246,9 @@ details[open] summary svg{transform:rotate(180deg)}
 .legend.roles .edge.tok{border-top-style:dashed;border-color:var(--muted)}
 
 /* pipeline */
-.pipeline{list-style:none;margin:16px 0 10px;padding:0;display:grid;grid-template-columns:repeat(4,1fr);gap:10px;counter-reset:none}
-@media (min-width:1500px){.pipeline{grid-template-columns:repeat(7,1fr)}}
+.pipeline{list-style:none;margin:16px 0 10px;padding:0;display:grid;grid-template-columns:repeat(6,1fr);gap:10px;counter-reset:none}
+@media (max-width:1040px){.pipeline{grid-template-columns:repeat(3,1fr)}}
 @media (max-width:760px){.pipeline{grid-template-columns:repeat(2,1fr)}}
-@media (max-width:440px){.pipeline{grid-template-columns:1fr}}
 .pipeline li{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-s);padding:14px 12px 12px;box-shadow:var(--shadow);font-size:13.5px;line-height:1.45;border-top:3px solid var(--line-2)}
 .pipeline li.agent{border-top-color:var(--accent)}
 .pipeline li.map{border-top-color:var(--warm)}
@@ -258,7 +257,7 @@ details[open] summary svg{transform:rotate(180deg)}
 .pipeline li.agent .n{background:var(--accent-soft);color:var(--accent-ink)}
 .pipeline li.map .n{background:var(--warm-soft);color:var(--warm-ink)}
 .pipeline li.judge .n{background:var(--ok-soft);color:var(--ok)}
-.pipeline li b{display:block;font-size:14px;margin-bottom:5px;color:var(--ink);line-height:1.3}
+.pipeline li b{display:block;font-size:13.5px;margin-bottom:5px;color:var(--ink);line-height:1.3}
 .pipeline li p{margin:0;color:var(--muted);font-size:13px}
 .pipeline li.zero::after{content:"0 rollouts";position:absolute;top:10px;right:10px;font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--warm-ink);background:var(--warm-soft);padding:2px 6px;border-radius:999px}
 .budget{display:flex;flex-wrap:wrap;align-items:center;gap:12px 18px;margin:16px 0 0;font-size:14px}
@@ -645,6 +644,9 @@ details.abstract summary:hover{border-color:var(--accent);color:var(--accent-ink
 .traj-kids .aim{color:var(--muted);font-size:12px}
 .traj-kids .el{color:var(--warm-ink);font-weight:600;font-size:11.5px;font-family:var(--sans,inherit)}
 .traj-kids tr.path td{background:color-mix(in srgb,var(--warm) 10%,transparent)}
-.figcard.video{margin:18px 0 0}
-.figcard.video video{display:block;width:100%;height:auto;background:#000}
-.figcard.video .figbar .muted{letter-spacing:0;text-transform:none;font-family:var(--font)}
+/* trajectory panel: video mode */
+.traj.video .traj-side,.traj.video .traj-legend,.traj.video .reveal .step,.traj.video .reveal .play,.traj.video .reveal input,.traj.video .reveal .readout{display:none}
+.traj.video .traj-map{grid-column:1/-1}
+.traj.video .reveal{justify-content:flex-end}
+.traj-video{display:block;width:100%;height:auto;border-radius:8px;background:#000}
+.traj-video-note{font-size:13px;color:var(--muted);margin:10px 2px 2px;line-height:1.5}

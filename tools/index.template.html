@@ -117,35 +117,29 @@
     <!-- ---- search loop (§3.3) -->
     <div class="lab" id="lab-loop">
       <div class="lab-head"><div><span class="micro">Searching over the Harness-MAP</span><h3>Searching over the map</h3></div><span class="lab-note">§3.3, Algorithm 1</span></div>
-      <p>Standard CVT-MAP-Elites mutates blindly, and a plain harness-evolution loop has no notion of coverage. Harness-MAP runs the LLM-guided loop across the archive. Steps marked <span class="tag agent">meta-agent</span> are headless tool-using sessions over a candidate directory. Steps marked <span class="tag map">map</span> read only the archive and cost no rollout.</p>
-      <ol class="pipeline">
-        <li class="agent"><span class="n">0</span><b>Coverage-gated initialization</b><p>The meta-agent proposes root harnesses until ⌈<i>m</i>·k₀⌉ cells hold an evaluated founder.</p></li>
-        <li class="map"><span class="n">1</span><b>Select elites</b><p>Breed from P cell elites, cycling through the occupied cells.</p></li>
-        <li class="agent"><span class="n">2</span><b>Diagnose</b><p>A diagnostician reads the parent's code and traces and names the binding constraint.</p></li>
-        <li class="agent"><span class="n">3</span><b>Directive-steered variation</b><p>Each child is written toward a target cell through a structural or token-level directive.</p></li>
-        <li class="judge"><span class="n">4</span><b>Validity filter</b><p>A child must keep the entry-point contract and pass the anti-cheat judge.</p></li>
-        <li class="map"><span class="n">5</span><b>Evaluate and archive</b><p>The child is scored, placed in its nearest cell and kept if it is that cell's best.</p></li>
-        <li class="map zero"><span class="n">6</span><b>Adapt resolution</b><p>Sub-split the occupied cell with the largest fitness range and revert the split if no child cell improves.</p></li>
+      <p>Standard CVT-MAP-Elites mutates blindly, and a plain harness-evolution loop has no notion of coverage. Harness-MAP runs the LLM-guided loop across the archive. Before the loop, the meta-agent proposes root harnesses until ⌈<i>m</i>·k₀⌉ cells hold an evaluated founder. Steps marked <span class="tag agent">meta-agent</span> are headless tool-using sessions over a candidate directory. Steps marked <span class="tag map">map</span> read only the archive and cost no rollout.</p>
+      <ol class="pipeline six">
+        <li class="map"><span class="n">1</span><b>Select elites</b><p>Breed from P cell elites in turn.</p></li>
+        <li class="agent"><span class="n">2</span><b>Diagnose</b><p>Name the parent's binding constraint.</p></li>
+        <li class="agent"><span class="n">3</span><b>Directive-steered variation</b><p>Write a child toward a target cell.</p></li>
+        <li class="judge"><span class="n">4</span><b>Validity filter</b><p>A child must pass the anti-cheat judge.</p></li>
+        <li class="map"><span class="n">5</span><b>Evaluate and archive</b><p>Score the child and keep it if it is its cell's best.</p></li>
+        <li class="map zero"><span class="n">6</span><b>Adapt resolution</b><p>Sub-split the occupied cell with the largest variance, or revert the refinement.</p></li>
       </ol>
     </div>
 
     <!-- ---- adaptive resolution (§3.4) -->
     <div class="lab" id="lab-adapt">
       <div class="lab-head"><div><span class="micro">Adapting map resolution</span><h3>Sub-splitting as a localized, data-driven hypothesis</h3></div><span class="lab-note">§3.4, Algorithm 2</span></div>
-      <p>A fixed granularity wastes evaluations on uniform cells and hides distinct candidates in high-variance ones. Harness-MAP adapts the resolution at every step at zero evaluation cost. <b>Sub-splitting.</b> The single occupied cell with the <mark>largest internal fitness range</mark> is divided by a local CVT and every other cell is left unchanged. <b>Reversion and memory.</b> The split is kept only if a child cell <mark>beats the parent elite</mark>. Otherwise it is reverted and the parent remembers its fitness distribution, so it is not re-split until a new candidate changes it.</p>
+      <p><b>Sub-splitting.</b> The single occupied cell with the <mark>largest internal fitness range</mark> is divided by a local CVT and every other cell is left unchanged. <b>Reversion and memory.</b> The split is kept only if a child cell <mark>beats the parent elite</mark>. Otherwise it is reverted and the parent remembers its fitness distribution, so it is not re-split until a new candidate changes it.</p>
     </div>
 
     <!-- ---- a real search trajectory -->
     <div class="lab" id="lab-traj">
       <div class="lab-head"><div><span class="micro">The search, step by step</span><h3>A real search trajectory</h3></div><span class="lab-note">BALROG-MiniHack · k₀ = 8</span></div>
-      <p>The adaptive k₀ = 8 run on BALROG-MiniHack, one parent and one child per step, N = 50 evaluations. Success climbs from 0.100 to 0.875 at evaluation 40 and the best-so-far harness improves in six different cells along the way. The archive sub-splits eleven times and reverts six of those splits, and the final elite is found inside a cell born by sub-splitting. Step through the run to watch coverage grow, cells divide and merge back, and the lineage of the best harness cross the map.</p>
+      <p>The adaptive k₀ = 8 run on BALROG-MiniHack, one parent and one child per step, N = 50 evaluations.</p>
       <div class="traj" id="traj"></div>
-      <figure class="figcard video" id="process-video">
-        <div class="figbar"><span>The whole process on this run · about a minute</span><span class="muted small">factorize · locate · evolve · illuminate</span></div>
-        <video controls muted playsinline preload="none" poster="static/video/harness_map_process.jpg" src="static/video/harness_map_process.mp4" width="1280" height="720"></video>
-        <figcaption>Rendered from the same run. A harness is factorized into its component graph and token blocks, placed in its cell, and the archive evolves step by step with sub-splits, reversions and new elites, until every harness is lifted to its success and the reference and best harnesses are compared.</figcaption>
-      </figure>
-      <p class="caption">Cells are the archive's Voronoi partitions, drawn from the run's own cell centroids projected to two principal components. A sub-split divides a cell along the bisector of its two children, a reverted split merges them back. Where a dot sits inside its cell is a layout choice, not its descriptor. Each dot is one evaluated harness coloured by its search-split success, a solid ring marks a cell elite, a dashed ring the child bred in the shown step, and the warm path the lineage of the best harness. The 3D view lifts every harness to its success. Hover a dot for its tasks. Source: the run's archive trace and driver log.</p>
+      <p class="caption">Cells are the archive's Voronoi partitions drawn from the run's own cell centroids (two principal components, scaled to equal ranges). Where a dot sits inside its cell is a layout choice, not its descriptor.</p>
     </div>
 
   </div>
