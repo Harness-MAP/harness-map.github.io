@@ -8,6 +8,7 @@ from pathlib import Path
 from collections import Counter
 HM = Path("/home/azureuser/workspace/HarnessMAP"); sys.path.insert(0, str(HM))
 from harness_map.qd.descriptors import component_graph, harness_pyfiles, _toplevel, component_role
+from display_names import rename_anatomy, file_name, mod_name   # page shows harness.py as orchestrator.py
 SITE = Path(__file__).resolve().parent.parent
 LED = json.load(open("/tmp/claude-1000/-home-azureuser/8e7565d1-6529-493a-a528-66b753c0583c/scratchpad/balrog_ledgers.json"))
 ENTRY = ("act", "step", "run_episode", "build_agent", "decide")
@@ -49,8 +50,8 @@ def anatomy(cdir):
     for a, b in edges:
         ma, mb = comp2mod.get(a, a if a in mods else None), comp2mod.get(b, b if b in mods else None)
         if ma and mb and ma != mb and ma in mods and mb in mods: medges[(ma, mb)] += 1
-    return {"modules": [{"name": m, **v} for m, v in sorted(mods.items(), key=lambda kv: (not kv[1]["main"], kv[0]))],
-            "edges": [[a, b, n] for (a, b), n in sorted(medges.items())], "n_components": len(nodes), "n_edges": len(edges), "entry": ent}
+    return rename_anatomy({"modules": [{"name": m, **v} for m, v in sorted(mods.items(), key=lambda kv: (not kv[1]["main"], kv[0]))],
+            "edges": [[a, b, n] for (a, b), n in sorted(medges.items())], "n_components": len(nodes), "n_edges": len(edges), "entry": ent})
 
 def by_index(arm, n1):            # paper's N<k>, 1-based
     return LED[arm][n1 - 1]

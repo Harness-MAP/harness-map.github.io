@@ -8,6 +8,7 @@ from collections import Counter
 from pathlib import Path
 sys.path.insert(0, "/home/azureuser/workspace/HarnessMAP")
 from harness_map.qd.descriptors import component_graph, harness_pyfiles, _toplevel, component_role
+from display_names import rename_anatomy, file_name, mod_name   # page shows harness.py as orchestrator.py
 G = Path("/home/azureuser/workspace/AutoSpatial/spatial_world/game_baselines/runs_adaptive"); SITE = Path(__file__).resolve().parent.parent
 NAMES = {"maze3d_pro": "Maze3D-Pro", "block3d": "Block3D", "maze": "Maze", "snake": "Snake", "rubik": "Rubik"}
 RUNS = {"maze": ["k32"], "block3d": ["k32"], "snake": ["k32"], "rubik": ["k4"], "maze3d_pro": ["k2", "k16", "k32"]}
@@ -70,7 +71,8 @@ for g, ks in RUNS.items():
     for j, c in enumerate(best):
         mods, edges, ncomp, nedge = modules_of(c["dir"]); span, rel, name, code = core_function(c["dir"])
         C[f"same_{g}_{j}"] = dict(arm=f"{g}__{c['k']}_claude_pv", N=c["n"], label=c["label"], score=1.0, parent=c["parent"], parent_score=c["parent_score"], display=f"{NAMES[g]} · k₀ = {c['k'][1:]}",
-                                  pseudo=code, pseudo_src=f"{rel} · {name}", code_label=f"Core function · {rel} · {name} ({span} lines)", modules=mods, edges=edges, n_components=ncomp, n_edges=nedge, heading=heading(c["dir"]))
+                                  pseudo=code, pseudo_src=f"{file_name(rel)} · {name}", code_label=f"Core function · {file_name(rel)} · {name} ({span} lines)", modules=mods, edges=edges, n_components=ncomp, n_edges=nedge, heading=heading(c["dir"]))
+        rename_anatomy(C[f"same_{g}_{j}"])
         print(f"{g:10s} {c['k']:4s} #{c['n']:2d} {c['label']:30s} modules {len(mods)} comps {ncomp} core {rel}:{name} | {heading(c['dir'])[:50]}")
     print(f"  -> {g}: {len(cands)} harnesses at 100% in {ks}; chosen trio max pairwise similarity {maxsim:.3f}")
 for k in [k for k in C if k.startswith("game_")]: del C[k]   # the single-champion group is superseded

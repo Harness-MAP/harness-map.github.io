@@ -23,6 +23,7 @@ sys.path.insert(0, "/home/azureuser/workspace/HarnessMAP")
 import ast
 from collections import Counter
 from harness_map.qd.descriptors import component_graph, harness_pyfiles, _toplevel, component_role
+from display_names import rename_anatomy, file_name, mod_name   # page shows harness.py as orchestrator.py
 RUN = Path("/home/azureuser/workspace/AutoSpatial/balrog/balrog_ours/runs") / D["run"] / "candidates"
 def graph_of(cdir):
     """Module-level graph: one node per .py file with its components and dominant role; inter-module call/import edges."""
@@ -34,7 +35,7 @@ def graph_of(cdir):
         except Exception: continue
         comps = [n.name for n in _toplevel(t)]
         for c in comps: comp2mod[c] = mod
-        mods[mod] = dict(name=mod, comps=[(c, component_role(c)) for c in comps])
+        mods[mod] = dict(name=mod_name(mod), comps=[(c, component_role(c)) for c in comps])
     main = max(mods, key=lambda m: len(mods[m]["comps"]))
     for m, v in mods.items():
         rc = Counter(r for _, r in v["comps"] if r != "logic"); v["role"] = "controller" if m == main else (rc.most_common(1)[0][0] if rc else "tool"); v["main"] = m == main
@@ -43,7 +44,7 @@ def graph_of(cdir):
         mx, my = comp2mod.get(x, x if x in mods else None), comp2mod.get(y, y if y in mods else None)
         if mx and my and mx != my and mx in mods and my in mods: me[(mx, my)] += 1
     order = sorted(mods, key=lambda m: (not mods[m]["main"], m))
-    return dict(mods=[mods[m] for m in order], edges=[(x, y, n) for (x, y), n in me.items()], n_comp=len(nodes), n_edges=len(edges))
+    return dict(mods=[mods[m] for m in order], edges=[(mod_name(x), mod_name(y), n) for (x, y), n in me.items()], n_comp=len(nodes), n_edges=len(edges))
 import re as _re
 _R = json.load(open(RUN.parent / "RESULT.json"))
 _SRC = {h["label"]: Path(_re.search(r"source_dir=PosixPath\('([^']+)'\)", h["genome"]).group(1)) for h in _R["history"]}

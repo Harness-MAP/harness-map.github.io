@@ -11,6 +11,7 @@ from pathlib import Path
 from collections import Counter
 HM = Path("/home/azureuser/workspace/HarnessMAP"); sys.path.insert(0, str(HM))
 from harness_map.qd.descriptors import component_graph, roles, harness_pyfiles, _toplevel, component_role
+from display_names import rename_anatomy, file_name, mod_name   # page shows harness.py as orchestrator.py
 E = HM / "examples"; SITE = Path(__file__).resolve().parent.parent
 PACKS = {"balrog": E / "balrog/evolution", "nav_hard": E / "simworld_nav/evolution",
          **{f"games_{g}": E / f"spatialworld_games/evolution/{g}" for g in ["maze3d_pro", "block3d", "maze", "snake", "rubik"]}}
@@ -64,9 +65,9 @@ def anatomy(cdir):
     if notes.exists():
         for line in notes.read_text().splitlines():
             if line.strip() and not line.startswith("##"): heading = line.lstrip("# ").strip(); break
-    return {"modules": [{"name": m, **v} for m, v in sorted(mods.items(), key=lambda kv: (not kv[1]["main"], kv[0]))],
+    return rename_anatomy({"modules": [{"name": m, **v} for m, v in sorted(mods.items(), key=lambda kv: (not kv[1]["main"], kv[0]))],
             "edges": [[a, b, n] for (a, b), n in sorted(medges.items())], "n_components": len(nodes), "n_edges": len(edges),
-            "entry": ent, "heading": heading[:160]}
+            "entry": ent, "heading": heading[:160]})
 
 out = {}
 for key, pack in PACKS.items():

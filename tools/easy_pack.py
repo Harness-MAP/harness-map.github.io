@@ -9,6 +9,7 @@ from collections import Counter
 from pathlib import Path
 sys.path.insert(0, "/home/azureuser/workspace/HarnessMAP"); sys.path.insert(0, "/tmp/claude-1000/-home-azureuser/8e7565d1-6529-493a-a528-66b753c0583c/scratchpad/pylib_mpl")
 from harness_map.qd.descriptors import component_graph, harness_pyfiles, _toplevel, component_role
+from display_names import rename_anatomy, file_name, mod_name   # page shows harness.py as orchestrator.py
 import imageio_ffmpeg
 FF = imageio_ffmpeg.get_ffmpeg_exe(); SITE = Path(__file__).resolve().parent.parent; RENDER = Path("/home/azureuser/workspace/HarnessMAP/examples/render/render_nav_trace.py")
 ap = argparse.ArgumentParser(); ap.add_argument("run"); ap.add_argument("episode"); ap.add_argument("--harness-dir-of", action="append", default=[]); ap.add_argument("--traces-root", default=""); ap.add_argument("--source-root", default="", help="code at <root>/<label>_r<NNN>/source (anchor = r000)"); ap.add_argument("--dry-run", action="store_true")
@@ -71,7 +72,7 @@ def anatomy(d):
             for f in cands:
                 if isinstance(f, (ast.FunctionDef, ast.AsyncFunctionDef)) and f.name in ("run_episode", "act", "step", "decide", "build_agent") and (entry is None or Path(rel).stem == "harness"):
                     s = ast.get_source_segment(src, f); lines = s.splitlines(); entry = dict(file=rel, name=(n.name + "." if isinstance(n, ast.ClassDef) else "") + f.name, src="\n".join(lines[:60]) + ("\n…" if len(lines) > 60 else ""), lines=len(lines))
-    return dict(modules=[mods[m] for m in sorted(mods, key=lambda m: (not mods[m]["main"], m))], edges=[[x, y, n] for (x, y), n in sorted(me.items())], n_components=len(nodes), n_edges=len(edges), entry=entry, heading=heading(d))
+    return rename_anatomy(dict(modules=[mods[m] for m in sorted(mods, key=lambda m: (not mods[m]["main"], m))], edges=[[x, y, n] for (x, y), n in sorted(me.items())], n_components=len(nodes), n_edges=len(edges), entry=entry, heading=heading(d)))
 L = json.load(open(SITE / "static/data/lineages.json")); A = json.load(open(SITE / "static/data/anatomy.json")); V = json.load(open(SITE / "static/data/videos.json"))
 out_rows, anat = [], []
 for i, r in enumerate(rows):
