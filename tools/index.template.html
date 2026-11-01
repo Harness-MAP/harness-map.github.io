@@ -236,7 +236,8 @@
       <div class="tabs" role="tablist" aria-label="Benchmark">
         <button class="tab" role="tab" aria-selected="true" aria-controls="evo-balrog" id="tab-evo-balrog">BALROG-MiniHack</button>
         <button class="tab" role="tab" aria-selected="false" aria-controls="evo-games" id="tab-evo-games">SpatialWorld-3DGames</button>
-        <button class="tab" role="tab" aria-selected="false" aria-controls="evo-nav" id="tab-evo-nav">SimWorld-MMNav</button>
+        <button class="tab" role="tab" aria-selected="false" aria-controls="nav-easy" id="tab-nav-easy">SimWorld-MMNav · easy</button>
+        <button class="tab" role="tab" aria-selected="false" aria-controls="nav-hard" id="tab-nav-hard">SimWorld-MMNav · hard</button>
       </div>
 
       <div id="evo-balrog" role="tabpanel" aria-labelledby="tab-evo-balrog">
@@ -281,22 +282,15 @@
         </div>
       </div>
 
-      <div id="evo-nav" role="tabpanel" aria-labelledby="tab-evo-nav" hidden>
-        <div data-tabs>
-          <div class="tabs" role="tablist" aria-label="Setting">
-            <button class="tab" role="tab" aria-selected="true" aria-controls="nav-easy" id="tab-nav-easy">easy</button>
-            <button class="tab" role="tab" aria-selected="false" aria-controls="nav-hard" id="tab-nav-hard">hard</button>
-          </div>
-          <div id="nav-easy" role="tabpanel" aria-labelledby="tab-nav-easy">
-            <ul class="settings"><li><b>setting</b>easy</li><li><b>mode</b>adaptive</li><li><b>k₀</b>2</li><li><b>P</b>1</li><li><b>C</b>2</li><li><b>budget</b>N = 16</li><li><b>search split</b>50 tasks</li><li><b>meta-agent</b>claude-opus-5 · Claude Code CLI</li><li><b>backbone</b>Qwen3-VL-30B-A3B-Instruct</li><li><b>best</b>cand_r8_1 · subtask success 0.465</li></ul>
-            <div class="showcase"><div class="chart" id="chart-nav-easy"></div></div>
-            <p class="small muted" style="margin-top:10px">The code and the episode recordings of the easy run were not preserved; only its evaluation ledger survives.</p>
-          </div>
-          <div id="nav-hard" role="tabpanel" aria-labelledby="tab-nav-hard" hidden>
-            <ul class="settings"><li><b>setting</b>hard</li><li><b>mode</b>adaptive</li><li><b>k₀</b>4</li><li><b>P</b>2</li><li><b>C</b>1</li><li><b>budget</b>N = 16</li><li><b>search split</b>50 tasks · maps 20_0 to 20_24 · 10 held-out maps</li><li><b>meta-agent</b>claude-opus-5 · Claude Code CLI</li><li><b>backbone</b>Qwen3-VL-30B-A3B-Instruct</li><li><b>best</b>cand_r15_0 · subtask success 0.555 · evaluation 16</li><li><b>video</b>map 20_10 · task dist_21</li></ul>
-            <div class="showcase"><div class="chart" id="chart-nav"></div><div class="anatomy" id="anat-nav"></div><div class="pair" id="pair-nav"></div></div>
-          </div>
-        </div>
+      <div id="nav-easy" role="tabpanel" aria-labelledby="tab-nav-easy" hidden>
+        <ul class="settings"><li><b>setting</b>easy</li><li><b>mode</b>adaptive</li><li><b>k₀</b>2</li><li><b>P</b>1</li><li><b>C</b>2</li><li><b>budget</b>N = 16</li><li><b>search split</b>50 tasks</li><li><b>meta-agent</b>claude-opus-5 · Claude Code CLI</li><li><b>backbone</b>Qwen3-VL-30B-A3B-Instruct</li><li><b>best</b>cand_r8_1 · subtask success 0.465</li></ul>
+        <div class="showcase"><div class="chart" id="chart-nav-easy"></div></div>
+        <p class="small muted" style="margin-top:10px">No episode video exists for the easy run; its evaluation ledger is shown.</p>
+      </div>
+
+      <div id="nav-hard" role="tabpanel" aria-labelledby="tab-nav-hard" hidden>
+        <ul class="settings"><li><b>setting</b>hard</li><li><b>mode</b>adaptive</li><li><b>k₀</b>4</li><li><b>P</b>2</li><li><b>C</b>1</li><li><b>budget</b>N = 16</li><li><b>search split</b>50 tasks · maps 20_0 to 20_24 · 10 held-out maps</li><li><b>meta-agent</b>claude-opus-5 · Claude Code CLI</li><li><b>backbone</b>Qwen3-VL-30B-A3B-Instruct</li><li><b>best</b>cand_r15_0 · subtask success 0.555 · evaluation 16</li><li><b>video</b>map 20_10 · task dist_21</li></ul>
+        <div class="showcase"><div class="chart" id="chart-nav"></div><div class="anatomy" id="anat-nav"></div><div class="pair" id="pair-nav"></div></div>
       </div>
     </div>
   </div>

@@ -7,15 +7,15 @@ sys.path.insert(0, "/tmp/claude-1000/-home-azureuser/8e7565d1-6529-493a-a528-66b
 import imageio_ffmpeg
 FF = imageio_ffmpeg.get_ffmpeg_exe(); SITE = Path(__file__).resolve().parent.parent; SRC = Path("/tmp/claude-1000/-home-azureuser/8e7565d1-6529-493a-a528-66b753c0583c/scratchpad/balrog_render")
 V, P, DATA = SITE / "static/videos/balrog", SITE / "static/posters/balrog", SITE / "static/data"
-LOG = Path("/tmp/claude-1000/-home-azureuser/8e7565d1-6529-493a-a528-66b753c0583c/tasks/bf1mzyu74.output").read_text()
+import glob as _g
+LOG = "".join(Path(f).read_text() for f in _g.glob("/tmp/claude-1000/-home-azureuser/8e7565d1-6529-493a-a528-66b753c0583c/tasks/*.output"))
 steps = {m[1]: int(m[2]) for m in re.finditer(r"balrog_render/([^/]+)\.mp4: (\d+) steps replayed and verified", LOG)}
 lin = json.load(open("/home/azureuser/workspace/HarnessMAP/examples/balrog/evolution/lineage.json")); H = lin["harnesses"]; anchor = H[0]; best = next(h for h in H if h["is_best"])
 def probe(src):
     r = subprocess.run([FF, "-hide_banner", "-i", str(src)], capture_output=True, text=True).stderr
     m = re.search(r"Duration: (\d+):(\d+):([\d.]+)", r); m2 = re.search(r", (\d{2,5})x(\d{2,5})", r); return round(int(m[1]) * 3600 + int(m[2]) * 60 + float(m[3]), 1), int(m2[1]), int(m2[2])
-videos = json.load(open(DATA / "videos.json")); have = {t["task"] for t in videos["balrog"]["tasks"]}
+videos = json.load(open(DATA / "videos.json")); videos["balrog"]["tasks"] = [t for t in videos["balrog"]["tasks"] if t["task"] not in ("Boxoban-Hard", "CorridorBattle-Dark", "MazeWalk-9x9", "Quest-Medium")]  # re-import replaces
 for task, run in [("Boxoban-Hard", "00"), ("CorridorBattle-Dark", "04"), ("MazeWalk-9x9", "00"), ("Quest-Medium", "00")]:
-    if task in have: continue
     key = task.lower().replace("-", "_"); ents = []
     for who, h in (("anchor", anchor), ("best", best)):
         src = SRC / f"{task}_run{run}__{who}.mp4"; name = f"{key}_{h['index']:02d}"; dst = V / f"{name}.mp4"
