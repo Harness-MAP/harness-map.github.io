@@ -25,11 +25,17 @@ for g in vid["balrog"]["grids"]:
     grids += (f'<div class="player"><video controls muted playsinline preload="none" poster="{g["poster"]}" src="{g["file"]}" width="{g["w"]}" height="{g["h"]}"></video>'
               f'<div class="cap"><span class="text"><b>{g["task"]}</b>, episode {g["episode"].split()[-1][-2:]}: anchor, cand_r35_0, cand_r41_0, cand_r68_0</span></div></div>')
 html = html.replace('<div class="vgrid two" id="grids-balrog"></div>', f'<div class="vgrid two" id="grids-balrog">{grids}</div>')
+# cache-busting: GitHub Pages serves assets with max-age=600 and browsers reuse cached CSS/JS on a normal navigation, so
+# every build stamps the stylesheet and script references with a content hash
+import hashlib
+def ver(rel): return hashlib.sha1((SITE / rel).read_bytes()).hexdigest()[:8]
+html = html.replace('href="static/css/style.css"', f'href="static/css/style.css?v={ver("static/css/style.css")}"').replace('src="static/js/main.js"', f'src="static/js/main.js?v={ver("static/js/main.js")}"')
+assert html.count("style.css?v=") == 1 and html.count("main.js?v=") == 1
 (SITE / "index.html").write_text(html)
 # link check: every local reference must exist
 missing = []
 for ref in set(re.findall(r'(?:src|href|poster)="(static/[^"]+)"', html)):
-    if not (SITE / ref).exists(): missing.append(ref)
+    if not (SITE / ref.split('?')[0]).exists(): missing.append(ref)
 for section in [vid["balrog"]["mazewalk"], vid["balrog"]["grids"], vid["nav"]] + list(vid["games"].values()):
     for e in section:
         for k in ("file", "poster"):
