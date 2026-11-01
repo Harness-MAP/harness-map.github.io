@@ -407,7 +407,6 @@
       ps.forEach(p => { const host = el('div', 'chart'); chartsEl.appendChild(host); resChart(host, cfgFor(p, Math.max(200, cw), small));
         zoomable(host, `${p.title} · archive cells vs. step T`, (body, bw) => resChart(body, cfgFor(p, bw, false))); });
       toolsEl.innerHTML = '';
-      if (ps.length > 1) { const b = el('button', '', `Enlarge all ${ps.length} panels`); b.type = 'button'; b.addEventListener('click', () => openLightbox(`${RB.find(x => x.id === st.bench).label} · archive cells vs. step T`, (body, bw) => { ps.forEach(p => { const h = el('div', 'chart'); body.appendChild(h); resChart(h, cfgFor(p, bw, false)); }); }, true)); toolsEl.appendChild(b); }
       noteEl.innerHTML = st.bench === 'games'
         ? 'One archive per game. Faded lines were reconstructed from the driver log of an equivalent-configuration run; solid lines are the exact per-step trace. Fixed-resolution arms are flat by construction and are shown where a trace survives.'
         : st.bench === 'balrog' ? 'One archive per arm: a single harness plays all eight tasks, so the three modes are directly comparable. Fixed resolution never splits; hierarchical expansion grows the archive on a prepared ladder; adaptive resolution splits on fitness variance and retreats when a split did not pay.'
@@ -790,8 +789,6 @@
       host.innerHTML = ''; const w = host.clientWidth || 900; const cols = gridCols(w, 5); host.style.gridTemplateColumns = `repeat(${cols},1fr)`;
       const W = Math.floor((w - 12 * (cols - 1)) / cols) - 20, small = cols > 2;
       T5.panels.forEach(p => { const h = el('div', 'chart'); host.appendChild(h); genPanel(h, p, Math.max(200, W), small); zoomable(h, `${p.title} · search → held-out`, (body, bw) => genPanel(body, p, bw, false)); });
-      const tools = el('div', 'charts-tools'); tools.style.gridColumn = '1 / -1'; const b = el('button', '', 'Enlarge all 5 panels'); b.type = 'button';
-      b.addEventListener('click', () => openLightbox('Generalization · search split → held-out', (body, bw) => T5.panels.forEach(p => { const h = el('div', 'chart'); body.appendChild(h); genPanel(h, p, bw, false); }), true)); tools.appendChild(b); host.appendChild(tools);
     }
     render(); let lastW = host.clientWidth; onResize(() => { if (host.clientWidth && Math.abs(host.clientWidth - lastW) > 30) { lastW = host.clientWidth; render(); } });
   }

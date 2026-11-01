@@ -153,30 +153,28 @@
       <div><p class="eyebrow">Results</p><h2>Budget-matched.<br>Every benchmark.</h2></div>
       <p class="lead">Every method starts from the same reference harness and the same frozen policy model and receives the same candidate-evaluation budget <span class="formula">N = ⌈<i>m</i>·k₀⌉ + G · P · C</span> (N = 50 on SpatialWorld-3DGames and BALROG-MiniHack, N = 16 on SimWorld-MMNav).</p>
     </div>
-    <p id="res-table1" class="concl">Harness-MAP establishes a new state-of-the-art across all three benchmarks under budget-matched evaluation.</p>
-    <div class="results-toolbar"><span class="micro">Table 1 · success rate (%) ↑</span><span class="muted small">darker = higher within each column · Harness-MAP in bold</span></div>
+    <div class="lab" id="res-table1">
+      <div class="lab-head"><div><span class="micro">Table 1 · success rate (%) ↑</span><h3>Harness-MAP establishes a new state-of-the-art across all three benchmarks under budget-matched evaluation.</h3></div><span class="lab-note">darker = higher within each column · Harness-MAP in bold</span></div>
     <div class="barcards" id="barcards"></div>
     <details class="numeric"><summary>Table 1 as numbers <svg viewBox="0 0 24 24"><path d="M12 15.5 5.5 9l1.4-1.4 5.1 5.1 5.1-5.1L18.5 9z"/></svg></summary>
     <div class="scroll"><table class="tbl" id="t1-table">
       <caption><b>Table 1.</b> Results across three interactive benchmarks under the budget-matched evaluation protocol. Success rate (%) on SpatialWorld-3DGames and BALROG-MiniHack (± standard error), subtask success rate (%) on SimWorld-MMNav.</caption>
       <thead><tr><th>Method</th><th>SpatialWorld-3DGames</th><th>SimWorld-MMNav · easy</th><th>SimWorld-MMNav · hard</th><th>BALROG-MiniHack</th></tr></thead>
       <tbody></tbody></table></div></details>
+    </div>
 
     <div class="lab" id="lab-dyn">
-      <div class="lab-head"><div><span class="micro">Figures 3, 6 and 7 · interactive</span><h3>Sample efficiency in evaluations and in sequential steps</h3></div><span class="lab-note">best-so-far success</span></div>
-      <p class="concl">Harness-MAP achieves high sample efficiency across both evaluation budgets and search steps.</p>
+      <div class="lab-head"><div><span class="micro">Figures 3, 6 and 7 · interactive</span><h3>Harness-MAP achieves high sample efficiency across both evaluation budgets and search steps.</h3></div><span class="lab-note">best-so-far success</span></div>
       <div class="dyn" data-dyn="search"></div>
     </div>
 
     <div class="lab" id="lab-res">
-      <div class="lab-head"><div><span class="micro">Figures 4 and 8 · interactive</span><h3>Resolution dynamics</h3></div><span class="lab-note">archive cells vs. step T</span></div>
-      <p class="concl">Dynamic resolution mitigates sensitivity to the initial cell count \(k_0\) by preventing archive over-partitioning.</p>
+      <div class="lab-head"><div><span class="micro">Figures 4 and 8 · interactive</span><h3>Dynamic resolution mitigates sensitivity to the initial cell count \(k_0\) by preventing archive over-partitioning.</h3></div><span class="lab-note">archive cells vs. step T</span></div>
       <div class="dyn" data-dyn="resolution"></div>
     </div>
 
     <div class="lab" id="lab-qd">
-      <div class="lab-head"><div><span class="micro">Table 2 · quality-diversity</span><h3>Coverage and QD-score across map resolutions</h3></div><span class="lab-note">SpatialWorld-3DGames</span></div>
-      <p class="concl">Harness-MAP maintains broad archive coverage and scales quality-diversity metrics across map resolutions.</p>
+      <div class="lab-head"><div><span class="micro">Table 2 · quality-diversity</span><h3>Harness-MAP maintains broad archive coverage and scales quality-diversity metrics across map resolutions.</h3></div><span class="lab-note">SpatialWorld-3DGames</span></div>
       <div class="charts two" id="qd-charts"></div>
       <details class="numeric"><summary>Table 2 as numbers <svg viewBox="0 0 24 24"><path d="M12 15.5 5.5 9l1.4-1.4 5.1 5.1 5.1-5.1L18.5 9z"/></svg></summary>
       <div class="scroll"><table class="tbl">
@@ -197,8 +195,7 @@
     </div>
 
     <div class="lab" id="lab-abl">
-      <div class="lab-head"><div><span class="micro">Table 3 · descriptor ablation</span><h3>The descriptor and the search loop, crossed</h3></div><span class="lab-note">SpatialWorld-3DGames · k₀ = 8</span></div>
-      <p class="concl">Structure-token space inherently improves search performance and efficiency independent of the search algorithm.</p>
+      <div class="lab-head"><div><span class="micro">Table 3 · descriptor ablation</span><h3>Structure-token space inherently improves search performance and efficiency independent of the search algorithm.</h3></div><span class="lab-note">SpatialWorld-3DGames · k₀ = 8</span></div>
       <div class="scroll"><table class="tbl abltab">
         <thead><tr><th>Loop · descriptor</th><th>Maze</th><th>Maze3D</th><th>Block3D</th><th>Rubik</th><th>Snake</th><th>Avg.</th></tr></thead>
         <tbody>
@@ -211,8 +208,7 @@
     </div>
 
     <div class="lab" id="lab-gen">
-      <div class="lab-head"><div><span class="micro">Table 5 · generalization</span><h3>From the search split to held-out tasks</h3></div><span class="lab-note">search → held-out</span></div>
-      <p class="concl">Harness-MAP outperforms prior harness evolution methods across both search and held-out tasks.</p>
+      <div class="lab-head"><div><span class="micro">Table 5 · generalization</span><h3>Harness-MAP outperforms prior harness evolution methods across both search and held-out tasks.</h3></div><span class="lab-note">search → held-out</span></div>
       <div class="charts multi gen" id="gen-charts"></div>
       <details class="numeric"><summary>Table 5 as numbers <svg viewBox="0 0 24 24"><path d="M12 15.5 5.5 9l1.4-1.4 5.1 5.1 5.1-5.1L18.5 9z"/></svg></summary>
       <div class="scroll"><table class="tbl">
