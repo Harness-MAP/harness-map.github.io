@@ -1375,7 +1375,7 @@
   "first_at": 17,
   "n": 17,
   "n_run": 17,
-  "run": "easy_adaptive_k2",
+  "run": "nav_easy_run",
   "k0": 2,
   "C": 2,
   "rounds": 8,
@@ -1392,8 +1392,8 @@
     "best": false,
     "depth": null,
     "diff": null,
-    "nfiles": null,
-    "heading": ""
+    "nfiles": 10,
+    "heading": "NOTES.md \u2014 SimWorld-MMNav anchor (module map \u00b7 evolvable levers \u00b7 contract)"
    },
    {
     "i": 1,
@@ -1403,9 +1403,13 @@
     "path": false,
     "best": false,
     "depth": null,
-    "diff": null,
-    "nfiles": null,
-    "heading": ""
+    "diff": {
+     "files": 2,
+     "insertions": 284,
+     "deletions": 29
+    },
+    "nfiles": 10,
+    "heading": "NOTES.md \u2014 cand_r001_0_spatial-grounding (parent: `anchor_nav`, iter 1)"
    },
    {
     "i": 2,
@@ -1415,9 +1419,13 @@
     "path": false,
     "best": false,
     "depth": null,
-    "diff": null,
-    "nfiles": null,
-    "heading": ""
+    "diff": {
+     "files": 1,
+     "insertions": 134,
+     "deletions": 4
+    },
+    "nfiles": 10,
+    "heading": "NOTES.md \u2014 cand_r001_1_action-planning (parent: anchor_nav, iter 1, setting=easy)"
    },
    {
     "i": 3,
@@ -1427,9 +1435,13 @@
     "path": true,
     "best": false,
     "depth": null,
-    "diff": null,
-    "nfiles": null,
-    "heading": ""
+    "diff": {
+     "files": 2,
+     "insertions": 425,
+     "deletions": 62
+    },
+    "nfiles": 10,
+    "heading": "NOTES.md \u2014 cand_r002_0_spatial-grounding (parent: `anchor_nav`, iter 2, setting=easy)"
    },
    {
     "i": 4,
@@ -1439,8 +1451,12 @@
     "path": false,
     "best": false,
     "depth": null,
-    "diff": null,
-    "nfiles": null,
+    "diff": {
+     "files": 0,
+     "insertions": 0,
+     "deletions": 0
+    },
+    "nfiles": 10,
     "heading": ""
    },
    {
@@ -1451,9 +1467,13 @@
     "path": false,
     "best": false,
     "depth": null,
-    "diff": null,
-    "nfiles": null,
-    "heading": ""
+    "diff": {
+     "files": 2,
+     "insertions": 203,
+     "deletions": 117
+    },
+    "nfiles": 10,
+    "heading": "NOTES.md \u2014 cand_r003_0_spatial-grounding (parent: cand_r1_1_action-planning, iter 3, setting=easy)"
    },
    {
     "i": 6,
@@ -1463,9 +1483,13 @@
     "path": false,
     "best": false,
     "depth": null,
-    "diff": null,
-    "nfiles": null,
-    "heading": ""
+    "diff": {
+     "files": 2,
+     "insertions": 180,
+     "deletions": 1
+    },
+    "nfiles": 10,
+    "heading": "NOTES.md \u2014 cand_r003_1_action-planning (parent: cand_r001_1_action-planning, iter 3, setting=easy)"
    },
    {
     "i": 7,
@@ -1475,9 +1499,13 @@
     "path": false,
     "best": false,
     "depth": null,
-    "diff": null,
-    "nfiles": null,
-    "heading": ""
+    "diff": {
+     "files": 3,
+     "insertions": 384,
+     "deletions": 108
+    },
+    "nfiles": 10,
+    "heading": "NOTES.md \u2014 cand_r004_0_spatial-grounding (parent: `cand_r2_0_spatial-grounding`, iter 4, setting=easy)"
    },
    {
     "i": 8,
@@ -1487,9 +1515,13 @@
     "path": true,
     "best": false,
     "depth": null,
-    "diff": null,
-    "nfiles": null,
-    "heading": ""
+    "diff": {
+     "files": 4,
+     "insertions": 466,
+     "deletions": 142
+    },
+    "nfiles": 11,
+    "heading": "NOTES.md \u2014 cand_r004_1_action-planning (parent: `cand_r2_0_spatial-grounding`, iter 4, setting=easy)"
    },
    {
     "i": 9,
@@ -1499,8 +1531,12 @@
     "path": false,
     "best": false,
     "depth": null,
-    "diff": null,
-    "nfiles": null,
+    "diff": {
+     "files": 0,
+     "insertions": 0,
+     "deletions": 0
+    },
+    "nfiles": 10,
     "heading": ""
    },
    {
@@ -1511,8 +1547,12 @@
     "path": false,
     "best": false,
     "depth": null,
-    "diff": null,
-    "nfiles": null,
+    "diff": {
+     "files": 0,
+     "insertions": 0,
+     "deletions": 0
+    },
+    "nfiles": 10,
     "heading": ""
    },
    {
@@ -1523,8 +1563,12 @@
     "path": false,
     "best": false,
     "depth": null,
-    "diff": null,
-    "nfiles": null,
+    "diff": {
+     "files": 0,
+     "insertions": 0,
+     "deletions": 0
+    },
+    "nfiles": 10,
     "heading": ""
    },
    {
@@ -1535,8 +1579,12 @@
     "path": false,
     "best": false,
     "depth": null,
-    "diff": null,
-    "nfiles": null,
+    "diff": {
+     "files": 0,
+     "insertions": 0,
+     "deletions": 0
+    },
+    "nfiles": 10,
     "heading": ""
    },
    {
@@ -1547,8 +1595,12 @@
     "path": false,
     "best": false,
     "depth": null,
-    "diff": null,
-    "nfiles": null,
+    "diff": {
+     "files": 0,
+     "insertions": 0,
+     "deletions": 0
+    },
+    "nfiles": 10,
     "heading": ""
    },
    {
@@ -1559,8 +1611,12 @@
     "path": false,
     "best": false,
     "depth": null,
-    "diff": null,
-    "nfiles": null,
+    "diff": {
+     "files": 0,
+     "insertions": 0,
+     "deletions": 0
+    },
+    "nfiles": 10,
     "heading": ""
    },
    {
@@ -1571,9 +1627,13 @@
     "path": false,
     "best": false,
     "depth": null,
-    "diff": null,
-    "nfiles": null,
-    "heading": ""
+    "diff": {
+     "files": 3,
+     "insertions": 426,
+     "deletions": 31
+    },
+    "nfiles": 12,
+    "heading": "NOTES.md \u2014 cand_r008_0_spatial-grounding (parent: cand_r004_1_action-planning, iter 8, setting=easy)"
    },
    {
     "i": 16,
@@ -1583,9 +1643,13 @@
     "path": true,
     "best": true,
     "depth": null,
-    "diff": null,
-    "nfiles": null,
-    "heading": ""
+    "diff": {
+     "files": 4,
+     "insertions": 621,
+     "deletions": 63
+    },
+    "nfiles": 12,
+    "heading": "NOTES.md \u2014 cand_r008_1_action-planning (parent: cand_r4_1_action-planning, iter 8, setting=easy)"
    }
   ]
  }
