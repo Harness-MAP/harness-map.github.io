@@ -156,7 +156,9 @@ p{margin:0 0 1em}
 .abstract-full mark{background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--ink);font-weight:600;padding:0 .15em;border-radius:3px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
 /* the idea */
 .idea .eyebrow{margin-bottom:18px}
-.story{display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px;margin:26px 0 8px}
+/* overview: question → idea → 2×2 results on the left; Figure 1 + caption on the right, stretched to the same height */
+.story{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px 48px;align-items:stretch;margin:26px 0 8px}
+.story-main{display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px}
 .story-item{max-width:940px}
 .story-item .label{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
 .story-item.q .label{color:var(--warm-ink)}
@@ -166,17 +168,17 @@ p{margin:0 0 1em}
 .story-item .nb{white-space:nowrap}
 .story-arrow{color:var(--line-2);line-height:0;padding:2px 0}
 .story-arrow svg{width:22px;height:22px;fill:currentColor}
-/* Figure 1 on the left half, the four headline results as a 2×2 grid on the right half */
-.story-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px 48px;align-items:center;margin-top:36px}
-.story-row .teaser-fig{margin:0;max-width:none}
-.story-row .teaser-fig figcaption{padding:12px 0 0;text-align:left}
-.story-row .metrics{grid-template-columns:1fr 1fr;border-top:0;margin-top:0;padding:0;row-gap:0}
-.story-row .metrics>div{padding:26px 12px}
-.story-row .metrics>div:nth-child(odd){border-left:0}
-.story-row .metrics>div:nth-child(n+3){border-top:1px solid var(--line)}
-.story-row .metrics .value{font-size:clamp(28px,3.4vw,44px)}
-@media (max-width:900px){.story-row{grid-template-columns:1fr;gap:34px}.story-row .teaser-fig{width:100%;max-width:440px;margin:0 auto}}
-@media (max-width:420px){.story-row .metrics{grid-template-columns:1fr}.story-row .metrics>div{border-left:0;border-top:1px solid var(--line)}.story-row .metrics>div:first-child{border-top:0}}
+.story .metrics{width:100%;grid-template-columns:1fr 1fr;border-top:0;margin-top:18px;padding:0;row-gap:0}
+.story .metrics>div{padding:24px 10px}
+.story .metrics>div:nth-child(odd){border-left:0}
+.story .metrics>div:nth-child(n+3){border-top:1px solid var(--line)}
+.story .metrics .value{font-size:clamp(28px,3.4vw,44px)}
+.story .teaser-fig{margin:0;max-width:none;display:flex;flex-direction:column;min-height:0}
+.story .teaser-fit{position:relative;flex:1;min-height:0}
+.story .teaser-fit .teaser-svg{position:absolute;inset:0;width:100%;height:100%}
+.story .teaser-fig figcaption{padding:12px 0 0;text-align:left}
+@media (max-width:900px){.story{grid-template-columns:1fr;gap:34px}.story .teaser-fig{width:100%;max-width:440px;margin:0 auto}.story .teaser-fit{flex:none}.story .teaser-fit .teaser-svg{position:static;height:auto}}
+@media (max-width:420px){.story .metrics{grid-template-columns:1fr}.story .metrics>div{border-left:0;border-top:1px solid var(--line)}.story .metrics>div:first-child{border-top:0}}
 .hi-s{color:var(--hi-s)}
 .hi-t{color:var(--hi-t)}
 details.abstract{max-width:860px;margin:14px auto 0;border:0;background:none;padding:0}
