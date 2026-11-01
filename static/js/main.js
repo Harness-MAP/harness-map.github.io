@@ -133,6 +133,22 @@
     });
   }
   if ($('#barcards')) barCards($('#barcards'));
+  function t1Table(tbody) {
+    const val = (r, id) => (r.v[id] == null ? null : Array.isArray(r.v[id]) ? r.v[id][0] : r.v[id]), se = (r, id) => (Array.isArray(r.v[id]) ? r.v[id][1] : null);
+    const cols = ['games', 'easy', 'hard', 'minihack'], best = {};
+    cols.forEach(id => { best[id] = Math.max(...T1.rows.map(r => val(r, id)).filter(x => x != null)); });
+    const grpName = { direct: 'Direct inference', search: 'Harness search at budget N = 50, 16, 16, 50', ours: 'Ours' };
+    let grp = '', html = '';
+    T1.rows.forEach(r => {
+      if (r.group !== grp) { grp = r.group; html += `<tr class="grp"><td colspan="5">${grpName[grp]}</td></tr>`; }
+      html += `<tr class="${r.group === 'ours' ? 'ours' : ''}"><td>${esc(r.name)}${r.anchor ? ' <span class="muted small">(the reference harness\u2019s backbone)</span>' : ''}</td>` + cols.map(id => {
+        const x = val(r, id), s = se(r, id); if (x == null) return '<td>–</td>';
+        return `<td class="${x === best[id] ? 'best' : ''}">${x.toFixed(1)}${s != null ? ` ± ${s.toFixed(1)}` : ''}</td>`;
+      }).join('') + '</tr>';
+    });
+    tbody.innerHTML = html;
+  }
+  if ($('#t1-table tbody')) t1Table($('#t1-table tbody'));
 
   /* ======================================================= generic best-so-far step chart */
   function curveChart(host, cfg) {
