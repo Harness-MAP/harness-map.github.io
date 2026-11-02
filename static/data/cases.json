@@ -11,8 +11,8 @@
   "pseudo_src": "case1_steady_improvement/N03_35pct_cand_r10_0_spatial-grounding",
   "modules": [
    {
-    "name": "orchestrator",
-    "file": "orchestrator.py",
+    "name": "agent",
+    "file": "agent.py",
     "lines": 138,
     "components": [
      [
@@ -89,17 +89,17 @@
   ],
   "edges": [
    [
-    "orchestrator",
+    "agent",
     "action_io",
     2
    ],
    [
-    "orchestrator",
+    "agent",
     "chart",
     2
    ],
    [
-    "orchestrator",
+    "agent",
     "prompting",
     1
    ]
@@ -107,7 +107,7 @@
   "n_components": 15,
   "n_edges": 8,
   "entry": {
-   "file": "orchestrator.py",
+   "file": "agent.py",
    "name": "CompassHarness.act",
    "src": "def act(self, obs, prev_action=None):\n    self._refresh_legal()\n    if prev_action:\n        self.prompt_builder.update_action(prev_action)\n    self.prompt_builder.update_observation(obs)\n    chart = chart_mod.parse_map(obs)\n    last = prev_action.strip().lower() if isinstance(prev_action, str) and prev_action.strip() else self.last_action\n    if self.last_how in (\"kick-dir\", \"modal\"):\n        last = None                 # a kick's direction or a prompt answer is not a move\n    self.chart.observe(chart, last)\n    action, how = self._rung(chart)\n    if action is not None and self.last_response is not None:\n        return self._emit(self.last_response, action, how)\n    moves = [d for d in chart_mod.DIRS if self._ok(d)]\n    rows = self.chart.rank(chart, moves) if chart[\"pos\"] is not None and chart[\"grid\"] else []\n    compass = chart_mod.Chart.render(rows) if rows else \"\"\n    ...",
    "lines": 28
@@ -125,8 +125,8 @@
   "pseudo_src": "case1_steady_improvement/N05_60pct_cand_r11_0_spatial-grounding",
   "modules": [
    {
-    "name": "orchestrator",
-    "file": "orchestrator.py",
+    "name": "agent",
+    "file": "agent.py",
     "lines": 406,
     "components": [
      [
@@ -162,7 +162,7 @@
   "n_components": 7,
   "n_edges": 5,
   "entry": {
-   "file": "orchestrator.py",
+   "file": "agent.py",
    "name": "ChartedAgent.act",
    "src": "def act(self, obs, prev_action=None):\n    self.refresh_legal()\n    if prev_action:\n        self.prompt_builder.update_action(prev_action)\n    self.prompt_builder.update_observation(obs)\n    chart = parse_map(obs)\n    self.remember(chart)\n    try:\n        planned = self.push_step(chart)\n    except Exception:\n        planned, self.tape, self.expect = None, [], None\n    if planned is not None:\n        if self.last_response is not None:\n            shell = self.last_response._replace(input_tokens=0, output_tokens=0)\n        else:\n            shell = _Shell(\"harness\", planned, \"stop\", 0, 0, \"\")\n    ...",
    "lines": 34
@@ -180,8 +180,8 @@
   "pseudo_src": "case1_steady_improvement/N15_72pct_cand_r16_0_spatial-grounding",
   "modules": [
    {
-    "name": "orchestrator",
-    "file": "orchestrator.py",
+    "name": "agent",
+    "file": "agent.py",
     "lines": 158,
     "components": [
      [
@@ -321,27 +321,27 @@
   ],
   "edges": [
    [
-    "orchestrator",
+    "agent",
     "action_io",
     2
    ],
    [
-    "orchestrator",
+    "agent",
     "chart",
     1
    ],
    [
-    "orchestrator",
+    "agent",
     "planner",
     1
    ],
    [
-    "orchestrator",
+    "agent",
     "prompting",
     3
    ],
    [
-    "orchestrator",
+    "agent",
     "quest",
     2
    ],
@@ -364,7 +364,7 @@
   "n_components": 26,
   "n_edges": 20,
   "entry": {
-   "file": "orchestrator.py",
+   "file": "agent.py",
    "name": "PlannedHarness.act",
    "src": "def act(self, obs, prev_action=None):\n    self._refresh_legal()\n    if prev_action:\n        self.prompt_builder.update_action(prev_action)\n    self.prompt_builder.update_observation(obs)\n    chart = chart_mod.parse_map(obs)\n    self.planner.observe(chart)\n    legal = self.planner.legal\n    armed = quest_mod.armed(legal, chart[\"grid\"])\n    if armed:\n        self.quest.observe(chart)\n        ans = self.quest.prompt(chart[\"message\"], legal)\n        if ans is not None:\n            self.planner.commit(None)\n            return self._shell(*ans)\n    plan = self.planner.committed(chart)\n    ...",
    "lines": 42
@@ -382,8 +382,8 @@
   "pseudo_src": "case1_steady_improvement/N21_78pct_cand_r19_0_spatial-grounding",
   "modules": [
    {
-    "name": "orchestrator",
-    "file": "orchestrator.py",
+    "name": "agent",
+    "file": "agent.py",
     "lines": 197,
     "components": [
      [
@@ -531,32 +531,32 @@
   ],
   "edges": [
    [
-    "orchestrator",
+    "agent",
     "action_io",
     2
    ],
    [
-    "orchestrator",
+    "agent",
     "chart",
     1
    ],
    [
-    "orchestrator",
+    "agent",
     "planner",
     1
    ],
    [
-    "orchestrator",
+    "agent",
     "prompting",
     3
    ],
    [
-    "orchestrator",
+    "agent",
     "quest",
     2
    ],
    [
-    "orchestrator",
+    "agent",
     "sokoban",
     1
    ],
@@ -574,7 +574,7 @@
   "n_components": 28,
   "n_edges": 21,
   "entry": {
-   "file": "orchestrator.py",
+   "file": "agent.py",
    "name": "PlannedHarness.act",
    "src": "def act(self, obs, prev_action=None):\n    self._refresh_legal()\n    if prev_action:\n        self.prompt_builder.update_action(prev_action)\n    self.prompt_builder.update_observation(obs)\n    chart = chart_mod.parse_map(obs)\n    self.planner.observe(chart)\n    plan = None\n    for claim in self._owners(chart):\n        plan = claim()\n        if plan is not None:\n            break\n    if plan is not None and _no_call(plan[1]):\n        action, how = plan\n        self.planner.commit(None if how.startswith(\"quest:item\") or how.startswith(\"quest:aim\")\n                            or how == \"quest:yes\" else action)\n    ...",
    "lines": 38
@@ -592,8 +592,8 @@
   "pseudo_src": "case1_steady_improvement/N39_80pct_cand_r28_0_spatial-grounding",
   "modules": [
    {
-    "name": "orchestrator",
-    "file": "orchestrator.py",
+    "name": "agent",
+    "file": "agent.py",
     "lines": 206,
     "components": [
      [
@@ -754,37 +754,37 @@
   ],
   "edges": [
    [
-    "orchestrator",
+    "agent",
     "action_io",
     2
    ],
    [
-    "orchestrator",
+    "agent",
     "chart",
     1
    ],
    [
-    "orchestrator",
+    "agent",
     "planner",
     1
    ],
    [
-    "orchestrator",
+    "agent",
     "prompting",
     3
    ],
    [
-    "orchestrator",
+    "agent",
     "quest",
     2
    ],
    [
-    "orchestrator",
+    "agent",
     "sokoban",
     1
    ],
    [
-    "orchestrator",
+    "agent",
     "volley",
     1
    ],
@@ -807,7 +807,7 @@
   "n_components": 30,
   "n_edges": 23,
   "entry": {
-   "file": "orchestrator.py",
+   "file": "agent.py",
    "name": "PlannedHarness.act",
    "src": "def act(self, obs, prev_action=None):\n    self._refresh_legal()\n    if prev_action:\n        self.prompt_builder.update_action(prev_action)\n    self.prompt_builder.update_observation(obs)\n    chart = chart_mod.parse_map(obs)\n    self.planner.observe(chart)\n    plan = None\n    for claim in self._owners(chart):\n        plan = claim()\n        if plan is not None:\n            break\n    if plan is not None and _no_call(plan[1]):\n        action, how = plan\n        self.planner.commit(None if how.startswith(\"quest:item\") or how.startswith(\"quest:aim\")\n                            or how == \"quest:yes\" else action)\n    ...",
    "lines": 38
@@ -825,8 +825,8 @@
   "pseudo_src": "case1_steady_improvement/N47_85pct_cand_r32_0_spatial-grounding",
   "modules": [
    {
-    "name": "orchestrator",
-    "file": "orchestrator.py",
+    "name": "agent",
+    "file": "agent.py",
     "lines": 470,
     "components": [
      [
@@ -991,32 +991,32 @@
     2
    ],
    [
-    "orchestrator",
+    "agent",
     "chart",
     2
    ],
    [
-    "orchestrator",
+    "agent",
     "gate",
     1
    ],
    [
-    "orchestrator",
+    "agent",
     "melee",
     1
    ],
    [
-    "orchestrator",
+    "agent",
     "planner",
     1
    ],
    [
-    "orchestrator",
+    "agent",
     "quest",
     3
    ],
    [
-    "orchestrator",
+    "agent",
     "volley",
     1
    ],
@@ -1034,7 +1034,7 @@
   "n_components": 29,
   "n_edges": 24,
   "entry": {
-   "file": "orchestrator.py",
+   "file": "agent.py",
    "name": "PlanLadderAgent.act",
    "src": "def act(self, obs, prev_action=None):\n    self.refresh_legal()\n    if prev_action:\n        self.prompt_builder.update_action(prev_action)\n    self.prompt_builder.update_observation(obs)\n    chart = parse_map(obs)\n    self._chart, self._rows = chart, None\n    self.remember(chart)\n    self.volley.tick()\n    plan = self.claim_step(chart, obs_text(obs))\n    self.melee.observe(chart)\n    if plan is not None:\n        action, rung = plan\n        keystroke = rung.startswith((\"quest:item\", \"quest:yes\", \"quest:aim\"))\n        if self.last_response is not None:\n            try:\n    ...",
    "lines": 44
@@ -1052,8 +1052,8 @@
   "pseudo_src": "case2_champion_diversity/k02_75pct_VLM",
   "modules": [
    {
-    "name": "orchestrator",
-    "file": "orchestrator.py",
+    "name": "agent",
+    "file": "agent.py",
     "lines": 153,
     "components": [
      [
@@ -1296,22 +1296,22 @@
     5
    ],
    [
-    "orchestrator",
+    "agent",
     "action_io",
     1
    ],
    [
-    "orchestrator",
+    "agent",
     "chart",
     5
    ],
    [
-    "orchestrator",
+    "agent",
     "deciders",
     4
    ],
    [
-    "orchestrator",
+    "agent",
     "prompting",
     1
    ],
@@ -1324,7 +1324,7 @@
   "n_components": 48,
   "n_edges": 58,
   "entry": {
-   "file": "orchestrator.py",
+   "file": "agent.py",
    "name": "LayeredHarness.act",
    "src": "def act(self, obs, prev_action=None):\n    if prev_action:\n        self.prompt_builder.update_action(self._emitted or prev_action)\n    self.prompt_builder.update_observation(obs)\n    self._mount()\n    frame = parse_frame(self._context(obs))\n    try:\n        self._chart.fold(frame)\n    except Exception:                                         # noqa: BLE001\n        pass                                                  # a chart is never worth an episode\n    response = self.client.generate(build_messages(self.prompt_builder))\n    out = copy.deepcopy(response)\n    reply = extract_action(out.completion)\n    action = self._decide(reply, frame)\n    self._emitted = action\n    self._chart.record_emission(self._chart.here if frame.grounded else None, action)\n    return out._replace(completion=action)",
    "lines": 21
@@ -1342,8 +1342,8 @@
   "pseudo_src": "case2_champion_diversity/k04_85pct_VLM",
   "modules": [
    {
-    "name": "orchestrator",
-    "file": "orchestrator.py",
+    "name": "agent",
+    "file": "agent.py",
     "lines": 470,
     "components": [
      [
@@ -1508,32 +1508,32 @@
     2
    ],
    [
-    "orchestrator",
+    "agent",
     "chart",
     2
    ],
    [
-    "orchestrator",
+    "agent",
     "gate",
     1
    ],
    [
-    "orchestrator",
+    "agent",
     "melee",
     1
    ],
    [
-    "orchestrator",
+    "agent",
     "planner",
     1
    ],
    [
-    "orchestrator",
+    "agent",
     "quest",
     3
    ],
    [
-    "orchestrator",
+    "agent",
     "volley",
     1
    ],
@@ -1551,7 +1551,7 @@
   "n_components": 29,
   "n_edges": 24,
   "entry": {
-   "file": "orchestrator.py",
+   "file": "agent.py",
    "name": "PlanLadderAgent.act",
    "src": "def act(self, obs, prev_action=None):\n    self.refresh_legal()\n    if prev_action:\n        self.prompt_builder.update_action(prev_action)\n    self.prompt_builder.update_observation(obs)\n    chart = parse_map(obs)\n    self._chart, self._rows = chart, None\n    self.remember(chart)\n    self.volley.tick()\n    plan = self.claim_step(chart, obs_text(obs))\n    self.melee.observe(chart)\n    if plan is not None:\n        action, rung = plan\n        keystroke = rung.startswith((\"quest:item\", \"quest:yes\", \"quest:aim\"))\n        if self.last_response is not None:\n            try:\n    ...",
    "lines": 44
@@ -1569,8 +1569,8 @@
   "pseudo_src": "case2_champion_diversity/k08_82pct_VLM",
   "modules": [
    {
-    "name": "orchestrator",
-    "file": "orchestrator.py",
+    "name": "agent",
+    "file": "agent.py",
     "lines": 302,
     "components": [
      [
@@ -1698,27 +1698,27 @@
   ],
   "edges": [
    [
-    "orchestrator",
+    "agent",
     "action_io",
     1
    ],
    [
-    "orchestrator",
+    "agent",
     "chart",
     2
    ],
    [
-    "orchestrator",
+    "agent",
     "prompting",
     1
    ],
    [
-    "orchestrator",
+    "agent",
     "quest",
     1
    ],
    [
-    "orchestrator",
+    "agent",
     "sokoban",
     1
    ],
@@ -1731,7 +1731,7 @@
   "n_components": 24,
   "n_edges": 13,
   "entry": {
-   "file": "orchestrator.py",
+   "file": "agent.py",
    "name": "SituationAgent.act",
    "src": "def act(self, obs, prev_action=None):\n    if prev_action:\n        self.prompt_builder.update_action(prev_action)\n    self.prompt_builder.update_observation(obs)\n    legal = self._legal()\n    moves = tuple(d for d in COMPASS if not legal or d in legal)\n    frame = parse_screen(self._text(obs))\n    if moves and set(moves) <= set(CARDINALS):\n        self.chart.bars = True                                 # Boxoban: `#` is bars\n    pilot = goal = push_hop = None\n    try:\n        if frame[\"modal\"] and self.last_move and self.last_pos is not None \\\n                and \"really attack\" in frame[\"message\"].lower():\n            self.chart.refused.add((self.last_pos, self.last_move))\n        self.chart.absorb(frame, self.last_move, self.last_pos)\n        self.chart.hazard = {c for c in self.chart.hazard\n    ...",
    "lines": 56
@@ -1749,8 +1749,8 @@
   "pseudo_src": "case2_champion_diversity/k16_90pct_noVLM",
   "modules": [
    {
-    "name": "orchestrator",
-    "file": "orchestrator.py",
+    "name": "agent",
+    "file": "agent.py",
     "lines": 550,
     "components": [
      [
@@ -1842,12 +1842,12 @@
   ],
   "edges": [
    [
-    "orchestrator",
+    "agent",
     "quest",
     1
    ],
    [
-    "orchestrator",
+    "agent",
     "sokoban",
     1
    ]
@@ -1855,7 +1855,7 @@
   "n_components": 20,
   "n_edges": 16,
   "entry": {
-   "file": "orchestrator.py",
+   "file": "agent.py",
    "name": "LearnerAgent.act",
    "src": "def act(self, obs, prev_action=None):\n    if prev_action:\n        self.prompt_builder.update_action(prev_action)\n    self.prompt_builder.update_observation(obs)\n    text = obs[\"text\"][\"long_term_context\"] if isinstance(obs, dict) else str(obs)\n    fr = parse_glyph_map(text)\n    legal = self.legal_actions()\n    if fr[\"dlvl\"] != self.level:\n        self.forget()\n        self.level = fr[\"dlvl\"]\n    c = {\"fr\": fr, \"legal\": legal, \"moves\": [d for d in ORDER if d in legal],\n         \"quest\": Quest.armed(legal), \"gap\": None, \"bad\": set(), \"kind\": None}\n    for name in STAGES:\n        got = getattr(self, \"st_\" + name)(c)\n        if got is not None:\n            return got\n    return self.reply(c[\"moves\"][0] if c[\"moves\"] else legal[0], \"fallback\")",
    "lines": 17
@@ -1873,8 +1873,8 @@
   "pseudo_src": "case2_champion_diversity/k32_40pct_VLM",
   "modules": [
    {
-    "name": "orchestrator",
-    "file": "orchestrator.py",
+    "name": "agent",
+    "file": "agent.py",
     "lines": 159,
     "components": [
      [
@@ -2014,27 +2014,27 @@
     3
    ],
    [
-    "orchestrator",
+    "agent",
     "action_io",
     2
    ],
    [
-    "orchestrator",
+    "agent",
     "arbiter",
     3
    ],
    [
-    "orchestrator",
+    "agent",
     "footprint",
     1
    ],
    [
-    "orchestrator",
+    "agent",
     "percept",
     1
    ],
    [
-    "orchestrator",
+    "agent",
     "prompting",
     2
    ]
@@ -2042,7 +2042,7 @@
   "n_components": 26,
   "n_edges": 30,
   "entry": {
-   "file": "orchestrator.py",
+   "file": "agent.py",
    "name": "FootprintHarness.act",
    "src": "def act(self, obs, prev_action=None):\n    if prev_action:\n        self.prompt_builder.update_action(prev_action)\n    self.prompt_builder.update_observation(obs)\n    if self.legal is None:\n        self.legal = self.read_legal()\n    frame, modal = None, False\n    self.yn = False\n    try:\n        text = (obs.get(\"text\") or {}).get(\"long_term_context\", \"\") or \"\"\n        frame = read(text)\n        modal = frame[\"modal\"]\n        self.yn = bool(frame[\"yn\"] and (modal or frame[\"pos\"] is None))\n        if frame[\"pos\"] is None or modal:\n            frame = None\n        else:\n    ...",
    "lines": 48
@@ -2060,8 +2060,8 @@
   "pseudo_src": "case3_failure/a_stalled_arm_k32_late_N44_20pct",
   "modules": [
    {
-    "name": "orchestrator",
-    "file": "orchestrator.py",
+    "name": "agent",
+    "file": "agent.py",
     "lines": 111,
     "components": [
      [
@@ -2185,32 +2185,32 @@
   ],
   "edges": [
    [
-    "orchestrator",
+    "agent",
     "action_io",
     3
    ],
    [
-    "orchestrator",
+    "agent",
     "ledger",
     1
    ],
    [
-    "orchestrator",
+    "agent",
     "mixer",
     1
    ],
    [
-    "orchestrator",
+    "agent",
     "percept",
     1
    ],
    [
-    "orchestrator",
+    "agent",
     "prompting",
     2
    ],
    [
-    "orchestrator",
+    "agent",
     "rays",
     1
    ]
@@ -2218,7 +2218,7 @@
   "n_components": 21,
   "n_edges": 13,
   "entry": {
-   "file": "orchestrator.py",
+   "file": "agent.py",
    "name": "SightlineHarness.act",
    "src": "def act(self, obs, prev_action=None):\n    if prev_action:\n        self.prompt_builder.update_action(prev_action)\n    self.prompt_builder.update_observation(obs)\n    if self.legal is None:\n        self.legal = read_legal(self.prompt_builder, DIRS)\n    frame, scores, modal = None, {}, False\n    try:\n        frame = read((obs.get(\"text\") or {}).get(\"long_term_context\", \"\") or \"\")\n        modal = frame[\"modal\"]\n        if frame[\"pos\"] is None or modal:\n            frame = None\n        else:\n            self.ledger.book(frame)\n            scores = score_all(frame, self.ledger)\n    except Exception:                                   # noqa: BLE001\n    ...",
    "lines": 45
@@ -2236,8 +2236,8 @@
   "pseudo_src": "case3_failure/a_stalled_arm_k32_late_N45_22pct",
   "modules": [
    {
-    "name": "orchestrator",
-    "file": "orchestrator.py",
+    "name": "agent",
+    "file": "agent.py",
     "lines": 184,
     "components": [
      [
@@ -2375,37 +2375,37 @@
     1
    ],
    [
-    "orchestrator",
+    "agent",
     "action_io",
     1
    ],
    [
-    "orchestrator",
+    "agent",
     "archive",
     1
    ],
    [
-    "orchestrator",
+    "agent",
     "journal",
     1
    ],
    [
-    "orchestrator",
+    "agent",
     "phases",
     1
    ],
    [
-    "orchestrator",
+    "agent",
     "prompting",
     2
    ],
    [
-    "orchestrator",
+    "agent",
     "reflect",
     2
    ],
    [
-    "orchestrator",
+    "agent",
     "screen",
     1
    ]
@@ -2413,7 +2413,7 @@
   "n_components": 22,
   "n_edges": 16,
   "entry": {
-   "file": "orchestrator.py",
+   "file": "agent.py",
    "name": "GroundedJournalHarness.act",
    "src": "def act(self, obs, prev_action=None):\n    if prev_action:\n        self.prompt_builder.update_action(prev_action)\n    self.prompt_builder.update_observation(obs)\n    if self.legal is None:\n        self.legal = self.read_legal()\n    moves = [d for d in DIRS if d in self.legal]\n    action, tag, cell, frame = None, \"explore\", None, {}\n    try:\n        text = (obs.get(\"text\") or {}).get(\"long_term_context\", \"\") or \"\"\n        frame = read(text)\n        cell = frame[\"pos\"] if frame[\"live\"] else None\n        last = prev_action or self.last_action\n        discovered = self.archive.observe(self.prev_cell, last, cell, frame.get(\"adj\"))\n        self.machine.note(cell, discovered)\n        if cell is None and frame.get(\"modal\"):\n    ...",
    "lines": 61
@@ -2431,8 +2431,8 @@
   "pseudo_src": "case3_failure/a_stalled_arm_k32_late_N46_30pct",
   "modules": [
    {
-    "name": "orchestrator",
-    "file": "orchestrator.py",
+    "name": "agent",
+    "file": "agent.py",
     "lines": 99,
     "components": [
      [
@@ -2569,27 +2569,27 @@
     1
    ],
    [
-    "orchestrator",
+    "agent",
     "action_io",
     1
    ],
    [
-    "orchestrator",
+    "agent",
     "committee",
     2
    ],
    [
-    "orchestrator",
+    "agent",
     "ledger",
     1
    ],
    [
-    "orchestrator",
+    "agent",
     "perceive",
     1
    ],
    [
-    "orchestrator",
+    "agent",
     "prompting",
     1
    ],
@@ -2602,7 +2602,7 @@
   "n_components": 24,
   "n_edges": 16,
   "entry": {
-   "file": "orchestrator.py",
+   "file": "agent.py",
    "name": "CommitteeHarness.act",
    "src": "def act(self, obs, prev_action=None):\n    if prev_action:\n        self.prompt_builder.update_action(prev_action)\n    self.prompt_builder.update_observation(obs)\n    if self.legal is None:\n        self.legal = self.read_legal()\n    frame = read_frame(obs)\n    self.ledger.observe(frame)\n    ballots, first = {}, None\n    for name in self.views:\n        try:\n            msgs = VIEWS[name](self.prompt_builder, frame, self.ledger, self.priors)\n            resp = self.client.generate(msgs)\n        except Exception:                           # noqa: BLE001\n            if name == \"history\":\n                raise\n    ...",
    "lines": 37
@@ -2620,8 +2620,8 @@
   "pseudo_src": "case3_failure/b_regression_k16_N43_25pct_from90",
   "modules": [
    {
-    "name": "orchestrator",
-    "file": "orchestrator.py",
+    "name": "agent",
+    "file": "agent.py",
     "lines": 215,
     "components": [
      [
@@ -2677,12 +2677,12 @@
   ],
   "edges": [
    [
-    "orchestrator",
+    "agent",
     "grid",
     1
    ],
    [
-    "orchestrator",
+    "agent",
     "route",
     1
    ]
@@ -2690,7 +2690,7 @@
   "n_components": 10,
   "n_edges": 6,
   "entry": {
-   "file": "orchestrator.py",
+   "file": "agent.py",
    "name": "GroundedAgent.act",
    "src": "def act(self, obs, prev_action=None):\n    if prev_action:\n        self.prompt_builder.update_action(prev_action)\n    self.prompt_builder.update_observation(obs)\n    text = \"\"\n    if isinstance(obs, dict):\n        text = (obs.get(\"text\") or {}).get(\"long_term_context\", \"\") or \"\"\n    frame = parse_glyph_map(text, self.bars)\n    self.bars = frame[\"bars\"]\n    self.learn(frame, prev_action)\n    self.chart.observe(text, frame[\"pos\"], self.bars)\n    legal = self.legal()\n    owned = self.reflex(text, frame, legal)\n    if owned and owned[0] in legal:\n        return self.reply(*owned)\n    messages = self.prompt_builder.get_prompt()\n    ...",
    "lines": 30
@@ -2708,8 +2708,8 @@
   "pseudo_src": "run dir",
   "modules": [
    {
-    "name": "orchestrator",
-    "file": "orchestrator.py",
+    "name": "agent",
+    "file": "agent.py",
     "lines": 255,
     "components": [
      [
@@ -2782,17 +2782,17 @@
   ],
   "edges": [
    [
-    "orchestrator",
+    "agent",
     "chart",
     1
    ],
    [
-    "orchestrator",
+    "agent",
     "field",
     2
    ],
    [
-    "orchestrator",
+    "agent",
     "quest",
     1
    ]
@@ -2800,7 +2800,7 @@
   "n_components": 14,
   "n_edges": 7,
   "entry": {
-   "file": "orchestrator.py",
+   "file": "agent.py",
    "name": "GradientAgent.act",
    "src": "def act(self, obs, prev_action=None):\n    if prev_action:\n        self.prompt_builder.update_action(prev_action)\n    self.prompt_builder.update_observation(obs)\n    text = obs[\"text\"][\"long_term_context\"] if isinstance(obs, dict) else str(obs)\n    legal = self.legal()\n    c = {\"fr\": F.parse_tty_frame(text), \"legal\": legal, \"dirs\": [d for d in STEP if d in legal],\n         \"banned\": set(), \"open\": [], \"cell\": {}, \"field\": {}, \"kind\": None, \"quest\": False}\n    for name in STAGES:\n        got = getattr(self, \"st_\" + name)(c)\n        if got is not None:\n            return got\n    return self.reply(c[\"dirs\"][0] if c[\"dirs\"] else legal[0], \"fallback\")",
    "lines": 13
@@ -2818,8 +2818,8 @@
   "pseudo_src": "run dir",
   "modules": [
    {
-    "name": "orchestrator",
-    "file": "orchestrator.py",
+    "name": "agent",
+    "file": "agent.py",
     "lines": 537,
     "components": [
      [
@@ -2911,12 +2911,12 @@
   ],
   "edges": [
    [
-    "orchestrator",
+    "agent",
     "quest",
     1
    ],
    [
-    "orchestrator",
+    "agent",
     "sokoban",
     1
    ]
@@ -2924,7 +2924,7 @@
   "n_components": 20,
   "n_edges": 16,
   "entry": {
-   "file": "orchestrator.py",
+   "file": "agent.py",
    "name": "LearnerAgent.act",
    "src": "def act(self, obs, prev_action=None):\n    if prev_action:\n        self.prompt_builder.update_action(prev_action)\n    self.prompt_builder.update_observation(obs)\n    text = obs[\"text\"][\"long_term_context\"] if isinstance(obs, dict) else str(obs)\n    fr = parse_glyph_map(text)\n    legal = self.legal_actions()\n    if fr[\"dlvl\"] != self.level:\n        self.forget()\n        self.level = fr[\"dlvl\"]\n    c = {\"fr\": fr, \"legal\": legal, \"moves\": [d for d in ORDER if d in legal],\n         \"quest\": Quest.armed(legal), \"gap\": None, \"bad\": set(), \"kind\": None}\n    for name in STAGES:\n        got = getattr(self, \"st_\" + name)(c)\n        if got is not None:\n            return got\n    return self.reply(c[\"moves\"][0] if c[\"moves\"] else legal[0], \"fallback\")",
    "lines": 17
@@ -2943,8 +2943,8 @@
   "code_label": "Core function \u00b7 tools/vlm.py \u00b7 decide (33 lines)",
   "modules": [
    {
-    "name": "orchestrator",
-    "file": "orchestrator.py",
+    "name": "agent",
+    "file": "agent.py",
     "lines": 53,
     "components": [
      [
@@ -3009,7 +3009,7 @@
   ],
   "edges": [
    [
-    "orchestrator",
+    "agent",
     "vlm",
     2
    ]
@@ -3031,8 +3031,8 @@
   "code_label": "Core function \u00b7 tools/vlm.py \u00b7 decide (66 lines)",
   "modules": [
    {
-    "name": "orchestrator",
-    "file": "orchestrator.py",
+    "name": "agent",
+    "file": "agent.py",
     "lines": 51,
     "components": [
      [
@@ -3097,7 +3097,7 @@
   ],
   "edges": [
    [
-    "orchestrator",
+    "agent",
     "vlm",
     2
    ]
@@ -3119,8 +3119,8 @@
   "code_label": "Core function \u00b7 tools/vlm.py \u00b7 decide (31 lines)",
   "modules": [
    {
-    "name": "orchestrator",
-    "file": "orchestrator.py",
+    "name": "agent",
+    "file": "agent.py",
     "lines": 52,
     "components": [
      [
@@ -3185,7 +3185,7 @@
   ],
   "edges": [
    [
-    "orchestrator",
+    "agent",
     "vlm",
     2
    ]
@@ -3207,8 +3207,8 @@
   "code_label": "Core function \u00b7 tools/vlm.py \u00b7 decide (54 lines)",
   "modules": [
    {
-    "name": "orchestrator",
-    "file": "orchestrator.py",
+    "name": "agent",
+    "file": "agent.py",
     "lines": 63,
     "components": [
      [
@@ -3414,7 +3414,7 @@
     1
    ],
    [
-    "orchestrator",
+    "agent",
     "vlm",
     2
    ],
@@ -3476,8 +3476,8 @@
   "code_label": "Core function \u00b7 tools/vlm.py \u00b7 decide (70 lines)",
   "modules": [
    {
-    "name": "orchestrator",
-    "file": "orchestrator.py",
+    "name": "agent",
+    "file": "agent.py",
     "lines": 82,
     "components": [
      [
@@ -3538,7 +3538,7 @@
   ],
   "edges": [
    [
-    "orchestrator",
+    "agent",
     "vlm",
     2
    ]
@@ -3560,8 +3560,8 @@
   "code_label": "Core function \u00b7 tools/vlm.py \u00b7 decide (49 lines)",
   "modules": [
    {
-    "name": "orchestrator",
-    "file": "orchestrator.py",
+    "name": "agent",
+    "file": "agent.py",
     "lines": 83,
     "components": [
      [
@@ -3802,7 +3802,7 @@
     1
    ],
    [
-    "orchestrator",
+    "agent",
     "vlm",
     2
    ],
@@ -3864,8 +3864,8 @@
   "code_label": "Core function \u00b7 tools/vlm.py \u00b7 decide (38 lines)",
   "modules": [
    {
-    "name": "orchestrator",
-    "file": "orchestrator.py",
+    "name": "agent",
+    "file": "agent.py",
     "lines": 51,
     "components": [
      [
@@ -3958,7 +3958,7 @@
   ],
   "edges": [
    [
-    "orchestrator",
+    "agent",
     "vlm",
     2
    ],
@@ -3985,8 +3985,8 @@
   "code_label": "Core function \u00b7 tools/vlm.py \u00b7 decide (82 lines)",
   "modules": [
    {
-    "name": "orchestrator",
-    "file": "orchestrator.py",
+    "name": "agent",
+    "file": "agent.py",
     "lines": 67,
     "components": [
      [
@@ -4051,7 +4051,7 @@
   ],
   "edges": [
    [
-    "orchestrator",
+    "agent",
     "vlm",
     2
    ]
@@ -4073,8 +4073,8 @@
   "code_label": "Core function \u00b7 tools/docket.py \u00b7 arraign (60 lines)",
   "modules": [
    {
-    "name": "orchestrator",
-    "file": "orchestrator.py",
+    "name": "agent",
+    "file": "agent.py",
     "lines": 74,
     "components": [
      [
@@ -4230,7 +4230,7 @@
     5
    ],
    [
-    "orchestrator",
+    "agent",
     "vlm",
     3
    ],
@@ -4267,8 +4267,8 @@
   "code_label": "Core function \u00b7 tools/action.py \u00b7 think (36 lines)",
   "modules": [
    {
-    "name": "orchestrator",
-    "file": "orchestrator.py",
+    "name": "agent",
+    "file": "agent.py",
     "lines": 60,
     "components": [
      [
@@ -4537,7 +4537,7 @@
   ],
   "edges": [
    [
-    "orchestrator",
+    "agent",
     "vlm",
     2
    ],
@@ -4569,8 +4569,8 @@
   "code_label": "Core function \u00b7 tools/vlm.py \u00b7 look (34 lines)",
   "modules": [
    {
-    "name": "orchestrator",
-    "file": "orchestrator.py",
+    "name": "agent",
+    "file": "agent.py",
     "lines": 59,
     "components": [
      [
@@ -4775,7 +4775,7 @@
   ],
   "edges": [
    [
-    "orchestrator",
+    "agent",
     "vlm",
     2
    ],
@@ -4807,8 +4807,8 @@
   "code_label": "Core function \u00b7 tools/vlm.py \u00b7 decide (25 lines)",
   "modules": [
    {
-    "name": "orchestrator",
-    "file": "orchestrator.py",
+    "name": "agent",
+    "file": "agent.py",
     "lines": 56,
     "components": [
      [
@@ -4917,7 +4917,7 @@
   ],
   "edges": [
    [
-    "orchestrator",
+    "agent",
     "vlm",
     2
    ],
@@ -4949,8 +4949,8 @@
   "code_label": "Core function \u00b7 tools/plan.py \u00b7 edges (33 lines)",
   "modules": [
    {
-    "name": "orchestrator",
-    "file": "orchestrator.py",
+    "name": "agent",
+    "file": "agent.py",
     "lines": 72,
     "components": [
      [
@@ -5147,12 +5147,12 @@
     4
    ],
    [
-    "orchestrator",
+    "agent",
     "plan",
     2
    ],
    [
-    "orchestrator",
+    "agent",
     "vlm",
     2
    ],
@@ -5189,8 +5189,8 @@
   "code_label": "Core function \u00b7 tools/vlm.py \u00b7 reckon (73 lines)",
   "modules": [
    {
-    "name": "orchestrator",
-    "file": "orchestrator.py",
+    "name": "agent",
+    "file": "agent.py",
     "lines": 51,
     "components": [
      [
@@ -5399,7 +5399,7 @@
   ],
   "edges": [
    [
-    "orchestrator",
+    "agent",
     "vlm",
     2
    ]
@@ -5421,8 +5421,8 @@
   "code_label": "Core function \u00b7 tools/frame.py \u00b7 capture (36 lines)",
   "modules": [
    {
-    "name": "orchestrator",
-    "file": "orchestrator.py",
+    "name": "agent",
+    "file": "agent.py",
     "lines": 118,
     "components": [
      [
@@ -5487,7 +5487,7 @@
   ],
   "edges": [
    [
-    "orchestrator",
+    "agent",
     "vlm",
     2
    ]

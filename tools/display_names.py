@@ -1,12 +1,12 @@
 """Display names for harness files on the project page.
 
-On disk every harness's entry module is harness.py (the skeleton the method repo fixes).  The page shows it as
-orchestrator.py, which is the node's role in the module graph.  Every tool that writes anatomy rows (anatomy.py,
+On disk every harness of the recorded runs has its entry module at harness.py; the public method repo renamed that
+skeleton file to agent.py (2026-11-02), so the page shows it as agent.py.  Every tool that writes anatomy rows (anatomy.py,
 cases.py, same_game_cases.py, easy_pack.py, process_video.py) applies this mapping at output, so regenerated data
 keeps the page name while the search code keeps reading harness.py.
 """
-ON_DISK, SHOWN = "harness.py", "orchestrator.py"
-MOD_ON_DISK, MOD_SHOWN = "harness", "orchestrator"
+ON_DISK, SHOWN = "harness.py", "agent.py"
+MOD_ON_DISK, MOD_SHOWN = "harness", "agent"
 
 
 def file_name(rel):
